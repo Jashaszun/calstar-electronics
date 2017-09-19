@@ -1,0 +1,10 @@
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\bin\Debug\RFM69HCW_Control.exe.config
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\bin\Debug\RFM69HCW_Control.exe
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\bin\Debug\RFM69HCW_Control.pdb
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\bin\Debug\mcp2210_dll_m_dotnetv4_x86.dll
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\obj\Debug\RFM69HCW_Control.csprojResolveAssemblyReference.cache
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\obj\Debug\RFM69HCW_Control.Form1.resources
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\obj\Debug\RFM69HCW_Control.Properties.Resources.resources
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\obj\Debug\RFM69HCW_Control.csproj.GenerateResource.Cache
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\obj\Debug\RFM69HCW_Control.exe
+C:\Users\Jacob\Desktop\Electronics\RFM69HCW_Control\RFM69HCW_Control\obj\Debug\RFM69HCW_Control.pdb
