@@ -1,0 +1,6 @@
+#!/bin/bash
+
+/usr/local/CrossPack-AVR-20131216/bin/avr-gcc -g -mmcu=atmega328p -c "$1".c
+/usr/local/CrossPack-AVR-20131216/bin/avr-gcc -g -mmcu=atmega328p -o "$1".bin "$1".o
+/usr/local/CrossPack-AVR-20131216/avr/bin/objcopy -j .text -j .data -O ihex "$1".bin "$1".hex
+avrdude -c usbtiny -p atmega328p -U flash:w:"$1".hex
