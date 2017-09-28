@@ -1,6 +1,8 @@
 // This code borrows from http://www.embedds.com/programming-avr-i2c-interface/
 // Access control: 
 
+#include <avr/io.h>
+
 #define F_CPU 16000000
 // 115200 baud
 #define BITRATE 62 // ( clock / baud - 16) / (2 * prescaler)
@@ -11,8 +13,14 @@
 #define X_ACCEL_LSB 0x29
 
 int main() {
-	TWSR = 0;
-	TWBR = BITRATE;
+	DDRD = 0xFF;
+	DDRB = 0xFF;
+	PORTD = 0x00;
+	PORTB = 0x00;
+	i2c_init();
+	int x = xAccel();
+	PORTB = 0xFF;
+	PORTD = 0xFF;
 }
 
 void i2c_init() {
@@ -69,5 +77,6 @@ short xAccel() {
 }
 
 void error() {
-	// do something with the outputs here
+	// PORTB = 0xFF;
+	// PORTD = 0xFF;
 }
