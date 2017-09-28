@@ -39,15 +39,16 @@ void i2c_write(char byte) {
 	if (TWSR == 0x38) {
 		error();
 	}
+	TWCR |= (1 << TWINT); // clear SAK
 }
 
 short xAccel() {
 	short x;
 	i2c_start();
-	i2c_write((I2C_ADDR << 1) + I2C_WRITE); // slave address
+	i2c_write((I2C_ADDR << 1) + I2C_WRITE); // slave address, write mode
 	i2c_write(X_ACCEL_MSB << 1) // register address
 	i2c_start(); // repeated start
-	i2c_write((I2C_ADDR << 1) + I2C_READ);
+	i2c_write((I2C_ADDR << 1) + I2C_READ); // slave address, read mode
 	return x;
 }
 
