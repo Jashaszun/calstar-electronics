@@ -2,6 +2,7 @@
 // Access control: 
 
 #include <avr/io.h>
+#include <util/delay.h>
 
 #define F_CPU 16000000
 // 115200 baud
@@ -16,9 +17,20 @@
 #define Z_ACCEL_MSB 0x2C
 #define Z_ACCEL_LSB 0x2D
 
+void delay(int ms) {
+    int repeats, remainder;
+    repeats = ms / 10;
+    remainder = ms % 10;
+    int i;
+    for (i = 0; i < repeats; i++) {
+        _delay_ms(10);
+    }
+    _delay_ms(remainder);
+}
+
 void error() {
-	// PORTB = 0xFF;
-	// PORTD = 0xFF;
+	PORTB = 0xFF;
+	PORTD = 0xFF;
 }
 
 void I2C_init() {
@@ -29,13 +41,11 @@ void I2C_init() {
 void I2C_start() {
 	TWCR = (1 << TWEN) | (1 << TWSTA) | (1 << TWINT); // transmit start condition
 	while (!(TWCR & (1 << TWINT))); // wait for interrupt flag
-	if (TWSR != 0x08) { // get status, should be 0x08
-		error();
-	}
 }
 
 void I2C_stop() {
 	TWCR = (1 << TWEN) | (1 << TWSTO) | (1 << TWINT); // transmit stop condition
+	while (!(TWCR & (1 << TWINT)));
 }
 
 void I2C_write(char byte) {
@@ -46,6 +56,12 @@ void I2C_write(char byte) {
 		error();
 	} else { // ACK received
 		TWCR |= (1 << TWINT); // clear ACK
+	}
+}
+
+void I2C_check_status(char status_code) {
+	if (TWSR != status_code) {
+		error();
 	}
 }
 
@@ -77,18 +93,30 @@ char I2C_read_nack() {
 short lsm9ds1_read(char addr1, char addr2) {
 	short rv;
 	I2C_start();
+	I2C_check_status(0x08);
 	I2C_write((I2C_ADDR << 1) + I2C_WRITE); // slave address, write mode
-	I2C_write(addr1 << 1); // register address
+	I2C_check_status(0x18);
+	I2C_write(addr1); // register address
+	I2C_check_status(0x28);
 	I2C_start(); // repeated start
+	I2C_check_status(0x10);
 	I2C_write((I2C_ADDR << 1) + I2C_READ); // slave address, read mode
+	I2C_check_status(0x40);
 	rv = (I2C_read_nack() << 8);
+	I2C_check_status(0x58);
 	I2C_stop();
 	I2C_start();
+	I2C_check_status(0x08);
 	I2C_write((I2C_ADDR << 1) + I2C_WRITE); // slave address, write mode
-	I2C_write(addr2 << 1); // register address
+	I2C_check_status(0x18);
+	I2C_write(addr2); // register address
+	I2C_check_status(0x28);
 	I2C_start(); // repeated start
+	I2C_check_status(0x10)
 	I2C_write((I2C_ADDR << 1) + I2C_READ); // slave address, read mode
+	I2C_write(0x40);
 	rv |= I2C_read_nack();
+	I2C_check_status(0x58);
 	I2C_stop();
 	return rv;
 }
@@ -111,8 +139,6 @@ int main() {
 	PORTD = 0x00;
 	PORTB = 0x00;
 	I2C_init();
-	int x = lsm9ds1_xAccel();
-	PORTB = 0xFF;
-	PORTD = 0xFF;
+	short x = lsm9ds1_xAccel();
 }
 
