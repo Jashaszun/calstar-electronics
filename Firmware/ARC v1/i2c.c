@@ -60,7 +60,7 @@ void I2C_write(char byte) {
 }
 
 void I2C_check_status(char status_code) {
-	if (TWSR != status_code) {
+	if ((TWSR & 0xF8) != status_code) {
 		error();
 	}
 }
