@@ -71,25 +71,6 @@ char I2C_read_nack() {
 	return TWDR;
 }
 
-/*short xAccel() {
-	short x;
-	I2C_start();
-	I2C_write((I2C_ADDR << 1) + I2C_WRITE); // slave address, write mode
-	I2C_write(X_ACCEL_MSB << 1) // register address
-	I2C_start(); // repeated start
-	I2C_write((I2C_ADDR << 1) + I2C_READ); // slave address, read mode
-	x = (I2C_read_nack() << 8);
-	I2C_stop();
-	I2C_start();
-	I2C_write((I2C_ADDR << 1) + I2C_WRITE); // slave address, write mode
-	I2C_write(X_ACCEL_LSB << 1) // register address
-	I2C_start(); // repeated start
-	I2C_write((I2C_ADDR << 1) + I2C_READ); // slave address, read mode
-	x |= I2C_read_nack();
-	I2C_stop();
-	return x;
-}*/
-
 short lsm9ds1_read(char addr1, char addr2) {
 	short rv;
 	I2C_start();
