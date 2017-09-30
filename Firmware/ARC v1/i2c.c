@@ -67,7 +67,7 @@ char I2C_read_nack() {
 }
 
 short lsm9ds1_read(char addr1, char addr2) {
-	short rv = 0;
+	short rv;
 	I2C_start();
 	I2C_check_status(0x08);
 	I2C_write((I2C_ADDR << 1) + I2C_WRITE); // slave address, write mode
@@ -117,13 +117,9 @@ int main() {
 	I2C_init();
 	short x;
 	x = lsm9ds1_xAccel();
-	/*while(1) {
-		x = lsm9ds1_xAccel();
-		PORTD = (((x >> 3) & 1) << PD5);
-		PORTD |= (((x >> 2) & 1) << PD6);
-		PORTB = (((x >> 1) & 1) << PB1);
-		PORTB |= (((x >> 0) & 1) << PB2);
-		delay(100);
-	}*/
+	/*PORTD = (((x >> 7) & 1) << PD5);
+	PORTD |= (((x >> 6) & 1) << PD6);
+	PORTB = (((x >> 5) & 1) << PB1);
+	PORTB |= (((x >> 4) & 1) << PB2);*/
 }
 
