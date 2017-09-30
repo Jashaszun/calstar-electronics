@@ -45,18 +45,13 @@ void I2C_start() {
 
 void I2C_stop() {
 	TWCR = (1 << TWEN) | (1 << TWSTO) | (1 << TWINT); // transmit stop condition
-	while (!(TWCR & (1 << TWINT)));
+	while(TWCR & (1<<TWSTO));
 }
 
 void I2C_write(char byte) {
 	TWDR = byte;
 	TWCR = (1 << TWINT) | (1 << TWEN); // clear interrupt flag to transmit
 	while (!(TWCR & (1 << TWINT)));
-	if ((TWSR == 0x38) || (TWSR == 0x48)) {
-		error();
-	} else { // ACK received
-		TWCR |= (1 << TWINT); // clear ACK
-	}
 }
 
 void I2C_check_status(char status_code) {
@@ -72,7 +67,7 @@ char I2C_read_nack() {
 }
 
 short lsm9ds1_read(char addr1, char addr2) {
-	short rv;
+	short rv = 0;
 	I2C_start();
 	I2C_check_status(0x08);
 	I2C_write((I2C_ADDR << 1) + I2C_WRITE); // slave address, write mode
@@ -83,7 +78,7 @@ short lsm9ds1_read(char addr1, char addr2) {
 	I2C_check_status(0x10);
 	I2C_write((I2C_ADDR << 1) + I2C_READ); // slave address, read mode
 	I2C_check_status(0x40);
-	rv = (I2C_read_nack() << 8);
+	rv = (short) (I2C_read_nack() << 8);
 	I2C_check_status(0x58);
 	I2C_stop();
 	I2C_start();
@@ -93,10 +88,10 @@ short lsm9ds1_read(char addr1, char addr2) {
 	I2C_write(addr2); // register address
 	I2C_check_status(0x28);
 	I2C_start(); // repeated start
-	I2C_check_status(0x10)
+	I2C_check_status(0x10);
 	I2C_write((I2C_ADDR << 1) + I2C_READ); // slave address, read mode
-	I2C_write(0x40);
-	rv |= I2C_read_nack();
+	I2C_check_status(0x40);
+	rv |= (short) I2C_read_nack();
 	I2C_check_status(0x58);
 	I2C_stop();
 	return rv;
@@ -120,6 +115,15 @@ int main() {
 	PORTD = 0x00;
 	PORTB = 0x00;
 	I2C_init();
-	short x = lsm9ds1_xAccel();
+	short x;
+	x = lsm9ds1_xAccel();
+	/*while(1) {
+		x = lsm9ds1_xAccel();
+		PORTD = (((x >> 3) & 1) << PD5);
+		PORTD |= (((x >> 2) & 1) << PD6);
+		PORTB = (((x >> 1) & 1) << PB1);
+		PORTB |= (((x >> 0) & 1) << PB2);
+		delay(100);
+	}*/
 }
 
