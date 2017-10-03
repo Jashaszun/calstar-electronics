@@ -69,4 +69,7 @@ int main() {
 	PORTB = 0x00;
 	i2c_init();
 	short x = lsm9ds1_xAccel();
+	if (x == 0) {
+		error();
+	}
 }
