@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define USART_BAUDRATE 9600
-#define F_CPU 16000000UL
+#define USART_BAUDRATE 19200
+#define F_CPU (16000000UL)
 #define UBRR_VALUE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)
 
 #include <avr/io.h>
@@ -10,7 +10,7 @@
 #include "uart.h"
 #include "LIS331.h"
 
-#define FOSC 16000000
+#define FOSC (16000000UL)
 
 #define LIS331_SAD 0b00110000
 #define LIS331_R (LIS331_SAD | 0x01)
