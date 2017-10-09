@@ -28,8 +28,11 @@ int main() {
 	i2cInit();
 	initUART();
     delay_ms(100);
+
+    LIS331Write(CTRL_REG1, 0x27);
+    LIS331Write(CTRL_REG4, 0x82);
 	
-    // delay_ms(1000);
+    delay_ms(1000);
     
 	int xyz_values[3];
     while (1) {
@@ -99,7 +102,7 @@ void getLIS331(int average, int *readings) {
 	
 	for (i = 0; i<average; i++) {
 		// Wait until there is some new reading
-		while (!(LIS331Read(STATUS_REG) & 0x01)) {}
+		while (!LIS331Read(STATUS_REG)) {}
 
 		temp = 0;
 		temp = LIS331Read(OUT_Y_H);
