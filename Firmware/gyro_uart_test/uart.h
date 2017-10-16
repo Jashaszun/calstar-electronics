@@ -86,34 +86,5 @@ void byteToStr(uint8_t b, char *s) {
 	s[1] = '0' + tens;
 	s[2] = '0' + ones;
 }
-// int main (void)
-// {
-// 	const uint8_t INPUT_LEN = 10;
-// 	char input[INPUT_LEN+1];
-// 	char numStr[4];
-// 	uint8_t i;
-
-// 	numStr[3] = '\0';
-
-// 	initUART();
-
-// 	while (1) {
-// 		while (!rxStr(input, INPUT_LEN+1)) { }
-
-// 		while (!txStr("Input (ASCII): ", -1)) { }
-
-// 		for (i = 0; i < INPUT_LEN-1; i++) {
-// 			byteToStr(input[i], numStr);
-// 			while (!txStr(numStr, -1)) { }
-// 			while (!txStr(",", -1)) { }
-// 		}
-// 		byteToStr(input[INPUT_LEN-1], numStr);
-// 		while (!txStr(numStr, -1)) { }
-
-// 		while (!txStr("\r\n= ", -1)) { }
-// 		while (!txStr(input, -1)) { }
-// 		while (!txStr("\r\n", -1)) { }
-// 	}
-// }
 
 #endif
