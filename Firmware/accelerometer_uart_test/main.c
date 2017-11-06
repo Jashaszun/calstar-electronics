@@ -32,11 +32,15 @@ int main() {
     LIS331Write(CTRL_REG1, 0x27);
     LIS331Write(CTRL_REG4, 0x82);
 	
-    delay_ms(1000);
-    
+    delay_ms(5000);
+	
+	char buf[100];
+	sprintf(buf, "SAD + W: %d; SAD + R: %d\r\n", LIS331_W, LIS331_R);
+	while(!txStr(buf, -1)){}
+	
 	int xyz_values[3];
     while (1) {
-        getLIS331(10, xyz_values);
+        getLIS331(100, xyz_values);
 
 		char str_buf[100];
 		sprintf(str_buf, "x: %+d; y: %+d; z: %+d\r\n", xyz_values[0], xyz_values[1], xyz_values[2]);
@@ -59,11 +63,11 @@ char LIS331Read(unsigned char address) {
 	i2cSendByte(address);	// write register address
 	i2cWaitForComplete();
 	
-	i2cSendStart();
+	i2cSendStart(); // start repeat
 	
 	i2cSendByte(LIS331_R);
 	i2cWaitForComplete();
-	i2cReceiveByte(FALSE);
+	i2cReceiveByte(FALSE); // nack
 	i2cWaitForComplete();
 	
 	data = i2cGetReceivedByte();	// Get MSB result
@@ -94,7 +98,7 @@ void LIS331Write(unsigned char address, unsigned char data) {
 
 void getLIS331(int average, int *readings) {
 	char temp;
-	signed int ax[average], ay[average], az[average];
+	signed int ax, ay, az;
 	signed int altx = 0;
 	signed int alty = 0;
 	signed int altz = 0;
@@ -106,22 +110,22 @@ void getLIS331(int average, int *readings) {
 
 		temp = 0;
 		temp = LIS331Read(OUT_Y_H);
-		ay[i] = temp << 8;
-		ay[i] |= LIS331Read(OUT_Y_L);
+		ay = temp << 8;
+		ay |= LIS331Read(OUT_Y_L);
 
 		temp = 0;
 		temp = LIS331Read(OUT_Z_H);
-		az[i] = temp << 8;
-		az[i] |= LIS331Read(OUT_Z_L);
+		az = temp << 8;
+		az |= LIS331Read(OUT_Z_L);
 
 		temp = 0;
 		temp = LIS331Read(OUT_X_H);
-		ax[i] = temp << 8;
-		ax[i] |= LIS331Read(OUT_X_L);
+		ax = temp << 8;
+		ax |= LIS331Read(OUT_X_L);
 
-		altx += ax[i];
-		alty += ay[i];
-		altz += az[i];
+		altx += ax;
+		alty += ay;
+		altz += az;
 	}
 	
 	altx = altx/average;
