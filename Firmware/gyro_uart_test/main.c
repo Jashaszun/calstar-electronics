@@ -11,8 +11,8 @@
 
 
 #define FOSC (16000000UL)
-#define ITG3200_R 0xD3	// ADD pin is pulled high
-#define ITG3200_W 0xD2	// So address is 0x69
+#define ITG3200_R 0xD3
+#define ITG3200_W 0xD2
 
 #define sbi(var, mask)   ((var) |= (uint8_t)(1 << mask))
 #define cbi(var, mask)   ((var) &= (uint8_t)~(1 << mask))
@@ -46,8 +46,8 @@ int main() {
         xyz_values[2] += 14;
 
         char strBuffer[100];
-        sprintf(strBuffer, "x: %+d; y: %+d; z: %+d\r\n", xyz_values[0], xyz_values[1], xyz_values[2]);
-		
+        //sprintf(strBuffer, "x: %+d; y: %+d; z: %+d\r\n", xyz_values[0], xyz_values[1], xyz_values[2]);
+		sprintf(strBuffer, "%04x %04x %04x\n\r", xyz_values[0], xyz_values[1], xyz_values[2]);
 		while (!txStr(strBuffer, -1)) {}
         delay_ms(10);
     }
