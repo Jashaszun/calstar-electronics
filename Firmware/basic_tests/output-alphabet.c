@@ -1,6 +1,6 @@
 #include <avr/io.h>
 
-#define USART_BAUDRATE 9600
+#define USART_BAUDRATE 19200
 #define F_CPU 16000000UL
 #define UBRR_VALUE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)
 
@@ -64,17 +64,12 @@ void byteToStr(uint8_t b, char *s) {
 }
 int main (void)
 {
-	uint8_t input_num;
-	char numStr[4];
-	numStr[3] = '\0';
+	uint8_t ch = 'a';
 
 	initUART();
 
 	while (1) {
-		while (!uartRx(&input_num)) { }
-		byteToStr(input_num, numStr);
-		while (!uartTxStr(numStr, 4)) { }
-		while (!uartTx('\n')) { }
-		while (!uartTx('\r')) { }
+		while (!uartTx(ch)) { }
+		ch = ch == 'z' ? 'a' : (ch+1);
 	}
 }
