@@ -36,7 +36,7 @@ void ADC_setup() {
 
 short ADC_read() {
 	while(!(ADCSRA & (1 << ADIF))); // wait for interrupt flag
-	short result = ADCL | ((ADCH & 0b11) << 8);
-	ADCSRA |= (1 << ADIF);
+	short result = ADCL | ((ADCH & 0b11) << 8); // get values for ADC data registers
+	ADCSRA |= (1 << ADIF); // clear interrupt flag
 	return result;
 }
