@@ -15,18 +15,28 @@
 #define ALT_THRESHOLD
 #define ACCEL_ADDR 0x00
 #define ALT_ADDR 0x60
+#define ALT_WRITE_ADDR 0xC0
+#define ALT_READ_ADDR 0xC1
 
 int main() {
 	/* Pseudocode for deployment sequence:
 	1. Wait until ADC input exceeds ADC threshold
 	2. Verify vehicle is at rest on the ground with accelerometer/altimeter
 	3. Actuate solenoid. */
+
+	// Setup
 	ADC_IO = 0x00; // configure ADC as input
 	SOLENOID_IO = 0xFF; // configure solenoid as output
+	I2C_init();
 
 	ADC_setup();
 
 	while(ADC_read() < ADC_THRESHOLD);
+
+	// verify sensor data
+
+	SOLENOID_PORT = (1 << SOLENOID_PIN);
+	return 0;
 }
 
 void ADC_setup() {
