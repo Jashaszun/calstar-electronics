@@ -21,8 +21,8 @@ int main() {
 	1. Wait until ADC input exceeds ADC threshold
 	2. Verify vehicle is at rest on the ground with accelerometer/altimeter
 	3. Actuate solenoid. */
-	DDRC = 0x00; // configure ADC as input
-	DDRB = 0xFF; // configure solenoid as output
+	ADC_IO = 0x00; // configure ADC as input
+	SOLENOID_IO = 0xFF; // configure solenoid as output
 
 	ADC_setup();
 
@@ -30,13 +30,14 @@ int main() {
 }
 
 void ADC_setup() {
-	ADMUX = 01000000; // muxes ADC0, right-adjusts ADC Data Register, and sets AVCC as reference voltage
+	ADMUX = (1 << REFS0) | (1 << ADLAR); // muxes ADC0, left-adjusts ADC Data Register, and sets AVCC as reference voltage
 	ADCSRA = (1 << ADEN) | (1 << ADIE) | 0b111; // Enables ADC and Conversion Complete interrupt flag, and sets prescaler to 128 for an ADC frequency of 16MHz/128 = 125kHz
 }
 
-short ADC_read() {
+char ADC_read() {
+	ADCSRA |= (1 << ADSC);
 	while(!(ADCSRA & (1 << ADIF))); // wait for interrupt flag
-	short result = ADCL | ((ADCH & 0b11) << 8); // get values for ADC data registers
+	char result = ADCH; // get values for ADC data registers
 	ADCSRA |= (1 << ADIF); // clear interrupt flag
 	return result;
 }
