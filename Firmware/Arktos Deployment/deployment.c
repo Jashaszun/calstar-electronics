@@ -27,7 +27,7 @@ int main() {
 	// Setup
 	ADC_IO = 0x00; // configure ADC as input
 	SOLENOID_IO = 0xFF; // configure solenoid as output
-	I2C_init();
+	SOLENOID_PORT = 0x00;
 
 	ADC_setup();
 
