@@ -55,13 +55,13 @@ namespace RadioSerial
                 port.DataReceived += (s, e) =>
                 {
                     buffer += port.ReadExisting();
-                    if (textBox1.InvokeRequired)
+                    if (serialReadTextBox.InvokeRequired)
                     {
                         string tempBuffer = buffer;
-                        textBox1.Invoke((Action)delegate { textBox1.AppendText(tempBuffer); });
+                        serialReadTextBox.Invoke((Action)delegate { serialReadTextBox.AppendText(tempBuffer); });
                     }
                     else
-                        textBox1.AppendText(buffer);
+                        serialReadTextBox.AppendText(buffer);
                     buffer = "";
                 };
                 port.Open();
@@ -94,6 +94,7 @@ namespace RadioSerial
             portNamesBox.Enabled = false;
             baudRateBox.Enabled = false;
             refreshPortsButton.Enabled = false;
+            sendButton.Enabled = true;
         }
 
         private void disconnectButton_Click(object sender, EventArgs e)
@@ -108,16 +109,29 @@ namespace RadioSerial
             portNamesBox.Enabled = true;
             baudRateBox.Enabled = true;
             refreshPortsButton.Enabled = true;
+            sendButton.Enabled = false;
         }
 
         private void clearRawButton_Click(object sender, EventArgs e)
         {
-            textBox1.Clear();
+            serialReadTextBox.Clear();
         }
 
         private void portToolStripMenuItem_Click(object sender, EventArgs e)
         {
             updatePortNames();
+        }
+
+        private void sendButton_Click(object sender, EventArgs e)
+        {
+            port.Write(sendTextBox.Text + (includeNewlinesCheckbox.Checked ? "\n" :""));
+            serialWriteTextBox.AppendText("» " + sendTextBox.Text + "\r\n");
+            sendTextBox.Text = "";
+        }
+
+        private void clearSentButton_Click(object sender, EventArgs e)
+        {
+            serialWriteTextBox.Clear();
         }
     }
 }

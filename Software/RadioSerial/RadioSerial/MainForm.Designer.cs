@@ -34,10 +34,16 @@
             this.baudRateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baudRateBox = new System.Windows.Forms.ToolStripComboBox();
             this.connectButton = new System.Windows.Forms.ToolStripMenuItem();
-            this.label3 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
             this.disconnectButton = new System.Windows.Forms.ToolStripMenuItem();
+            this.label3 = new System.Windows.Forms.Label();
+            this.serialReadTextBox = new System.Windows.Forms.TextBox();
             this.clearRawButton = new System.Windows.Forms.Button();
+            this.serialWriteTextBox = new System.Windows.Forms.TextBox();
+            this.sendButton = new System.Windows.Forms.Button();
+            this.sendTextBox = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.includeNewlinesCheckbox = new System.Windows.Forms.CheckBox();
+            this.clearSentButton = new System.Windows.Forms.Button();
             this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -97,6 +103,15 @@
             this.connectButton.Text = "Connect";
             this.connectButton.Click += new System.EventHandler(this.connectToolStripMenuItem_Click);
             // 
+            // disconnectButton
+            // 
+            this.disconnectButton.BackColor = System.Drawing.Color.Red;
+            this.disconnectButton.Name = "disconnectButton";
+            this.disconnectButton.Size = new System.Drawing.Size(78, 23);
+            this.disconnectButton.Text = "Disconnect";
+            this.disconnectButton.Visible = false;
+            this.disconnectButton.Click += new System.EventHandler(this.disconnectButton_Click);
+            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -106,29 +121,20 @@
             this.label3.TabIndex = 4;
             this.label3.Text = "Raw Data:";
             // 
-            // textBox1
+            // serialReadTextBox
             // 
-            this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.serialReadTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox1.BackColor = System.Drawing.Color.Black;
-            this.textBox1.ForeColor = System.Drawing.Color.Lime;
-            this.textBox1.Location = new System.Drawing.Point(12, 47);
-            this.textBox1.Multiline = true;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.ReadOnly = true;
-            this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox1.Size = new System.Drawing.Size(532, 236);
-            this.textBox1.TabIndex = 3;
-            // 
-            // disconnectButton
-            // 
-            this.disconnectButton.BackColor = System.Drawing.Color.Red;
-            this.disconnectButton.Name = "disconnectButton";
-            this.disconnectButton.Size = new System.Drawing.Size(78, 23);
-            this.disconnectButton.Text = "Disconnect";
-            this.disconnectButton.Visible = false;
-            this.disconnectButton.Click += new System.EventHandler(this.disconnectButton_Click);
+            this.serialReadTextBox.BackColor = System.Drawing.Color.Black;
+            this.serialReadTextBox.ForeColor = System.Drawing.Color.Lime;
+            this.serialReadTextBox.Location = new System.Drawing.Point(12, 47);
+            this.serialReadTextBox.Multiline = true;
+            this.serialReadTextBox.Name = "serialReadTextBox";
+            this.serialReadTextBox.ReadOnly = true;
+            this.serialReadTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.serialReadTextBox.Size = new System.Drawing.Size(293, 236);
+            this.serialReadTextBox.TabIndex = 3;
             // 
             // clearRawButton
             // 
@@ -141,17 +147,92 @@
             this.clearRawButton.UseVisualStyleBackColor = true;
             this.clearRawButton.Click += new System.EventHandler(this.clearRawButton_Click);
             // 
-            // Form1
+            // serialWriteTextBox
             // 
+            this.serialWriteTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.serialWriteTextBox.BackColor = System.Drawing.Color.Black;
+            this.serialWriteTextBox.ForeColor = System.Drawing.Color.Lime;
+            this.serialWriteTextBox.Location = new System.Drawing.Point(311, 88);
+            this.serialWriteTextBox.Multiline = true;
+            this.serialWriteTextBox.Name = "serialWriteTextBox";
+            this.serialWriteTextBox.ReadOnly = true;
+            this.serialWriteTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.serialWriteTextBox.Size = new System.Drawing.Size(233, 195);
+            this.serialWriteTextBox.TabIndex = 6;
+            // 
+            // sendButton
+            // 
+            this.sendButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.sendButton.Enabled = false;
+            this.sendButton.Location = new System.Drawing.Point(500, 47);
+            this.sendButton.Name = "sendButton";
+            this.sendButton.Size = new System.Drawing.Size(44, 23);
+            this.sendButton.TabIndex = 7;
+            this.sendButton.Text = "Send";
+            this.sendButton.UseVisualStyleBackColor = true;
+            this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
+            // 
+            // sendTextBox
+            // 
+            this.sendTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.sendTextBox.Location = new System.Drawing.Point(311, 49);
+            this.sendTextBox.Name = "sendTextBox";
+            this.sendTextBox.Size = new System.Drawing.Size(183, 20);
+            this.sendTextBox.TabIndex = 8;
+            // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(311, 72);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(32, 13);
+            this.label1.TabIndex = 9;
+            this.label1.Text = "Sent:";
+            // 
+            // includeNewlinesCheckbox
+            // 
+            this.includeNewlinesCheckbox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.includeNewlinesCheckbox.AutoSize = true;
+            this.includeNewlinesCheckbox.Checked = true;
+            this.includeNewlinesCheckbox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.includeNewlinesCheckbox.Location = new System.Drawing.Point(422, 71);
+            this.includeNewlinesCheckbox.Name = "includeNewlinesCheckbox";
+            this.includeNewlinesCheckbox.Size = new System.Drawing.Size(122, 17);
+            this.includeNewlinesCheckbox.TabIndex = 10;
+            this.includeNewlinesCheckbox.Text = "Include Newlines ^^";
+            this.includeNewlinesCheckbox.UseVisualStyleBackColor = true;
+            // 
+            // clearSentButton
+            // 
+            this.clearSentButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.clearSentButton.Location = new System.Drawing.Point(311, 289);
+            this.clearSentButton.Name = "clearSentButton";
+            this.clearSentButton.Size = new System.Drawing.Size(75, 23);
+            this.clearSentButton.TabIndex = 11;
+            this.clearSentButton.Text = "Clear";
+            this.clearSentButton.UseVisualStyleBackColor = true;
+            this.clearSentButton.Click += new System.EventHandler(this.clearSentButton_Click);
+            // 
+            // MainForm
+            // 
+            this.AcceptButton = this.sendButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 324);
+            this.Controls.Add(this.clearSentButton);
+            this.Controls.Add(this.includeNewlinesCheckbox);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.sendTextBox);
+            this.Controls.Add(this.sendButton);
+            this.Controls.Add(this.serialWriteTextBox);
             this.Controls.Add(this.clearRawButton);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.serialReadTextBox);
             this.Controls.Add(this.menuStrip);
             this.MainMenuStrip = this.menuStrip;
-            this.Name = "Form1";
+            this.Name = "MainForm";
             this.Text = "Radio Serial";
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
@@ -168,9 +249,15 @@
         private System.Windows.Forms.ToolStripComboBox baudRateBox;
         private System.Windows.Forms.ToolStripMenuItem connectButton;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox serialReadTextBox;
         private System.Windows.Forms.ToolStripMenuItem disconnectButton;
         private System.Windows.Forms.Button clearRawButton;
+        private System.Windows.Forms.TextBox serialWriteTextBox;
+        private System.Windows.Forms.Button sendButton;
+        private System.Windows.Forms.TextBox sendTextBox;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.CheckBox includeNewlinesCheckbox;
+        private System.Windows.Forms.Button clearSentButton;
     }
 }
 
