@@ -26,7 +26,10 @@
 state machine:
 
 initialization  --(upon initialization completion (no real event))-->           radio wait
-radio wait      --(radio signal)-->                                             deploy
+radio wait      --(normal deploy signal)-->                                     verification
+radio wait      --(force deploy signal)-->                                      deploy
+verification    --(passes)-->                                                   deploy
+verification    --(fails)-->                                                    radio wait
 deploy          --(upon completion of activating deployment (no real event))--> error flag wait
 error flag wait --(error flag recieved)-->                                      scissor lift
 scissor lift    --(upon extending scissor lift (no real event)) -->             self disable (do literally nothing)
@@ -47,16 +50,20 @@ scissor lift    --(upon extending scissor lift (no real event)) -->             
 #define ENCRYPTKEY "sampleEncryptKey"
 #define ATC_RSSI -80
 
-#define RADIO_SIGNAL "START"
-#define RADIO_SIGNAL_LEN 5
+// With current code, the length of the normal deploy signal, 
+//  and the length of the force deploy signal MUST be the same
+#define NORMAL_DEPLOY_SIGNAL "N DEPLOY" 
+#define FORCE_DEPLOY_SIGNAL "F DEPLOY"
+#define RADIO_SIGNAL_LEN 8
 
 typedef enum {
     INIT,
     RADIO_WAIT,
+    VERIFICATION,
     DEPLOY,
     ERROR_FLAG_WAIT,
     SCISSOR_LIFT_ACTIVATE,
-    PARTY
+    DISABLED
 } State;
 
 int main() {
@@ -93,11 +100,17 @@ int main() {
                     for (byte i = 0; i < radio.DATALEN; ++i)
                         signal[i] = (char)radio.DATA[i];
                     
-                    if (strcmp(signal, RADIO_SIGNAL) == 0)
+                    if (strcmp(signal, NORMAL_DEPLOY_SIGNAL) == 0) {
+                        state = VERIFICATION;
+                    } else if (strcmp(signal, FORCE_DEPLOY_SIGNAL) == 0) {
                         state = DEPLOY;
+                    }
                 }
 
-                break;       
+                break;
+            case VERIFICATION:
+                
+                break;
             case DEPLOY:
                 // raise current
                 digitalWrite(CURRENTLOOP_OD, LOW);
@@ -110,11 +123,11 @@ int main() {
                 break;            
             case SCISSOR_LIFT_ACTIVATE:
 
-                state = PARTY;
+                state = DISABLED;
                 break;
 
-            case PARTY:
-                // do literally nothing/party. maybe should disable stuff or something tho.
+            case DISABLED:
+                // do literally nothing. maybe should disable stuff or something tho.
                 break;
         }
     }
