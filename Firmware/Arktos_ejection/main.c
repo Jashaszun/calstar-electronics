@@ -7,17 +7,15 @@
 /*
 0) initialization:
     * turn current loop off (pull currlent loop high)   
-1) Wait till radio transmission (we are using interrupts?)
+1) Wait till radio transmission
 2) verify landing
     * Ways to fail verification: still falling
     * if landing verification fails, wait for another radio signal
-        - should we have an override radio signal as well, in case landing verification fails but we know (visually) that we are on the ground?
-            . this would skip verification and begin deployment
-            . so 2 types of signals, 1 normal, 1 force
+        - there should be a radio override to skip verification
 3) if landing verified, start deployment
     * begin current loop transmission (pull low) -> should cause deployment, and wire should break
-4) upon error flag (means separation has occurred) (can we make this an interrupt as well? <- cuz then interrupts would work nicely as events to change to state in a state machine)
-    a. wait some finite time
+4) upon error flag (means separation has occurred) 
+    a. wait some finite time 
     b. activate scissor lift
 5) dont do anything more 
 */
@@ -38,9 +36,14 @@ scissor lift    --(upon extending scissor lift (no real event)) -->             
 #include <RFM69_ATC.h>
 #include <avr/io.h>
 #include <string.h>
+#include <util/delay.h>
+#include "SparkFunMPL3115A2.h"
+#include "Wire.h"
 
 #define CURRENTLOOP_OD 7 // output disable
 #define CURRENTLOOP_EF 8 // error flag
+
+#define ALT_THRESHOLD 50
 
 #define RADIO_RESET 14
 #define NODEID (3)
@@ -56,7 +59,7 @@ scissor lift    --(upon extending scissor lift (no real event)) -->             
 #define FORCE_DEPLOY_SIGNAL "F DEPLOY"
 #define RADIO_SIGNAL_LEN 8
 
-typedef enum {
+enum State {
     INIT,
     RADIO_WAIT,
     VERIFICATION,
@@ -64,10 +67,11 @@ typedef enum {
     ERROR_FLAG_WAIT,
     SCISSOR_LIFT_ACTIVATE,
     DISABLED
-} State;
+};
 
 int main() {
 
+    MPL3115A2 altimeter;
     RFM69_ATC radio;
 
     State state = INIT;
@@ -75,11 +79,17 @@ int main() {
     while (true) {
         switch (state) {
             case INIT:
+                Wire.begin();
+
                 // Current loop initialization
                 pinMode(CURRENTLOOP_OD, OUTPUT);
                 digitalWrite(CURRENTLOOP_OD, HIGH);
-
                 pinMode(CURRENTLOOP_EF, INPUT);
+
+                altimeter.begin();
+                altimeter.setModeAltimeter();
+                altimeter.setOversampleRate(7);
+                altimeter.enableEventFlags();
 
                 radio.initialize(FREQUENCY, NODEID, NETWORKID);
                 radio.setHighPower();
@@ -109,7 +119,19 @@ int main() {
 
                 break;
             case VERIFICATION:
-                
+                //check for acceleration (should be 0 or however we calibrate) 
+                //  and for altitude (should be on ground)
+
+                bool acceleration_flag = false; // actually implement accelerometer stuff
+                    // and get accelerometer working
+                bool altimeter_flag = altimeter.readAltitudeFt() > ALT_THRESHOLD;
+
+                if (acceleration_flag && altimeter_flag) {
+                    state = DEPLOY;
+                } else {
+                    state = RADIO_WAIT;
+                }
+
                 break;
             case DEPLOY:
                 // raise current
@@ -118,11 +140,16 @@ int main() {
                 state = ERROR_FLAG_WAIT;
                 break;            
             case ERROR_FLAG_WAIT:
-                if (digitalRead(CURRENTLOOP_EF) == LOW)
+                if (digitalRead(CURRENTLOOP_EF) == LOW) {
+                    // delay to make sure deployment is complete
+                    for (int i = 0; i < 10; ++i)
+                        _delay_ms(100);
+
                     state = SCISSOR_LIFT_ACTIVATE;
+                }
                 break;            
             case SCISSOR_LIFT_ACTIVATE:
-
+                //should actually do servo stuff
                 state = DISABLED;
                 break;
 
