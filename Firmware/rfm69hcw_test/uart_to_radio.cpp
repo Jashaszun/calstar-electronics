@@ -74,6 +74,8 @@ int main(void) {
       if (input == '\n') {
         radio.send(TRANSMIT_TO, line.c_str(), line.length());
 
+        Serial.print("[SENDING] " + line);
+
         line = "";
       }
     }

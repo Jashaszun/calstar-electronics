@@ -59,13 +59,28 @@ int main(void) {
 	//Serial.println("RFM69_ATC Enabled (Auto Transmission Control)\n");
 	#endif
 
+	pinMode(8, INPUT_PULLUP); // error flag from current loop
+	pinMode(9, OUTPUT); // deployment voltage signal
+	digitalWrite(9, LOW);
+	pinMode(7, OUTPUT); // deployment current loop output disable
+	pinMode(7, LOW);
+
 	pinMode(A1, OUTPUT);
 	pinMode(A2, OUTPUT);
 	pinMode(A3, OUTPUT);
 
+	for (int i = 0; i < 3; i++) {
+		digitalWrite(A3, HIGH);
+		delay(1000);
+		digitalWrite(A3, LOW);
+		delay(1000);
+	}
+
 	bool red = false,
 		 green = false,
 		 blue = false;
+
+	bool deploymentSignalOut = false;
 
 	while (true) {
 		if (radio.receiveDone()) {
@@ -82,6 +97,8 @@ int main(void) {
 				}
 				else if (radio.DATA[i] == 'a') {
 					red = green = blue = true;
+				} else if (radio.DATA[i] == 's') {
+					deploymentSignalOut ^= true;
 				}
 				if (radio.DATA[i] == '\n')
 					Serial.println();
@@ -99,9 +116,13 @@ int main(void) {
 			Serial.println(blue ? '1' : '0');
 		}
 
-		digitalWrite(A3, red ? HIGH : LOW);
-		digitalWrite(A2, green ? HIGH : LOW);
-		digitalWrite(A1, blue ? HIGH : LOW);
+		//digitalWrite(A3, red ? HIGH : LOW);
+		//digitalWrite(A2, green ? HIGH : LOW);
+		//digitalWrite(A1, blue ? HIGH : LOW);
+		digitalWrite(9, deploymentSignalOut ? HIGH : LOW);
+		digitalWrite(7, deploymentSignalOut ? HIGH : LOW);
+		digitalWrite(A3, deploymentSignalOut ? HIGH : LOW); // red = sending signal
+		digitalWrite(A2, digitalRead(8)); // green = error flag from current loop
 	}
   	return 0;
 }
