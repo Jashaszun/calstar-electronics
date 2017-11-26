@@ -38,9 +38,11 @@ TO DO:
 
 #define SERIAL_BAUD 19200
 
+//Initialize sensor pins as sensors
 NewPing leftSonar(LEFT_SONAR_PING, LEFT_SONAR_PING, 180);
 NewPing rightSonar(RIGHT_SONAR_PING, RIGHT_SONAR_PING, 180);
 
+//Create FSM and 3 states
 State SkidDeployment = State(movementStop(), deployScan(), movementStop());
 State Movement = State(deploySkids(), movementLoop(), movementStop());
 State SolarDeployment = State(deploySolar(), readSolar(), movementStop());
@@ -64,7 +66,7 @@ void loop(){
 	roverStateMachine.update();
 }
 
-//Transition Functions
+//######################## Transition Functions ###############################
 
 //Deploys the skids once orientation is determined.
 void deploySkids(){
@@ -82,7 +84,7 @@ void deploySolar(){
 	//YOUR CODE HERE
 }
 
-//Update Functions
+//####################### Update Functions ##########################################
 
 //Scans for ground using ultrasonics, triggers skid deployment if distance from both is less than 5 in. Otherwise, rotate body.
 void deployScan(){
@@ -95,6 +97,7 @@ void deployScan(){
 	}
 }
 
+//Handles movement control, including feedback, obstacle avoidance, and distance measurement.
 void movementLoop(){
 	if(checkClearance()){
 		roverStateMachine.transitionTo(SolarDeployment);		
@@ -104,6 +107,7 @@ void movementLoop(){
 	
 }
 
+//Prints readings from solar sensors to serial port.
 int readSolar(){
 	float solarOutput = analogRead(SOLAR_ADC);
 	float solarAngle = analogRead(SOLAR_POT);
@@ -113,7 +117,7 @@ int readSolar(){
 	Serial.println(solarAngle);
 }
 
-//utility
+//############################## Utility Functions ###################################
 
 //Takes in 0 or 1, sets motors to drive forward if 0, reverse if 1.
 void setMotorDir(int direction){
