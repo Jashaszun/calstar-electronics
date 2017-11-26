@@ -2,6 +2,8 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include "Wire.h"
+#include "SparkFunMPL3115A2"
 
 #define F_CPU 16000000
 #define ADC_THRESHOLD 512
@@ -12,7 +14,7 @@
 #define SOLENOID_PORT PORTB
 #define SOLENOID_PIN 0
 #define ACCEL_TOLERANCE 1
-#define ALT_THRESHOLD
+#define ALT_THRESHOLD 50
 #define ACCEL_ADDR 0x00
 #define ALT_ADDR 0x60
 #define ALT_WRITE_ADDR 0xC0
@@ -28,14 +30,19 @@ int main() {
 	ADC_IO = 0x00; // configure ADC as input
 	SOLENOID_IO = 0xFF; // configure solenoid as output
 	SOLENOID_PORT = 0x00;
+	MPL3115A2 altimeter;
 
 	ADC_setup();
+	Wire.begin();
+	altimeter.begin();
+	altimeter.setModeAltimeter();
+	altimeter.setOversampleRate(7);
+	altimeter.enableEventFlags();
 
-	while(ADC_read() < ADC_THRESHOLD);
+	// Main program thread
+	waitForSignal(); // wait for ejection signal and cross-check with sensor
 
-	// verify sensor data
-
-	SOLENOID_PORT = (1 << SOLENOID_PIN);
+	SOLENOID_PORT = (1 << SOLENOID_PIN); // trigger solenoid
 	return 0;
 }
 
@@ -50,4 +57,12 @@ char ADC_read() {
 	char result = ADCH; // get values for ADC data registers
 	ADCSRA |= (1 << ADIF); // clear interrupt flag
 	return result;
+}
+
+void waitForSignal() {
+	while(ADC_read() < ADC_THRESHOLD); // wait for ADC value
+	if (altimeter.readAltitudeFt() > ALT_THRESHOLD) { // if not on ground
+		waitForSignal(); // recursively call self, not returning until both conditions are met simultaneously
+	}
+	return;
 }
