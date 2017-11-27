@@ -9,20 +9,31 @@ int main(void) {
 	pinMode(6, OUTPUT); // green
 	pinMode(7, OUTPUT); // blue
 
-	digitalWrite(5, HIGH);
-	delay(1000);
-	digitalWrite(5, LOW);
-	delay(1000);
-	digitalWrite(6, HIGH);
-	delay(1000);
-	digitalWrite(6, LOW);
-	delay(1000);
-	digitalWrite(7, HIGH);
-	delay(1000);
-	digitalWrite(7, LOW);
-	delay(1000);
+	for (int i = 0; i < 3; i++) {
+		digitalWrite(5, HIGH);
+		delay(500);
+		digitalWrite(5, LOW);
+		delay(500);
+		digitalWrite(6, HIGH);
+		delay(500);
+		digitalWrite(6, LOW);
+		delay(500);
+		digitalWrite(7, HIGH);
+		delay(500);
+		digitalWrite(7, LOW);
+		delay(500);
+	}
+
+	Serial.begin(19200);
 
 	while (true) {
+		Serial.print("Reading: ");
+		bool input = digitalRead(A0);
+		if (input) {
+			Serial.println("high");
+		} else {
+			Serial.println("low");
+		}
 		digitalWrite(5, digitalRead(A0) ? HIGH : LOW);
 	}
 

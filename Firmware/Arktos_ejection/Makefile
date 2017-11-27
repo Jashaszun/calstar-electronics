@@ -5,6 +5,6 @@ SRC =
 # the C++ source files
 PSRC = basic_test.cpp
 # extra Arduino libraries
-ARDLIBS = SPI RFM69
+ARDLIBS = SPI RFM69 Servo
 
 include ../Makefile.base

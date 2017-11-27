@@ -42,6 +42,8 @@ namespace RadioSerial
             InitializeComponent();
 
             updatePortNames();
+
+            new AltitudeForm().Show();
         }
 
         string buffer;

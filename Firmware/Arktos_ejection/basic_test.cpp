@@ -30,18 +30,39 @@
   RFM69 radio;
 #endif
 
+#include <Servo.h>
+Servo scissorLiftServo;
+
 int main(void) {
 	init();
 
+	pinMode(A1, OUTPUT);
+	pinMode(A2, OUTPUT);
+	pinMode(A3, OUTPUT);
+
+	for (int i = 0; i < 3; i++) {
+		digitalWrite(A2, HIGH);
+		delay(500);
+		digitalWrite(A2, LOW);
+		delay(500);
+		digitalWrite(A3, HIGH);
+		delay(500);
+		digitalWrite(A3, LOW);
+		delay(500);
+	}
+
+	scissorLiftServo.attach(6);
+	scissorLiftServo.write(90); // don't move
+
 	Serial.begin(19200);
-    //Serial.println("Resetting radio...");
+    Serial.println("Resetting radio...");
     pinMode(A0, OUTPUT);
     digitalWrite(A0, HIGH);
     delay(500);
     digitalWrite(A0, LOW);
     delay(500);
-    //Serial.println("Radio reset complete.");
-    //Serial.println();
+    Serial.println("Radio reset complete.");
+    Serial.println();
 
 	radio.initialize(FREQUENCY,NODEID,NETWORKID);
 	#ifdef IS_RFM69HW_HCW
@@ -53,10 +74,10 @@ int main(void) {
   	radio.enableAutoPower(ATC_RSSI);
 	#endif
 
-  	//Serial.println("Receiving at 433 MHz...");
+  	Serial.println("Receiving at 433 MHz...");
 
 	#ifdef ENABLE_ATC
-	//Serial.println("RFM69_ATC Enabled (Auto Transmission Control)\n");
+	Serial.println("RFM69_ATC Enabled (Auto Transmission Control)\n");
 	#endif
 
 	pinMode(8, INPUT_PULLUP); // error flag from current loop
@@ -65,64 +86,47 @@ int main(void) {
 	pinMode(7, OUTPUT); // deployment current loop output disable
 	pinMode(7, LOW);
 
-	pinMode(A1, OUTPUT);
-	pinMode(A2, OUTPUT);
-	pinMode(A3, OUTPUT);
-
-	for (int i = 0; i < 3; i++) {
-		digitalWrite(A3, HIGH);
-		delay(1000);
-		digitalWrite(A3, LOW);
-		delay(1000);
-	}
-
-	bool red = false,
-		 green = false,
-		 blue = false;
-
 	bool deploymentSignalOut = false;
+
+
+	// for reading 3-digit integer from UART
+	char input[3];
+	int inputIndex = 0;
 
 	while (true) {
 		if (radio.receiveDone()) {
-			Serial.print("[RECEIVED]: ");
 			for (byte i = 0; i < radio.DATALEN; i++) {
-				if (radio.DATA[i] == 'r')
-					red ^= true;
-				else if (radio.DATA[i] == 'g')
-					green ^= true;
-				else if (radio.DATA[i] == 'b')
-					blue ^= true;
-				else if (radio.DATA[i] == 'c') {
-					red = green = blue = false;
-				}
-				else if (radio.DATA[i] == 'a') {
-					red = green = blue = true;
-				} else if (radio.DATA[i] == 's') {
+				if (radio.DATA[i] == 's') {
 					deploymentSignalOut ^= true;
+					inputIndex = 0;
+				} else if (radio.DATA[i] >= '0' && radio.DATA[i] <= '9') {
+					input[inputIndex] = radio.DATA[i];
+					if (++inputIndex >= 3) {
+						int value = 100*(input[0]-'0') + 10*(input[1]-'0') + (input[2]-'0');
+						if (value >= 0 && value <= 180) {
+							Serial.print("Setting servo to ");
+							Serial.println(value);
+							scissorLiftServo.write(value);
+						}
+						inputIndex = 0;
+					}
+				} else if (radio.DATA[i] == '\n') {
+					inputIndex = 0;
 				}
-				if (radio.DATA[i] == '\n')
-					Serial.println();
-				else Serial.print((char)radio.DATA[i]);
 			}
 
 			if (radio.ACKRequested()) {
 				radio.sendACK();
 			}
-
-
-			Serial.print("RGB=");
-			Serial.print(red ? '1' : '0');
-			Serial.print(green ? '1' : '0');
-			Serial.println(blue ? '1' : '0');
 		}
 
 		//digitalWrite(A3, red ? HIGH : LOW);
 		//digitalWrite(A2, green ? HIGH : LOW);
 		//digitalWrite(A1, blue ? HIGH : LOW);
-		digitalWrite(9, deploymentSignalOut ? HIGH : LOW);
-		digitalWrite(7, deploymentSignalOut ? HIGH : LOW);
-		digitalWrite(A3, deploymentSignalOut ? HIGH : LOW); // red = sending signal
-		digitalWrite(A2, digitalRead(8)); // green = error flag from current loop
+		digitalWrite(9, deploymentSignalOut);
+		digitalWrite(7, deploymentSignalOut);
+		digitalWrite(A3, deploymentSignalOut); // red = sending signal
+		digitalWrite(A2, !digitalRead(8)); // green = error flag from current loop
 	}
   	return 0;
 }
