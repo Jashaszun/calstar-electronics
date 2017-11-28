@@ -1,10 +1,10 @@
 # the name of your main file, with no extension
-TARGET = basic_test
+TARGET = ejection
 # the C source files
 SRC =
 # the C++ source files
-PSRC = basic_test.cpp
+PSRC = main.cpp
 # extra Arduino libraries
-ARDLIBS = SPI RFM69 Servo
+ARDLIBS = RFM69 Servo Wire MPL3115A2 SPI
 
 include ../Makefile.base
