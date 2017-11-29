@@ -51,6 +51,8 @@ public:
     int16_t get_y() const;
     int16_t get_z() const;
 
+    byte get_i2c_addr() const;
+
 };
 
 #endif

@@ -45,3 +45,7 @@ void LIS331HH::write_reg(const byte reg, const byte val) const {
     Wire.write(val);
     Wire.endTransmission(true);
 }
+
+byte LIS331HH::get_i2c_addr() const {
+    return addr;
+}
