@@ -6,6 +6,11 @@
 
 #define LIS331HH_READ_TIMEOUT 50
 
+// scale = (upperbound - lowerbound)/(2^16)
+#define LIS331HH_6G_SCALE  0.00018310546875f
+#define LIS331HH_12G_SCALE 0.0003662109375f
+#define LIS331HH_24G_SCALE 0.000732421875f
+
 // must be bit or'd with a 0 or a 1 to result in the actual device address
 #define LIS331HH_BASE_ADDRESS     0b0011000
 
@@ -41,17 +46,23 @@
 class LIS331HH {
 private:
     byte addr;
+    float scale;
 public:
     LIS331HH(const bool lesser_bit);
 
-    byte read_reg(const byte reg) const;
-    void write_reg(const byte reg, const byte val) const;
+    float get_x_g() const;
+    float get_y_g() const;
+    float get_z_g() const;
 
-    int16_t get_x() const;
-    int16_t get_y() const;
-    int16_t get_z() const;
+    int16_t get_x_raw() const;
+    int16_t get_y_raw() const;
+    int16_t get_z_raw() const;
+
+    byte read_reg(const byte reg) const;
+    void write_reg(const byte reg, const byte val);
 
     byte get_i2c_addr() const;
+    float get_scale() const;
 
 };
 
