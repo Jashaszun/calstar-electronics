@@ -2,3 +2,16 @@
 ~*~
 .vs/
 obj/
+
+*.d
+*.hex
+*.eep
+*.obj
+*.cof
+*.elf
+*.map
+*.a90
+*.sym
+*.lnk
+*.lss
+*.lst
