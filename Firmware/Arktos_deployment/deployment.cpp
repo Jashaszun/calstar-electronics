@@ -48,23 +48,12 @@ int main() {
 	altimeter.setOversampleRate(7);
 	altimeter.enableEventFlags();
 
-	float alt;
-
-	while(1) {
-		alt = altimeter.readAltitudeFt();
-		if (alt % 3 == 0) {
-			LED_PORT = (1 << LED_PIN_RED);
-		}
-		else if (alt % 3 == 1) {
-			LED_PORT = (1 << LED_PIN_GREEN);
-		}
-		else if (alt % 3 == 2) {
-			LED_PORT = (1 << LED_PIN_BLUE);
-		}
-	}
+	float avg = altimeter.readAltitudeFt();
 
 	// Main program thread
-	while (altimeter.readAltitudeFt() < ALT_LAUNCHED); // wait for vehicle to launch
+	while (altimeter.readAltitudeFt() < ALT_LAUNCHED - avg) { // wait for vehicle to launch 
+		avg = (avg + altimeter.readAltitudeFt()) / 2; // compute moving exponential average
+	}
 	LED_PORT = (1 << LED_PIN_RED); // set LED to red to indicate launch
 	while (waitForSignal() == 0); // wait for ejection signal and cross-check with sensor
 	LED_PORT = (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
