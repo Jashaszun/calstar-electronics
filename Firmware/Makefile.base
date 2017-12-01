@@ -1,7 +1,10 @@
 ### MARKHAM'S NOTES:
 
 # This Makefile includes the Arduino core sources. (Set ARDDIR here:)
-ARDDIR 				= C:/Users/Jacob/Desktop/Electronics/calstar-electronics/Firmware/Arduino
+
+CURDIR = $(shell git rev-parse --show-toplevel)/Firmware
+
+ARDDIR = $(CURDIR)/Arduino
 
 # You should build a tiny Makefile for each of your projects and just declare a few
 # things in it, then include this Makefile in it. Your Makefile should be in the same
