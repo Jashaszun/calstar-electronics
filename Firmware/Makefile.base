@@ -2,7 +2,25 @@
 
 # This Makefile includes the Arduino core sources. (Set ARDDIR here:)
 
+
 CURDIR = $(shell git rev-parse --show-toplevel)/Firmware
+
+OS = NULL
+
+ifeq ($(OS),Windows_NT)
+    OS = WINDOWS
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        OS = LINUX
+    endif
+    ifeq ($(UNAME_S),Darwin)
+        OS = OSX
+    endif
+endif
+
+$(call assert,$(call sne,$(OS),NULL),OS could not be determined)
+$(call assert,$(call sne,$(OS),LINUX),Linux currently not supported)
 
 ARDDIR = $(CURDIR)/Arduino
 
@@ -195,9 +213,16 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT)
 # ---------------------------------------------------------------------------
 
 # Define directories, if needed.
-DIRAVR = C:/WinAVR-20100110
+ifeq ($(OS),OSX)
+    DIRAVR = $(CURDIR)/toolchain/osx/avr-gcc/7.2.0
+    DIRAVRUTILS = $(CURDIR)/toolchain/osx/avr-binutils/2.28
+endif
+ifeq ($(OS),WINDOWS)
+    DIRAVR = C:/WinAVR-20100110
+    DIRAVRUTILS = $(DIRAVR)/utils
+endif
 DIRAVRBIN = $(DIRAVR)/bin
-DIRAVRUTILS = $(DIRAVR)/utils/bin
+DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
 DIRINC = .
 DIRLIB = $(DIRAVR)/avr/lib
 
@@ -205,11 +230,13 @@ DIRLIB = $(DIRAVR)/avr/lib
 # Define programs and commands.
 SHELL = sh
 
-CC = avr-gcc
 
-OBJCOPY = avr-objcopy
-OBJDUMP = avr-objdump
-SIZE = avr-size
+CC = $(DIRAVRBIN)/avr-gcc
+
+
+OBJCOPY = $(DIRAVRUTILSBIN)/avr-objcopy
+OBJDUMP = $(DIRAVRUTILSBIN)/avr-objdump
+SIZE = $(DIRAVRUTILSBIN)/avr-size
 
 
 # Programming support using avrdude.
