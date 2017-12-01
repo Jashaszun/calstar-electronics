@@ -5,6 +5,6 @@ SRC =
 # the C++ source files
 PSRC = basic_test.cpp
 # extra Arduino libraries
-ARDLIBS =
+ARDLIBS = Wire MPL3115A2
 
 include ../Makefile.base
