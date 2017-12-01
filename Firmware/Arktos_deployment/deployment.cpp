@@ -25,6 +25,7 @@
 #define ALT_ADDR 0x60
 #define ALT_WRITE_ADDR 0xC0
 #define ALT_READ_ADDR 0xC1
+#define BASE_ALT 0
 
 int main() {
 	/* Pseudocode for deployment sequence:
@@ -50,12 +51,8 @@ int main() {
 	altimeter.setOversampleRate(7);
 	altimeter.enableEventFlags();
 
-	float avg = altimeter.readAltitudeFt();
-
 	// Main program thread
-	while (altimeter.readAltitudeFt() < ALT_LAUNCHED - avg) { // wait for vehicle to launch
-		avg = (avg + altimeter.readAltitudeFt()) / 2; // compute moving exponential average
-	}
+	while (altimeter.readAltitudeFt() - BASE_ALT < ALT_LAUNCHED); // wait for vehicle to launch
 	LED_PORT = (1 << LED_PIN_RED); // set LED to red to indicate launch
 	while (waitForSignal() == 0); // wait for ejection signal and cross-check with sensor
 	LED_PORT = (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
