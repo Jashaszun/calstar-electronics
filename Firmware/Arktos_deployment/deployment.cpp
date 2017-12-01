@@ -42,6 +42,8 @@ int main() {
 	MPL3115A2 altimeter;
 
 	// ADC_setup();
+
+	// Configure accelerometer
 	Wire.begin();
 	altimeter.begin();
 	altimeter.setModeAltimeter();
@@ -81,5 +83,5 @@ char waitForSignal() {
 	if (altimeter.readAltitudeFt() > ALT_LAND) { // if not on ground
 		return 0;
 	}
-	return 1;
+	return 1; // landed!
 }
