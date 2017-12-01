@@ -59,14 +59,14 @@ int main(void) {
 	scissorLiftServo.write(90); // don't move
 
 	Serial.begin(19200);
-    Serial.println("Resetting radio...");
+    Serial.println("Starting radio...");
     pinMode(A0, OUTPUT);
     digitalWrite(A0, HIGH);
     delay(500);
     digitalWrite(A0, LOW);
     delay(500);
-    Serial.println("Radio reset complete.");
-    Serial.println();
+    //Serial.println("Radio reset complete.");
+    //Serial.println();
 
 	radio.initialize(FREQUENCY,NODEID,NETWORKID);
 	#ifdef IS_RFM69HW_HCW
@@ -78,10 +78,10 @@ int main(void) {
   	radio.enableAutoPower(ATC_RSSI);
 	#endif
 
-  	Serial.println("Receiving at 433 MHz...");
+  	//Serial.println("Receiving at 433 MHz...");
 
 	#ifdef ENABLE_ATC
-	Serial.println("RFM69_ATC Enabled (Auto Transmission Control)\n");
+	//Serial.println("RFM69_ATC Enabled (Auto Transmission Control)\n");
 	#endif
 
 	pinMode(8, INPUT_PULLUP); // error flag from current loop
@@ -108,9 +108,17 @@ int main(void) {
 
 	char outbuf[100];
 
+	byte count = 0;
+	
 	while (true) {
+		if (count%16 == 0) {
+			sprintf(outbuf, "Ac: x: %+07i y: %+07i z: %+07i  Al: %+07i\n", (int)(1000*accelerometer.get_x_g()), (int)(1000*accelerometer.get_y_g()), (int)(1000*accelerometer.get_z_g()), (int)(1000*altimeter.readAltitudeFt()));
+			radio.sendWithRetry(TRANSMIT_TO, outbuf, strlen(outbuf));
+			count = 0;
+		}
 		if (radio.receiveDone()) {
 			for (byte i = 0; i < radio.DATALEN; i++) {
+				Serial.print((char)radio.DATA[i]);
 				if (radio.DATA[i] == 's') {
 					deploymentSignalOut ^= true;
 					inputIndex = 0;
@@ -145,8 +153,9 @@ int main(void) {
 		digitalWrite(A3, deploymentSignalOut); // red = sending signal
 		digitalWrite(A2, !digitalRead(8)); // green = error flag from current loop
 
-		sprintf(outbuf, "Accelerometer: x: %f, y: %f, z: %f    Altimeter: %f\n\r", accelerometer.get_x_g(), accelerometer.get_y_g(), accelerometer.get_z_g(), altimeter.readAltitudeFt());
-		radio.send(TRANSMIT_TO, outbuf, sizeof(outbuf));
+
+
+		++count;
 	}
   	return 0;
 }
