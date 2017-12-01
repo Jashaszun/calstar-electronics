@@ -13,15 +13,23 @@ void delay(int ms) {
     _delay_ms(remainder);
 }
 
+void ADC_setup() {
+	ADMUX = (1 << REFS0) | (1 << ADLAR); // muxes ADC0, left-adjusts ADC Data Register, and sets AVCC as reference voltage
+	ADCSRA = (1 << ADEN) | (1 << ADIE) | 0b111; // Enables ADC and Conversion Complete interrupt flag, and sets prescaler to 128 for an ADC frequency of 16MHz/128 = 125kHz
+}
+
+char ADC_read() {
+	ADCSRA |= (1 << ADSC);
+	while(!(ADCSRA & (1 << ADIF))); // wait for interrupt flag
+	char result = ADCH; // get values for ADC data registers
+	ADCSRA |= (1 << ADIF); // clear interrupt flag
+	return result;
+}
+
 int main() {
 	DDRD = 0xFF;
-	DDRB = 0xFF;
-	PORTB = 0x00;
 	PORTD = (1 << 5);
-	delay(1000);
-	PORTB = 0xFF;
-	PORTD = (1 << 6);
-	delay(2000);
-	PORTB = 0x00;
-	PORTD = (1 << 7);
+	ADC_setup();
+	while (ADC_read() < 512);
+	PORTB = (1 << 6);
 }

@@ -14,7 +14,7 @@
 #define SOLENOID_PORT PORTB
 #define SOLENOID_PIN 0
 #define LED_IO DDRD
-#define LED_PORT PORTB
+#define LED_PORT PORTD
 #define LED_PIN_RED 5
 #define LED_PIN_GREEN 6
 #define LED_PIN_BLUE 7
