@@ -1,6 +1,8 @@
-#include <RFM69.h>         //get it here: https://www.github.com/lowpowerlab/rfm69
 #include <RFM69_ATC.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
 #include <SPI.h>           //included with Arduino IDE install (www.arduino.cc)
+#include <Wire.h>
+#include "LIS331HH.h"
+#include <SparkFunMPL3115A2.h>
 
 //*********************************************************************************************
 //************ IMPORTANT SETTINGS - YOU MUST CHANGE/CONFIGURE TO FIT YOUR HARDWARE ************
@@ -32,6 +34,8 @@
 
 #include <Servo.h>
 Servo scissorLiftServo;
+MPL3115A2 altimeter;
+LIS331HH accelerometer(0); // tie SAO to ground
 
 int main(void) {
 	init();
@@ -88,10 +92,21 @@ int main(void) {
 
 	bool deploymentSignalOut = false;
 
+	altimeter.begin();
+    altimeter.setModeAltimeter();
+    altimeter.setOversampleRate(7);
+    altimeter.enableEventFlags();
+
+	// Normal power mode, 1000 Hz data rate, x y and z axes enabled
+    accelerometer.write_reg(LIS331HH_CTRL_REG1, 0x3F);
+    // Block data update, +- 12g scale
+    accelerometer.write_reg(LIS331HH_CTRL_REG4, 0x80);
 
 	// for reading 3-digit integer from UART
 	char input[3];
 	int inputIndex = 0;
+
+	char outbuf[100];
 
 	while (true) {
 		if (radio.receiveDone()) {
@@ -118,6 +133,8 @@ int main(void) {
 			if (radio.ACKRequested()) {
 				radio.sendACK();
 			}
+
+
 		}
 
 		//digitalWrite(A3, red ? HIGH : LOW);
@@ -127,6 +144,9 @@ int main(void) {
 		digitalWrite(7, deploymentSignalOut);
 		digitalWrite(A3, deploymentSignalOut); // red = sending signal
 		digitalWrite(A2, !digitalRead(8)); // green = error flag from current loop
+
+		sprintf(outbuf, "Accelerometer: x: %f, y: %f, z: %f    Altimeter: %f\n\r", accelerometer.get_x_g(), accelerometer.get_y_g(), accelerometer.get_z_g(), altimeter.readAltitudeFt());
+		radio.send(TRANSMIT_TO, outbuf, sizeof(outbuf));
 	}
   	return 0;
 }

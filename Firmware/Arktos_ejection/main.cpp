@@ -36,6 +36,8 @@ scissor lift    --(upon extending scissor lift (no real event)) -->             
 #include <RFM69_ATC.h>
 #include <SparkFunMPL3115A2.h>
 #include <Wire.h>
+#include "LIS331HH.h"
+#include <Servo.h>
 
 #define CURRENTLOOP_OD 7 // output disable
 #define CURRENTLOOP_EF 8 // error flag
@@ -56,6 +58,10 @@ scissor lift    --(upon extending scissor lift (no real event)) -->             
 #define FORCE_DEPLOY_SIGNAL "F DEPLOY"
 #define RADIO_SIGNAL_LEN 8
 
+#define SERVO1_PIN 6
+#define SERVO2_PIN 5
+#define SERVO_ACTUATION_TIME_MS 1000 // THIS NEEDS TO BE SET EXPERIMENTALLY. CURRENTLY ARBITARY. CHANGE.
+
 enum State {
     INIT,
     RADIO_WAIT,
@@ -70,6 +76,9 @@ int main() {
 
     MPL3115A2 altimeter;
     RFM69_ATC radio;
+    Servo servo1;
+    Servo servo2;
+    LIS331HH accelerometer(0); // tie SAO to ground
 
     State state = INIT;
 
@@ -95,6 +104,17 @@ int main() {
                 radio.setHighPower();
                 radio.encrypt(ENCRYPTKEY);
                 radio.enableAutoPower(ATC_RSSI);
+
+                servo1.attach(SERVO1_PIN);
+                servo1.write(90);
+                servo2.attach(SERVO2_PIN);
+                servo2.write(90);
+
+                // Normal power mode, 1000 Hz data rate, x y and z axes enabled
+                accelerometer.write_reg(LIS331HH_CTRL_REG1, 0x3F);
+
+                // Block data update, +- 12g scale
+                accelerometer.write_reg(LIS331HH_CTRL_REG4, 0x90);
 
                 state = RADIO_WAIT;
                 break;
@@ -141,6 +161,8 @@ int main() {
                 break;            
             case ERROR_FLAG_WAIT:
                 if (digitalRead(CURRENTLOOP_EF) == LOW) {
+                    digitalWrite(CURRENTLOOP_OD, HIGH);
+                                    
                     // delay to make sure deployment is complete
                     for (int i = 0; i < 10; ++i)
                         _delay_ms(100);
@@ -149,7 +171,12 @@ int main() {
                 }
                 break;            
             case SCISSOR_LIFT_ACTIVATE:
-                //should actually do servo stuff
+                //set servo speed in the correct direction <- figure that out
+
+                //servo1.write(100 or 80);
+                delay(SERVO_ACTUATION_TIME_MS);
+                servo1.write(90);
+
                 state = DISABLED;
                 break;
 
