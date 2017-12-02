@@ -1,9 +1,9 @@
 # the name of your main file, with no extension
-TARGET = basic_test
+TARGET = deployment
 # the C source files
 SRC =
 # the C++ source files
-PSRC = basic_test.cpp
+PSRC = deployment.cpp
 # extra Arduino libraries
 ARDLIBS = Wire MPL3115A2
 
