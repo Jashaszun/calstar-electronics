@@ -22,7 +22,26 @@ endif
 $(call assert,$(call sne,$(OS),NULL),OS could not be determined)
 $(call assert,$(call sne,$(OS),LINUX),Linux currently not supported)
 
+
+
+# Define directories, if needed.
+
 ARDDIR = $(CURDIR)/Arduino
+
+ifeq ($(OS),OSX)
+    DIRAVR = $(CURDIR)/toolchain/osx/avr-gcc/7.2.0
+    DIRAVRUTILS = $(CURDIR)/toolchain/osx/avr-binutils/2.28
+endif
+ifeq ($(OS),WINDOWS)
+    DIRAVR = C:/WinAVR-20100110
+    DIRAVRUTILS = $(DIRAVR)/utils
+endif
+
+DIRAVRBIN = $(DIRAVR)/bin
+DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
+AVRINC = $(DIRAVR)/avr/include
+AVRLIB = $(DIRAVR)/avr/lib
+
 
 # You should build a tiny Makefile for each of your projects and just declare a few
 # things in it, then include this Makefile in it. Your Makefile should be in the same
@@ -70,13 +89,13 @@ TARGET = main
 endif
 # List any extra directories to look for include files here.
 ifndef EXTRAINCDIRS
-EXTRAINCDIRS = 
+EXTRAINCDIRS =
 endif
 ifndef LDFLAGS
-LDFLAGS = 
+LDFLAGS =
 endif
 ifndef CFLAGS
-CFLAGS = 
+CFLAGS =
 endif
 
 
@@ -116,6 +135,8 @@ ifndef NO_ARDUINO
 	PSRC += $(wildcard $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src/*.cpp))
 	EXTRAINCDIRS += $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src)
 endif
+
+EXTRAINCDIRS += $(AVRINC)
 
 
 ############# Don't need to change below here for most purposes  (Elliot)
@@ -157,7 +178,7 @@ $(patsubst %,-I%,$(EXTRAINCDIRS))
 #             for use in COFF files, additional information about filenames
 #             and function names needs to be present in the assembler source
 #             files -- see avr-libc docs [FIXME: not yet described there]
-ASFLAGS = -Wa,-adhlns=$(<:.S=.lst),-gstabs 
+ASFLAGS = -Wa,-adhlns=$(<:.S=.lst),-gstabs
 
 
 
@@ -184,7 +205,7 @@ LDFLAGS += -Wl,-Map=$(TARGET).map,--cref
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 
-AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT) 
+AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT)
 
 # Uncomment the following if you want avrdude's erase cycle counter.
 # Note that this counter needs to be initialized first using -Yn,
@@ -196,7 +217,7 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT)
 #AVRDUDE_FLAGS += -V
 
 # Increase verbosity level.  Please use this when submitting bug
-# reports about avrdude. See <http://savannah.nongnu.org/projects/avrdude> 
+# reports about avrdude. See <http://savannah.nongnu.org/projects/avrdude>
 # to submit bug reports.
 #AVRDUDE_FLAGS += -v -v
 
@@ -211,20 +232,6 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT)
 #AVRDUDE_WRITE_FLASH = -U lfuse:w:0x01:m #run with 1 Mhz clock no start up time
 
 # ---------------------------------------------------------------------------
-
-# Define directories, if needed.
-ifeq ($(OS),OSX)
-    DIRAVR = $(CURDIR)/toolchain/osx/avr-gcc/7.2.0
-    DIRAVRUTILS = $(CURDIR)/toolchain/osx/avr-binutils/2.28
-endif
-ifeq ($(OS),WINDOWS)
-    DIRAVR = C:/WinAVR-20100110
-    DIRAVRUTILS = $(DIRAVR)/utils
-endif
-DIRAVRBIN = $(DIRAVR)/bin
-DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
-DIRINC = .
-DIRLIB = $(DIRAVR)/avr/lib
 
 
 # Define programs and commands.
@@ -256,7 +263,7 @@ ELFSIZE = $(SIZE) -A $(TARGET).elf
 MSG_ERRORS_NONE = Errors: none
 MSG_BEGIN = -------- begin --------
 MSG_END = --------  end  --------
-MSG_SIZE_BEFORE = Size before: 
+MSG_SIZE_BEFORE = Size before:
 MSG_SIZE_AFTER = Size after:
 MSG_COFF = Converting to AVR COFF:
 MSG_EXTENDED_COFF = Converting to AVR Extended COFF:
@@ -315,7 +322,7 @@ sizeafter:
 
 
 # Display compiler version information.
-gccversion : 
+gccversion :
 	@$(CC) --version
 	@echo
 
@@ -328,7 +335,7 @@ COFFCONVERT=$(OBJCOPY) --debugging \
 	--change-section-address .data-0x800000 \
 	--change-section-address .bss-0x800000 \
 	--change-section-address .noinit-0x800000 \
-	--change-section-address .eeprom-0x810000 
+	--change-section-address .eeprom-0x810000
 
 
 coff: $(TARGET).elf
@@ -345,7 +352,7 @@ extcoff: $(TARGET).elf
 
 
 
-# Program the device.  
+# Program the device.
 program: $(TARGET).hex # $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) -b $(BAUDRATE) $(AVRDUDE_WRITE_EEPROM)
 
@@ -447,8 +454,8 @@ clean_list :
 	$(REMOVE) *~
 
 
-# Automatically generate C source code dependencies. 
-# (Code originally taken from the GNU make user manual and modified 
+# Automatically generate C source code dependencies.
+# (Code originally taken from the GNU make user manual and modified
 # (See README.txt Credits).)
 #
 # Note that this will work with sh (bash) and sed that is shipped with WinAVR
