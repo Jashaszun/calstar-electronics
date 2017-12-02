@@ -22,10 +22,6 @@ endif
 $(call assert,$(call sne,$(OSNAME),NULL),OS could not be determined)
 $(call assert,$(call sne,$(OSNAME),LINUX),Linux currently not supported)
 
-
-
-# Define directories, if needed.
-
 ARDDIR = $(CURDIR)/Arduino
 
 ifeq ($(OSNAME),OSX)
@@ -132,8 +128,6 @@ ifndef NO_ARDUINO
 	EXTRAINCDIRS += $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src)
 endif
 
-EXTRAINCDIRS += $(AVRINC)
-
 
 ############# Don't need to change below here for most purposes  (Elliot)
 
@@ -228,6 +222,20 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT)
 #AVRDUDE_WRITE_FLASH = -U lfuse:w:0x01:m #run with 1 Mhz clock no start up time
 
 # ---------------------------------------------------------------------------
+
+# Define directories, if needed.
+ifeq ($(OS),OSX)
+    DIRAVR = $(CURDIR)/toolchain/osx/avr-gcc/7.2.0
+    DIRAVRUTILS = $(CURDIR)/toolchain/osx/avr-binutils/2.28
+endif
+ifeq ($(OS),WINDOWS)
+    DIRAVR = C:/WinAVR-20100110
+    DIRAVRUTILS = $(DIRAVR)/utils
+endif
+DIRAVRBIN = $(DIRAVR)/bin
+DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
+DIRINC = .
+DIRLIB = $(DIRAVR)/avr/lib
 
 
 # Define programs and commands.
