@@ -1,10 +1,10 @@
 # the name of your main file, with no extension
-TARGET = basic_test
+TARGET = sensor_test
 # the C source files
 SRC =
 # the C++ source files
-PSRC = basic_test.cpp
+PSRC = sensor_test.cpp
 # extra Arduino libraries
-ARDLIBS = Servo
+ARDLIBS = NewPing
 
 include ../Makefile.base
