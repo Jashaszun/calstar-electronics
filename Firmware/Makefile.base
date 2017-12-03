@@ -23,16 +23,7 @@ $(call assert,$(call sne,$(OSNAME),NULL),OS could not be determined)
 $(call assert,$(call sne,$(OSNAME),LINUX),Linux currently not supported)
 
 ARDDIR = $(CURDIR)/Arduino
-
-ifeq ($(OSNAME),OSX)
-    DIRAVR = $(CURDIR)/toolchain/osx/avr-gcc/7.2.0
-    DIRAVRUTILS = $(CURDIR)/toolchain/osx/avr-binutils/2.28
-endif
-ifeq ($(OSNAME),WINDOWS)
-    DIRAVR = $(CURDIR)/toolchain/windows/
-    # DIRAVRUTILS = $(CURDIR)/toolchain/windows/utils
-		DIRAVRUTILS = $(DIRAVR)
-endif
+TOOLCHAINDIR = $(CURDIR)/toolchain
 
 
 # You should build a tiny Makefile for each of your projects and just declare a few
@@ -224,11 +215,11 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT)
 # ---------------------------------------------------------------------------
 
 # Define directories, if needed.
-ifeq ($(OS),OSX)
-    DIRAVR = $(CURDIR)/toolchain/osx/avr-gcc/7.2.0
-    DIRAVRUTILS = $(CURDIR)/toolchain/osx/avr-binutils/2.28
+ifeq ($(OSNAME),OSX)
+    DIRAVR = /usr/local/Cellar/avr-gcc/7.2.0
+    DIRAVRUTILS = /usr/local/Cellar/avr-binutils/2.29
 endif
-ifeq ($(OS),WINDOWS)
+ifeq ($(OSNAME),WINDOWS)
     DIRAVR = C:/WinAVR-20100110
     DIRAVRUTILS = $(DIRAVR)/utils
 endif
@@ -247,7 +238,7 @@ AVRLIB = $(DIRAVR)/avr/lib
 DIRAVRBIN = $(DIRAVR)/bin
 DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
 CC = $(DIRAVRBIN)/avr-gcc
-NM = $(DIRAVRBIN)/avr-nm
+NM = $(DIRAVRUTILSBIN)/avr-nm
 
 OBJCOPY = $(DIRAVRUTILSBIN)/avr-objcopy
 OBJDUMP = $(DIRAVRUTILSBIN)/avr-objdump
@@ -301,9 +292,18 @@ ALL_ASFLAGS 	= -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target: make program!
-all: begin gccversion sizebefore \
+all: $(TOOLCHAINDIR)/INSTALLED begin gccversion sizebefore \
 	$(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).lss $(TARGET).sym \
 	sizeafter finished end
+
+$(TOOLCHAINDIR)/INSTALLED:
+ifeq ($(OSNAME),OSX)
+	sh $(TOOLCHAINDIR)/install_deps_osx.sh
+endif
+ifeq ($(OSNAME),WINDOWS)
+	@echo "Cannot automatically install deps on windows yet"
+endif
+
 
 # Eye candy.
 # AVR Studio 3.x does not check make's exit code but relies on
