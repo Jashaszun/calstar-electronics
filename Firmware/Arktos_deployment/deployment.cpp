@@ -19,39 +19,13 @@
 #define LED_PIN_GREEN 6
 #define LED_PIN_BLUE 7
 #define ACCEL_TOLERANCE 1
-#define ALT_LAND 200
+#define ALT_LAND 50
 #define ALT_LAUNCHED 200
 #define ACCEL_ADDR 0x00
 #define ALT_ADDR 0x60
 #define ALT_WRITE_ADDR 0xC0
 #define ALT_READ_ADDR 0xC1
 #define BASE_ALT 0
-
-MPL3115A2 altimeter;
-
-char waitForSignal() {
-	float alt;
-	while(!(SIGNAL_PORT & (1 << SIGNAL_PIN))); // wait for ADC value
-	alt = altimeter.readAltitudeFt();
-	Serial.println(alt);
-	if (altimeter.readAltitudeFt() > ALT_LAND) { // if not on ground
-		return 0;
-	}
-	return 1; // landed!
-}
-
-// void ADC_setup() {
-// 	ADMUX = (1 << REFS0) | (1 << ADLAR); // muxes ADC0, left-adjusts ADC Data Register, and sets AVCC as reference voltage
-// 	ADCSRA = (1 << ADEN) | (1 << ADIE) | 0b111; // Enables ADC and Conversion Complete interrupt flag, and sets prescaler to 128 for an ADC frequency of 16MHz/128 = 125kHz
-// }
-//
-// char ADC_read() {
-// 	ADCSRA |= (1 << ADSC);
-// 	while(!(ADCSRA & (1 << ADIF))); // wait for interrupt flag
-// 	char result = ADCH; // get values for ADC data registers
-// 	ADCSRA |= (1 << ADIF); // clear interrupt flag
-// 	return result;
-// }
 
 int main() {
 	/* Pseudocode for deployment sequence:
@@ -66,6 +40,8 @@ int main() {
 	LED_IO = 0xFF; // configure LED as output
 	SOLENOID_PORT = 0x00;
 	LED_PORT = 0x00;
+	MPL3115A2 altimeter;
+
 	// ADC_setup();
 
 	// Configure accelerometer
@@ -82,6 +58,27 @@ int main() {
 	LED_PORT = (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
 
 	SOLENOID_PORT = (1 << SOLENOID_PIN); // trigger solenoid
-	LED_PORT = (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
+	LED_PORT = (1 << LED_PIN_BLUE) // set LED to blue to indicate completion of program
 	return 0;
+}
+
+// void ADC_setup() {
+// 	ADMUX = (1 << REFS0) | (1 << ADLAR); // muxes ADC0, left-adjusts ADC Data Register, and sets AVCC as reference voltage
+// 	ADCSRA = (1 << ADEN) | (1 << ADIE) | 0b111; // Enables ADC and Conversion Complete interrupt flag, and sets prescaler to 128 for an ADC frequency of 16MHz/128 = 125kHz
+// }
+//
+// char ADC_read() {
+// 	ADCSRA |= (1 << ADSC);
+// 	while(!(ADCSRA & (1 << ADIF))); // wait for interrupt flag
+// 	char result = ADCH; // get values for ADC data registers
+// 	ADCSRA |= (1 << ADIF); // clear interrupt flag
+// 	return result;
+// }
+
+char waitForSignal() {
+	while(!(SIGNAL_PORT & (1 << SIGNAL_PIN))); // wait for ADC value
+	if (altimeter.readAltitudeFt() > ALT_LAND) { // if not on ground
+		return 0;
+	}
+	return 1; // landed!
 }
