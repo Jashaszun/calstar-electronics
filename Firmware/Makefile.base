@@ -220,7 +220,7 @@ ifeq ($(OSNAME),OSX)
     DIRAVRUTILS = /usr/local/Cellar/avr-binutils/2.29
 endif
 ifeq ($(OSNAME),WINDOWS)
-    DIRAVR = C:/WinAVR-20100110
+    DIRAVR = $(TOOLCHAINDIR)/windows
     DIRAVRUTILS = $(DIRAVR)/utils
 endif
 DIRAVRBIN = $(DIRAVR)/bin

@@ -5,6 +5,6 @@ SRC =
 # the C++ source files
 PSRC = sensor_test.cpp
 # extra Arduino libraries
-ARDLIBS = Servo NewPing
+ARDLIBS =
 
 include ../Makefile.base
