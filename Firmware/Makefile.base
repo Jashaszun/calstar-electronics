@@ -246,7 +246,7 @@ OBJDUMP = $(DIRAVRUTILSBIN)/avr-objdump
 SIZE = $(DIRAVRUTILSBIN)/avr-size
 endif
 ifeq ($(OSNAME),WINDOWS)
-NM = $(DIRAVRUTILSBIN)/avr-nm
+NM = $(DIRAVRBIN)/avr-nm
 OBJCOPY = $(DIRAVRBIN)/avr-objcopy
 OBJDUMP = $(DIRAVRBIN)/avr-objdump
 SIZE = $(DIRAVRBIN)/avr-size
