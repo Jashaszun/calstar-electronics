@@ -238,11 +238,19 @@ AVRLIB = $(DIRAVR)/avr/lib
 DIRAVRBIN = $(DIRAVR)/bin
 DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
 CC = $(DIRAVRBIN)/avr-gcc
-NM = $(DIRAVRUTILSBIN)/avr-nm
 
+ifeq ($(OSNAME),OSX)
+NM = $(DIRAVRUTILSBIN)/avr-nm
 OBJCOPY = $(DIRAVRUTILSBIN)/avr-objcopy
 OBJDUMP = $(DIRAVRUTILSBIN)/avr-objdump
 SIZE = $(DIRAVRUTILSBIN)/avr-size
+endif
+ifeq ($(OSNAME),WINDOWS)
+NM = $(DIRAVRUTILSBIN)/avr-nm
+OBJCOPY = $(DIRAVRBIN)/avr-objcopy
+OBJDUMP = $(DIRAVRBIN)/avr-objdump
+SIZE = $(DIRAVRBIN)/avr-size
+endif
 
 
 # Programming support using avrdude.
