@@ -19,19 +19,22 @@
 #define LED_PIN_GREEN 6
 #define LED_PIN_BLUE 7
 #define ACCEL_TOLERANCE 1
-#define ALT_LAND 50
+#define ALT_LAND 200
 #define ALT_LAUNCHED 200
 #define ACCEL_ADDR 0x00
 #define ALT_ADDR 0x60
 #define ALT_WRITE_ADDR 0xC0
 #define ALT_READ_ADDR 0xC1
-#define BASE_ALT 0
+#define BASE_ALT 185 // this needs to be set PRE LAUNCH using altitude_calibration
 
 MPL3115A2 altimeter;
 
 char waitForSignal() {
+	float alt;
 	while(!(SIGNAL_PORT & (1 << SIGNAL_PIN))); // wait for ADC value
-	if (altimeter.readAltitudeFt() > ALT_LAND) { // if not on ground
+	alt = altimeter.readAltitudeFt();
+	Serial.println(alt);
+	if (alt - BASE_ALT > ALT_LAND) { // if not on ground
 		return 0;
 	}
 	return 1; // landed!
@@ -65,7 +68,9 @@ int main() {
 	LED_PORT = 0x00;
 	// ADC_setup();
 
-	// Configure accelerometer
+	init();
+	Serial.begin(19200);
+	// Configure altimeter
 	Wire.begin();
 	altimeter.begin();
 	altimeter.setModeAltimeter();
@@ -73,9 +78,9 @@ int main() {
 	altimeter.enableEventFlags();
 
 	// Main program thread
-	while (altimeter.readAltitudeFt() - BASE_ALT < ALT_LAUNCHED); // wait for vehicle to launch
+	while (altimeter.readAltitudeFt() - BASE_ALT < ALT_LAUNCHED) Serial.println(altimeter.readAltitudeFt()); // wait for vehicle to launch
 	LED_PORT = (1 << LED_PIN_RED); // set LED to red to indicate launch
-	while (waitForSignal() == 0); // wait for ejection signal and cross-check with sensor
+	while (waitForSignal() == 0) Serial.println(altimeter.readAltitudeFt()); // wait for ejection signal and cross-check with sensor
 	LED_PORT = (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
 
 	SOLENOID_PORT = (1 << SOLENOID_PIN); // trigger solenoid
