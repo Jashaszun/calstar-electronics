@@ -19,7 +19,7 @@
 #define LED_PIN_GREEN 6
 #define LED_PIN_BLUE 7
 #define ACCEL_TOLERANCE 1
-#define ALT_LAND 50
+#define ALT_LAND 200
 #define ALT_LAUNCHED 200
 #define ACCEL_ADDR 0x00
 #define ALT_ADDR 0x60
@@ -30,7 +30,10 @@
 MPL3115A2 altimeter;
 
 char waitForSignal() {
+	float alt;
 	while(!(SIGNAL_PORT & (1 << SIGNAL_PIN))); // wait for ADC value
+	alt = altimeter.readAltitudeFt();
+	Serial.println(alt);
 	if (altimeter.readAltitudeFt() > ALT_LAND) { // if not on ground
 		return 0;
 	}
