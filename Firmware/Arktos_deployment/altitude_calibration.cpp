@@ -13,7 +13,7 @@ void delay(int ms) {
   for (i = 0; i < repeats; i++) {
       _delay_ms(10);
   }
-  _delay_ms(remainder);
+  // _delay_ms(remainder);
 }
 
 int main() {
@@ -28,7 +28,7 @@ int main() {
   float avg = 0;
   while (1) {
     avg = (avg + altimeter.readAltitudeFt()) / 2;
-    Serial.println("Current altitude: %f ft", avg);
+    Serial.println(avg);
     delay(100);
   }
 }

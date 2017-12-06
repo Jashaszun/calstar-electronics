@@ -5,42 +5,25 @@
 
 CURDIR = $(shell git rev-parse --show-toplevel)/Firmware
 
-OS = NULL
+OSNAME = NULL
 
 ifeq ($(OS),Windows_NT)
-    OS = WINDOWS
+    OSNAME = WINDOWS
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
-        OS = LINUX
+        OSNAME = LINUX
     endif
     ifeq ($(UNAME_S),Darwin)
-        OS = OSX
+        OSNAME = OSX
     endif
 endif
 
-$(call assert,$(call sne,$(OS),NULL),OS could not be determined)
-$(call assert,$(call sne,$(OS),LINUX),Linux currently not supported)
-
-
-
-# Define directories, if needed.
+$(call assert,$(call sne,$(OSNAME),NULL),OS could not be determined)
+$(call assert,$(call sne,$(OSNAME),LINUX),Linux currently not supported)
 
 ARDDIR = $(CURDIR)/Arduino
-
-ifeq ($(OS),OSX)
-    DIRAVR = $(CURDIR)/toolchain/osx/avr-gcc/7.2.0
-    DIRAVRUTILS = $(CURDIR)/toolchain/osx/avr-binutils/2.28
-endif
-ifeq ($(OS),WINDOWS)
-    DIRAVR = C:/WinAVR-20100110
-    DIRAVRUTILS = $(DIRAVR)/utils
-endif
-
-DIRAVRBIN = $(DIRAVR)/bin
-DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
-AVRINC = $(DIRAVR)/avr/include
-AVRLIB = $(DIRAVR)/avr/lib
+TOOLCHAINDIR = $(CURDIR)/toolchain
 
 
 # You should build a tiny Makefile for each of your projects and just declare a few
@@ -135,8 +118,6 @@ ifndef NO_ARDUINO
 	PSRC += $(wildcard $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src/*.cpp))
 	EXTRAINCDIRS += $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src)
 endif
-
-EXTRAINCDIRS += $(AVRINC)
 
 
 ############# Don't need to change below here for most purposes  (Elliot)
@@ -233,17 +214,43 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT)
 
 # ---------------------------------------------------------------------------
 
+# Define directories, if needed.
+ifeq ($(OSNAME),OSX)
+    DIRAVR = /usr/local/Cellar/avr-gcc/7.2.0
+    DIRAVRUTILS = /usr/local/Cellar/avr-binutils/2.29
+endif
+ifeq ($(OSNAME),WINDOWS)
+    DIRAVR = $(TOOLCHAINDIR)/windows
+    DIRAVRUTILS = $(DIRAVR)/utils
+endif
+DIRAVRBIN = $(DIRAVR)/bin
+DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
+DIRINC = .
+DIRLIB = $(DIRAVR)/avr/lib
+
 
 # Define programs and commands.
 SHELL = sh
 
+AVRINC = $(DIRAVR)/avr/include
+AVRLIB = $(DIRAVR)/avr/lib
 
+DIRAVRBIN = $(DIRAVR)/bin
+DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
 CC = $(DIRAVRBIN)/avr-gcc
 
-
+ifeq ($(OSNAME),OSX)
+NM = $(DIRAVRUTILSBIN)/avr-nm
 OBJCOPY = $(DIRAVRUTILSBIN)/avr-objcopy
 OBJDUMP = $(DIRAVRUTILSBIN)/avr-objdump
 SIZE = $(DIRAVRUTILSBIN)/avr-size
+endif
+ifeq ($(OSNAME),WINDOWS)
+NM = $(DIRAVRBIN)/avr-nm
+OBJCOPY = $(DIRAVRBIN)/avr-objcopy
+OBJDUMP = $(DIRAVRBIN)/avr-objdump
+SIZE = $(DIRAVRBIN)/avr-size
+endif
 
 
 # Programming support using avrdude.
@@ -293,9 +300,18 @@ ALL_ASFLAGS 	= -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target: make program!
-all: begin gccversion sizebefore \
+all: $(TOOLCHAINDIR)/INSTALLED begin gccversion sizebefore \
 	$(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).lss $(TARGET).sym \
 	sizeafter finished end
+
+$(TOOLCHAINDIR)/INSTALLED:
+ifeq ($(OSNAME),OSX)
+	sh $(TOOLCHAINDIR)/install_deps_osx.sh
+endif
+ifeq ($(OSNAME),WINDOWS)
+	@echo "Cannot automatically install deps on windows yet"
+endif
+
 
 # Eye candy.
 # AVR Studio 3.x does not check make's exit code but relies on
@@ -384,7 +400,7 @@ program-avrispv2: $(TARGET).hex
 %.sym: %.elf
 	@echo
 	@echo $(MSG_SYMBOL_TABLE) $@
-	avr-nm -n $< > $@
+	$(NM) -n $< > $@
 
 
 
