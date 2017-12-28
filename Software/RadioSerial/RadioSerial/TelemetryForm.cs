@@ -22,7 +22,7 @@ namespace RadioSerial
         {
             InitializeComponent();
             this.port = port;
-            startTime = DateTime.Now;
+            startTime = DateTime.Now.ToFileTimeUtc();
             altitudeData = new List<Tuple<Double, Double>>();
             accelData = new List<Tuple<double, double, double, double>>();
         }
@@ -30,7 +30,7 @@ namespace RadioSerial
         LineAnnotation maxLine;
         double maxAlt = double.MinValue;
         double maxAltTime = double.MinValue;
-        DateTime startTime;
+        long startTime;
         double lastTimeInAltChart = -1000;
         void addAltitude(double time, double alt)
         {
@@ -94,14 +94,14 @@ namespace RadioSerial
 
         string fullBuffer = "";
         string currentLine = "";
-        public void receive(string buffer)
+        public void receive(long time, string buffer)
         {
             fullBuffer += buffer;
             foreach (char ch in buffer)
             {
                 if (ch == '\n')
                 {
-                    processLine(currentLine);
+                    processLine(time, currentLine);
                     currentLine = "";
                 }
                 else if (ch != '\r')
@@ -112,7 +112,7 @@ namespace RadioSerial
         }
 
         bool pulsingServo = false;
-        private void processLine(string line)
+        private void processLine(long time, string line)
         {
             if (line.StartsWith("![") && line.EndsWith("]!"))
             {
@@ -198,9 +198,9 @@ namespace RadioSerial
                     int scaledAlt = int.Parse(parts[8]);
                     double actualAlt = scaledAlt;// / 1000.0;
 
-                    double time = DateTime.Now.Subtract(startTime).TotalSeconds;
-                    addAltitude(time, actualAlt);
-                    addAcceleration(time, actualAccelX - 1, actualAccelY, actualAccelZ);
+                    double graphTime = ((time - startTime) / 10000) / 1000.0;
+                    addAltitude(graphTime, actualAlt);
+                    addAcceleration(graphTime, actualAccelX - 1, actualAccelY, actualAccelZ);
                 }
                 catch (Exception) { }
             }
@@ -219,7 +219,7 @@ namespace RadioSerial
             accelChart.Series["Accel_X"].Points.Clear();
             accelChart.Series["Accel_Y"].Points.Clear();
             accelChart.Series["Accel_Z"].Points.Clear();
-            startTime = DateTime.Now;
+            startTime = DateTime.Now.ToFileTimeUtc();
             lastTimeInAltChart = -1000;
             lastTimeInAccelChart = -1000;
             altitudeData.Clear();

@@ -39,11 +39,16 @@ namespace RadioSerial
             portNamesBox.SelectedText = "";
         }
 
+        public static MainForm Main_Form;
         public MainForm()
         {
             InitializeComponent();
 
             updatePortNames();
+
+            replayFileDialog.InitialDirectory = Environment.CurrentDirectory;
+
+            Main_Form = this;
         }
 
         string buffer;
@@ -59,43 +64,7 @@ namespace RadioSerial
                 } : null;
                 port = new SerialPort(comPort, baud);
                 buffer = "";
-                port.DataReceived += (s, e) =>
-                {
-                    buffer += port.ReadExisting();
-
-                    // write time and data to log
-                    if (logFile != null)
-                    {
-                        logFile.Write(DateTime.Now.ToFileTimeUtc() + ": ");
-                        logFile.WriteLine(string.Join(" ", buffer.ToCharArray().Select(ch =>
-                        {
-                            return string.Format("{0:X2}", (int)ch);
-                        })));
-                        logFile.Flush();
-                    }
-                    
-                    if (serialReadTextBox.InvokeRequired)
-                    {
-                        string tempBuffer = buffer;
-                        serialReadTextBox.Invoke((Action)delegate { serialReadTextBox.AppendText(tempBuffer); });
-                        if (telemetryForm != null)
-                        {
-                            telemetryForm.Invoke((Action)delegate {
-                                try
-                                {
-                                    telemetryForm.receive(tempBuffer);
-                                }
-                                catch (Exception)
-                                {
-
-                                }
-                            });
-                        }   
-                    }
-                    else
-                        serialReadTextBox.AppendText(buffer);
-                    buffer = "";
-                };
+                port.DataReceived += (s, e) => receiveSerialData(DateTime.Now.ToFileTimeUtc());
                 port.Open();
                 port.Write(retryCheckBox.Checked ? "![YES_RETRY]!\n" : "![NO_RETRY]!\n");
                 return true;
@@ -105,6 +74,45 @@ namespace RadioSerial
                 port = null;
                 return false;
             }
+        }
+
+        Queue<Tuple<long, string>> telemetryFormReplayQueue = new Queue<Tuple<long, string>>();
+        void receiveSerialData(long time, bool real = true, string fakeData = "")
+        {
+            if (real)
+                buffer += port.ReadExisting();
+            else buffer += fakeData;
+
+            // write time and data to log
+            if (real && logFile != null)
+            {
+                logFile.Write(time + ": ");
+                logFile.WriteLine(string.Join(" ", buffer.ToCharArray().Select(ch =>
+                {
+                    return string.Format("{0:X2}", (int)ch);
+                })));
+                logFile.Flush();
+            }
+
+            string tempBuffer = buffer;
+            lock (telemetryFormReplayQueue)
+            {
+                telemetryFormReplayQueue.Enqueue(new Tuple<long, string>(time, tempBuffer));
+            }
+            serialReadTextBox.tryInvoke(() =>
+            {
+                lock (telemetryFormReplayQueue)
+                {
+                    while (telemetryFormReplayQueue.Count > 0)
+                    {
+                        Tuple<long, string> item = telemetryFormReplayQueue.Dequeue();
+                        serialReadTextBox.AppendText(item.Item2);
+                        if (telemetryForm != null)
+                            telemetryForm.receive(item.Item1, item.Item2);
+                    }
+                }
+            });
+            buffer = "";
         }
 
         private void connectToolStripMenuItem_Click(object sender, EventArgs e)
@@ -129,7 +137,7 @@ namespace RadioSerial
             baudRateBox.Enabled = false;
             refreshPortsButton.Enabled = false;
             sendButton.Enabled = true;
-            telemetryButton.Visible = true;
+            //telemetryButton.Visible = true;
             logFileTextBox.Enabled = false;
             if (logFileTextBox.Text == "")
                 logFileTextBox.Visible = false;
@@ -147,14 +155,7 @@ namespace RadioSerial
                     if (logFile != null)
                         logFile.Close();
 
-                    if (InvokeRequired)
-                    {
-                        Invoke((Action)delegate
-                        {
-                            updateUIOnPortClose();
-                        });
-                    }
-                    else updateUIOnPortClose();
+                    this.tryInvoke(updateUIOnPortClose);
                 })); //close port in new thread to avoid hang
 
                 portClose.Start(); // close port in new thread to avoid hanging
@@ -169,7 +170,7 @@ namespace RadioSerial
             baudRateBox.Enabled = true;
             refreshPortsButton.Enabled = true;
             sendButton.Enabled = false;
-            telemetryButton.Visible = false;
+            //telemetryButton.Visible = false;
             logFileTextBox.Enabled = true;
             logFileTextBox.Visible = true;
         }
@@ -203,12 +204,16 @@ namespace RadioSerial
             {
                 telemetryForm = new TelemetryForm(port);
                 telemetryForm.Show();
-                telemetryButton.Enabled = false;
+                //telemetryButton.Enabled = false;
                 telemetryForm.FormClosed += (s, ev) =>
                 {
                     telemetryForm = null;
-                    telemetryButton.Enabled = true;
+                    //telemetryButton.Enabled = true;
                 };
+            }
+            else
+            {
+                telemetryForm.BringToFront();
             }
         }
 
@@ -218,6 +223,48 @@ namespace RadioSerial
             {
                 port.Write(retryCheckBox.Checked ? "![YES_RETRY]!\n" : "![NO_RETRY]!\n");
             }
+        }
+
+        static Queue<Tuple<long, string>> replayQueue = new Queue<Tuple<long, string>>();
+        public static void addReplayLine(long time, string replay)
+        {
+            lock(replayQueue)
+            {
+                replayQueue.Enqueue(new Tuple<long, string>(time, replay));
+            }
+            Main_Form.serialReadTextBox.tryInvoke(() =>
+            {
+                lock(replayQueue)
+                {
+                    while (replayQueue.Any())
+                    {
+                        Tuple<long, string> item = replayQueue.Dequeue();
+                        Main_Form.receiveSerialData(item.Item1, false, item.Item2);
+                    }
+                }
+            });
+        }
+
+        ReplayForm replayForm;
+        private void replayFileButton_Click(object sender, EventArgs e)
+        {
+            if (replayForm == null)
+            {
+                if (replayFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    replayForm = new ReplayForm(replayFileDialog.FileName);
+                    replayForm.FormClosed += (s, ev) =>
+                    {
+                        replayForm = null;
+                        this.Text = "Radio Serial";
+                    };
+                    replayForm.Show();
+
+                    this.Text = "Radio Serial (Replaying Log)";
+                }
+            }
+            if (replayForm != null)
+                replayForm.BringToFront();
         }
     }
 }

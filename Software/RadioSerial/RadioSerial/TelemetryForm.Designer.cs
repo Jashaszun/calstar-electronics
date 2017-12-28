@@ -70,6 +70,8 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             chartArea1.AxisX.ArrowStyle = System.Windows.Forms.DataVisualization.Charting.AxisArrowStyle.Triangle;
             chartArea1.AxisX.Minimum = 0D;
+            chartArea1.AxisX.Title = "Time (s)";
+            chartArea1.AxisY.Title = "Altitude (ft)";
             chartArea1.Name = "ChartArea1";
             this.altitudeChart.ChartAreas.Add(chartArea1);
             this.altitudeChart.Location = new System.Drawing.Point(12, 12);
@@ -138,6 +140,8 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             chartArea2.AxisX.ArrowStyle = System.Windows.Forms.DataVisualization.Charting.AxisArrowStyle.Triangle;
             chartArea2.AxisX.Minimum = 0D;
+            chartArea2.AxisX.Title = "Time (s)";
+            chartArea2.AxisY.Title = "Acceleration (Gs)";
             chartArea2.Name = "ChartArea1";
             this.accelChart.ChartAreas.Add(chartArea2);
             legend1.Name = "Legend1";
@@ -279,6 +283,7 @@
             // 
             // label6
             // 
+            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(578, 232);
             this.label6.Name = "label6";

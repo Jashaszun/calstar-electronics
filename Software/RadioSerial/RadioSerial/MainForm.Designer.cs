@@ -48,6 +48,8 @@
             this.telemetryButton = new System.Windows.Forms.ToolStripMenuItem();
             this.logFileTextBox = new System.Windows.Forms.ToolStripTextBox();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
+            this.replayFileButton = new System.Windows.Forms.ToolStripMenuItem();
+            this.replayFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -173,6 +175,7 @@
             // 
             // refreshPortsButton
             // 
+            this.refreshPortsButton.BackColor = System.Drawing.Color.Yellow;
             this.refreshPortsButton.Name = "refreshPortsButton";
             this.refreshPortsButton.Size = new System.Drawing.Size(44, 23);
             this.refreshPortsButton.Text = "Port:";
@@ -226,7 +229,6 @@
             this.telemetryButton.Name = "telemetryButton";
             this.telemetryButton.Size = new System.Drawing.Size(110, 23);
             this.telemetryButton.Text = "Attach Telemetry";
-            this.telemetryButton.Visible = false;
             this.telemetryButton.Click += new System.EventHandler(this.telemetryButton_Click);
             // 
             // logFileTextBox
@@ -245,12 +247,25 @@
             this.connectButton,
             this.disconnectButton,
             this.telemetryButton,
-            this.logFileTextBox});
+            this.logFileTextBox,
+            this.replayFileButton});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
             this.menuStrip.Size = new System.Drawing.Size(789, 27);
             this.menuStrip.TabIndex = 2;
             this.menuStrip.Text = "menuStrip1";
+            // 
+            // replayFileButton
+            // 
+            this.replayFileButton.Name = "replayFileButton";
+            this.replayFileButton.Size = new System.Drawing.Size(77, 23);
+            this.replayFileButton.Text = "Replay Log";
+            this.replayFileButton.Click += new System.EventHandler(this.replayFileButton_Click);
+            // 
+            // replayFileDialog
+            // 
+            this.replayFileDialog.Filter = "*|";
+            this.replayFileDialog.Title = "File to Replay";
             // 
             // MainForm
             // 
@@ -300,6 +315,8 @@
         private System.Windows.Forms.ToolStripMenuItem telemetryButton;
         private System.Windows.Forms.ToolStripTextBox logFileTextBox;
         private System.Windows.Forms.MenuStrip menuStrip;
+        private System.Windows.Forms.OpenFileDialog replayFileDialog;
+        private System.Windows.Forms.ToolStripMenuItem replayFileButton;
     }
 }
 

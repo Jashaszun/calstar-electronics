@@ -50,6 +50,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ReplayForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ReplayForm.Designer.cs">
+      <DependentUpon>ReplayForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="StaticUtils.cs" />
     <Compile Include="TelemetryForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -64,6 +71,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="ReplayForm.resx">
+      <DependentUpon>ReplayForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="TelemetryForm.resx">
       <DependentUpon>TelemetryForm.cs</DependentUpon>
     </EmbeddedResource>
