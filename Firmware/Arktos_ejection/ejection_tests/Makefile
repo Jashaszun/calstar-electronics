@@ -1,10 +1,10 @@
 # the name of your main file, with no extension
-TARGET = lis331hh
+TARGET = serial_test
 # the C source files
 SRC =
 # the C++ source files
-PSRC = main.cpp
+PSRC = serial_test.cpp
 # extra Arduino libraries
-ARDLIBS = Wire LIS331HH
+ARDLIBS = 
 
-include ../Makefile.base
+include ../../Makefile.base

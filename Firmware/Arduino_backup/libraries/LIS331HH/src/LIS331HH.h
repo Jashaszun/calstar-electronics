@@ -1,8 +1,12 @@
+/*
+Not actually an external Arduino library
+Written by CalSTAR 2017
+*/
+
 #ifndef LIS331HH_H
 #define LIS331HH_H
 
 #include <Arduino.h>
-
 
 #define LIS331HH_READ_TIMEOUT 50
 

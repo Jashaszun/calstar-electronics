@@ -1,8 +1,8 @@
 #include <RFM69.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
 #include <SPI.h>           //included with Arduino IDE install (www.arduino.cc)
 #include <Wire.h>
-#include "LIS331HH.h"
 #include <SparkFunMPL3115A2.h>
+#include <LIS331HH.h>
 #include <Servo.h>
 
 //*********************************************************************************************

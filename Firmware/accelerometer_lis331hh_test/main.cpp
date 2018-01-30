@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#include "LIS331HH.h"
+#include <LIS331HH.h>
 
 int main() {
 	init();

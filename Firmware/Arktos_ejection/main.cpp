@@ -36,7 +36,7 @@ scissor lift    --(upon extending scissor lift (no real event)) -->             
 #include <RFM69_ATC.h>
 #include <SparkFunMPL3115A2.h>
 #include <Wire.h>
-#include "LIS331HH.h"
+#include <LIS331HH.h>
 #include <Servo.h>
 
 #define CURRENTLOOP_OD 7 // output disable

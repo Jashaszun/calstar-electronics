@@ -6,7 +6,7 @@ LIS331HH::LIS331HH(const bool lesser_bit):
     addr(LIS331HH_BASE_ADDRESS|lesser_bit),
     scale(LIS331HH_6G_SCALE)
 {
-    Wire.begin();
+    //Wire.begin();
 }
 
 float LIS331HH::get_x_g() const {
