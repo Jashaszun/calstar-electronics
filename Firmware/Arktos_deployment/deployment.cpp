@@ -94,6 +94,9 @@ char waitForSignal() {
 void beep(unsigned long* start_time, unsigned long* buzzer_time, short* buzzer) {
 	unsigned long current_time_ms = millis();
 	unsigned long current_time_us = micros();
+	if (current_time_ms - *start_time >= 1000) {
+		*start_time = current_time_ms;
+	}
 	if (current_time_us - *buzzer_time >= 500) {
 		*buzzer_time = current_time_us;
 		// buzzer frequency = 1/(2*500us) = 1000 Hz
