@@ -10,6 +10,9 @@
 #define RECEIVER_IO DDRD
 #define RECEIVER_PORT PIND
 #define RECEIVER_PIN 3
+#define TRANSMITTER_IO DDRD
+#define TRANSMITTER_PORT PORTD
+#define TRANSMITTER_PIN 2
 #define CHARGE_IO DDRC
 #define CHARGE_PORT PORTC
 #define CHARGE_PIN 1
@@ -32,6 +35,14 @@
 #define ALT_WRITE_ADDR 0xC0
 #define ALT_READ_ADDR 0xC1
 #define BASE_ALT 0
+#define VERIF_SAMPLES 5
+
+// Create global timer vars
+unsigned long start_time;
+unsigned long buzzer_time;
+
+// Altimeter
+MPL3115A2 altimeter;
 
 int main() {
 	/* Pseudocode for deployment sequence:
@@ -42,14 +53,14 @@ int main() {
 
 	// Setup
 	init(); // always do this when using Arduino.h!
-	// Signal receiver and continuity default to input
+	// LVDS receiver and continuity default to input
 	LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // configure LEDs as output
+	TRANSMITTER_IO |= (1 << TRANSMITTER_PIN); // configure LVDS transmitter as output
 	CHARGE_IO = 0xFF; // configure black powder as output
 	BUZZER_IO = 0xFF; // configure buzzer as output
-	LED_PORT = 0x00; // set LEDs to low
+	LED_PORT = 0x00; // set LEDs and transmitter output to low
 	CHARGE_PORT = 0x00; // set charge to low
 	BUZZER_PORT = 0x00; // set buzzer to low
-	MPL3115A2 altimeter;
 
 	// Configure accelerometer
 	Wire.begin();
@@ -59,38 +70,48 @@ int main() {
 	altimeter.enableEventFlags();
 
 	// Initialize timer vars
-	unsigned long start_time;
-	unsigned long buzzer_time;
 	start_time = millis();
 	buzzer_time = micros();
 
 	// Main program thread
-	while (altimeter.readAltitudeFt() - BASE_ALT < ALT_LAUNCHED) { // wait for vehicle to launch
-		beep(start_time, buzzer_time);
+	while (!launched(altimeter.readAltitudeFt())) { // wait for vehicle to launch
+		beep();
 	}
 	LED_PORT = (1 << LED_PIN_RED); // set LED to red to indicate launch
 	while (waitForSignal() == 0) { // wait for ejection signal and cross-check with sensor
-		beep(start_time, buzzer_time);
+		beep();
 	}
 	LED_PORT = (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
 
 	CHARGE_PORT = (1 << CHARGE_PIN); // trigger black powder
 	LED_PORT = (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
 	while (true) {
-		beep(start_time, buzzer_time);
+		beep();
 	}
 	return 0;
 }
 
 char waitForSignal() {
-	while(!(RECEIVER_PORT & (1 << RECEIVER_PIN))); // wait for signal from ejection
-	if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAND) { // if not on ground
-		return 0;
+	short signal_received = 0;
+	int count;
+	while (!(signal_received)) { // wait for signal from ejection
+		if (RECEIVER_PORT & (1 << RECEIVER_PIN)) {
+			count++;
+			if (count >= VERIF_SAMPLES) { // need five signals to verify
+				signal_received = 1; // break loop and return
+			}
+		} else {
+			count = 0;
+		}
+		beep();
 	}
-	return 1; // landed!
+	if (landed()) { // landed!
+		return 1;
+	}
+	return 0; // not on ground
 }
 
-void beep(unsigned long& start_time, unsigned long& buzzer_time) {
+void beep() {
 	static short buzzer = 0;
 	unsigned long current_time_ms = millis();
 	unsigned long current_time_us = micros();
@@ -108,5 +129,27 @@ void beep(unsigned long& start_time, unsigned long& buzzer_time) {
 }
 
 short detectContinuity() {
-	return (CONTINUITY_PORT & (1 << CONTINUITY_PIN));
+	return !(CONTINUITY_PORT & (1 << CONTINUITY_PIN));
+}
+
+short launched(int alt) {
+	static int count = 0;
+	if (alt - BASE_ALT > ALT_LAUNCHED) {
+		count++;
+		if (count >= VERIF_SAMPLES) { // need five signals to verify
+			return 1; // yay we launched
+		}
+	} else {
+		count = 0;
+	}
+	return 0;
+}
+
+short landed() {
+	for (int i = 0; i < VERIF_SAMPLES; i++) {
+		if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAND) {
+			return 0; // if any of the first five signals disagree, return - resend radio signal to retrigger
+		}
+	}
+	return 1;
 }
