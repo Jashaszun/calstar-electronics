@@ -7,9 +7,9 @@
 #include "SparkFunMPL3115A2.h"
 
 #define F_CPU 16000000
-#define LVDS_IO DDRD
-#define LVDS_PORT PIND
-#define LVDS_PIN 2
+#define RECEIVER_IO DDRD
+#define RECEIVER_PORT PIND
+#define RECEIVER_PIN 3
 #define CHARGE_IO DDRC
 #define CHARGE_PORT PORTC
 #define CHARGE_PIN 1
@@ -73,7 +73,7 @@ int main() {
 	}
 	LED_PORT = (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
 
-	CHARGE_PORT = (1 << CHARGE_PIN); // trigger solenoid
+	CHARGE_PORT = (1 << CHARGE_PIN); // trigger black powder
 	LED_PORT = (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
 	while (true) {
 		beep(start_time, buzzer_time);
@@ -82,7 +82,7 @@ int main() {
 }
 
 char waitForSignal() {
-	while(!(LVDS_PORT & (1 << LVDS_PIN))); // wait for ADC value
+	while(!(RECEIVER_PORT & (1 << RECEIVER_PIN))); // wait for signal from ejection
 	if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAND) { // if not on ground
 		return 0;
 	}
