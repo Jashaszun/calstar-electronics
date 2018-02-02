@@ -58,27 +58,25 @@ int main() {
 	altimeter.enableEventFlags();
 
 	// Initialize timer vars
-	unsigned long* start_time;
-	unsigned long* buzzer_time;
-	short* buzzer;
-	*start_time = millis();
-	*buzzer_time = micros();
-	*buzzer = 0;
+	unsigned long start_time;
+	unsigned long buzzer_time;
+	start_time = millis();
+	buzzer_time = micros();
 
 	// Main program thread
 	while (altimeter.readAltitudeFt() - BASE_ALT < ALT_LAUNCHED) { // wait for vehicle to launch
-		beep(start_time, buzzer_time, buzzer);
+		beep(start_time, buzzer_time);
 	}
 	LED_PORT = (1 << LED_PIN_RED); // set LED to red to indicate launch
 	while (waitForSignal() == 0) { // wait for ejection signal and cross-check with sensor
-		beep(start_time, buzzer_time, buzzer);
+		beep(start_time, buzzer_time);
 	}
 	LED_PORT = (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
 
 	CHARGE_PORT = (1 << CHARGE_PIN); // trigger solenoid
 	LED_PORT = (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
 	while (true) {
-		beep(start_time, buzzer_time, buzzer);
+		beep(start_time, buzzer_time);
 	}
 	return 0;
 }
@@ -91,18 +89,19 @@ char waitForSignal() {
 	return 1; // landed!
 }
 
-void beep(unsigned long* start_time, unsigned long* buzzer_time, short* buzzer) {
+void beep(unsigned long& start_time, unsigned long& buzzer_time) {
+	static short buzzer = 0;
 	unsigned long current_time_ms = millis();
 	unsigned long current_time_us = micros();
-	if (current_time_ms - *start_time >= 1000) {
-		*start_time = current_time_ms;
+	if (current_time_ms - start_time >= 1000) { // Counts up to one second then resets
+		start_time = current_time_ms;
 	}
-	if (current_time_us - *buzzer_time >= 500) {
-		*buzzer_time = current_time_us;
+	if (current_time_us - buzzer_time >= 500) { // Run every 500us
+		buzzer_time = current_time_us;
 		// buzzer frequency = 1/(2*500us) = 1000 Hz
-		if ((current_time_ms - *start_time <= 400) && (detectContinuity())) {
-			*buzzer = !(*buzzer);
-			BUZZER_PORT = (*buzzer << BUZZER_PIN);
+		if ((current_time_ms - start_time <= 400) && (detectContinuity())) { // If in first 400ms of the second and still detecting continuity
+			buzzer = !buzzer;
+			BUZZER_PORT = (buzzer << BUZZER_PIN);
 		}
 	}
 }

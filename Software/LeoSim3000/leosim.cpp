@@ -52,6 +52,9 @@ Three operator+(const Three& x, const Three& y) {
 Three operator-(const Three& x, const Three& y) {
   return Three(x.x - y.x, x.y - y.y, x.z - y.z);
 }
+Three operator-(const Three& x) {
+  return Three(-x.x, -x.y, -x.z);
+}
 Three operator*(const Three& x, const float& y) {
   return Three(x.x * y, x.y * y, x.z * y);
 }
@@ -77,6 +80,7 @@ typedef Three Vec;
 
 typedef Two Point2D;
 
+typedef RotationFunc function<Point(Point)>;
 
 // Rotate along x axis
 Point rotate_x(Point p, float rads) {
@@ -119,7 +123,16 @@ float mag(Point2D v) {
 }
 
 Vec normalize(Vec v) {
-  return v / mag(v);
+  float magnitude = mag(v);
+  if (magnitude < 0.00001) {
+    return Vec(0, 0, 1); // Return Z axis when input a zero vector
+  }
+  return v / magnitude;
+}
+
+// Reflects vector across XY plane
+Vec reflect_z(Vec v) {
+  return Vec(-v.x, -v.y, v.z);
 }
 
 // Distance between two points
@@ -135,6 +148,11 @@ float pdist(Point2D x, Point2D y) {
 // Cross product of two vectors
 Vec cross(Vec a, Vec b) {
   return Vec(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
+
+// Dot product of two vectors
+float dot(Vec a, Vec b) {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 // Area of triangle formed by three points in 2D
@@ -183,10 +201,47 @@ public:
     data[toint(x)][toint(y)] = true;
   }
 
+  // Returns 2D coordinates of center of pressure with area as Z
+  Vec get_cop() {
+    Vec cop(0, 0, 0);
+    for (int i = 0; i < resolution * sidelen; i++) {
+      for (int j = 0; j < resolution * sidelen; j++) {
+        if (data[i][j]) {
+          cop.x += tofloat(i);
+          cop.y += tofloat(j);
+          cop.z += 1;
+        }
+      }
+    }
+    float scale = pow((float)resolution, 2);
+    cop = cop / scale;
+    return cop;
+  }
+
+  string render() {
+    string str = "";
+    for (int i = 0; i < resolution * sidelen - 1; i += 2) {
+      string str2 = "";
+      for (int j = 0; j < resolution * sidelen; j++) {
+        if (data[j][i] && data[j][i + 1]) {
+          str2 += "█";
+        } else if (data[j][i] && !data[j][i + 1]) {
+          str2 += "▄";
+        } else if (data[j][i] && data[j][i + 1]) {
+          str2 += "▀";
+        } else {
+          str2 += " ";
+        }
+      }
+      str = str2 + '\n' + str;
+    }
+    return str;
+  }
+
   Projection(int sidelen, int resolution) : sidelen(sidelen), resolution(resolution), data(sidelen * resolution, vector<bool>(sidelen * resolution, false)) { }
 };
 
-function<Point (Point)> gen_rot(Vec norm) { // Generates a rotation function that will rotate norm vector to Z axis and any points along with it
+RotationFunc gen_rot(Vec norm) { // Generates a rotation function that will rotate norm vector to Z axis and any points along with it
   float to_rot_z = -atan2(norm.y, norm.x);
   float to_rot_y = -PI / 2 + atan2(norm.z, dist({norm.x, norm.y}));
   return [to_rot_z, to_rot_y](Point p) -> Point {
@@ -197,9 +252,17 @@ function<Point (Point)> gen_rot(Vec norm) { // Generates a rotation function tha
   };
 }
 
+RotationFunc combine_rotations(RotationFunc rot1, RotationFunc rot2) {
+  return [rot1, rot2](Point p) -> Point {
+      p = rot1(p);
+      p = rot2(p);
+      return p;
+  };
+}
+
 class Shape {
   // Cast shadow onto plane (proj) defined by normal vector (norm)
-  void project(Projection* proj, Vec norm) {
+  void project(Projection* proj, RotationFunc Rot) {
     assert(false);
   }
 };
@@ -211,7 +274,7 @@ public:
   float bottom_radius;
   float top_radius;
 
-  void project(Projection* proj, Vec norm) {
+  void project(Projection* proj, RotationFunc rot) {
 
     // debug(bottom);
     // debug(top);
@@ -225,7 +288,7 @@ public:
     //   p = rotate_z(p, -to_rot_z); // Rotates back to undo first rotation
     //   return p;
     // };
-    auto rot = gen_rot(norm);
+    // auto rot = gen_rot(norm);
 
     // These are the circles projected onto the plane
     Point new_bottom = rot(bottom);
@@ -353,9 +416,7 @@ public:
   Point p2;
   Point p3;
 
-  void project(Projection* proj, Vec norm) {
-    auto rot = gen_rot(norm);
-
+  void project(Projection* proj, RotationFunc rot) {
     Point2D p1_2D(rot(p1));
     Point2D p2_2D(rot(p2));
     Point2D p3_2D(rot(p3));
@@ -384,10 +445,23 @@ public:
 };
 
 class Object3D {
-  vector<Shape> shapes;
+  vector<Shape> static_shapes;
 };
 
+class SensorPackage {
+  Vec accelerometer;
+  Vec gyroscope;
+  Vec magnetometer;
+  float altimeter;
 
+  // TODO: Add noise parameter
+  void update(Point rocket_pos, Vec rocket_vel, Vec rocket_dir, Vec last_rocket_accel, Vec last_rocket_rotational_accel) {
+    altimeter = rocket_pos.z;
+    accelerometer = last_rocket_accel;
+    gyroscope = last_rocket_rotational_accel;
+    magnetometer = rocket_dir;
+  }
+};
 
 
 class Rocket {
@@ -400,6 +474,10 @@ public:
   float impulse; // in N
   float burntime; // in s
 
+  void update_fins() {
+
+  }
+
   Rocket(Point com, Point rotational_inertia, float mass, float impulse, float burntime) : center_of_mass(com), rotational_inertia(rotational_inertia), mass(mass), impulse(impulse), burntime(burntime) { }
 };
 
@@ -410,23 +488,63 @@ public:
   int ticks = 0;
 
   Rocket rocket;
-  Point rocketpos;
-  Vec rocketvel;
-  Vec rocketdir;
+  Point rocket_pos;
+  Vec rocket_vel;
+  Vec rocket_rotational_vel;
+  Vec rocket_dir;
+
+  Vec last_rocket_accel;
+  Vec last_rocket_rotational_accel;
+
+  Vec windspeed;
 
   void tick() {
     Vec accel(0, 0, -9.81);
+    Vec rotational_accel(0, 0, 0);
+
+    // Add engine thrust
     if (ticks < (int)(rocket.burntime * simspeed)) {
-      accel = accel + rocketdir * (rocket.impulse / rocket.mass);
+      accel = accel + rocket_dir * (rocket.impulse / rocket.mass);
     }
 
-    rocketvel = rocketvel + accel / simspeed;
-    rocketpos = rocketpos + rocketvel / simspeed;
+    Vec windvec = windspeed - rocket_vel; // "Felt" windspeed
+    Vec windvec_norm = normalize(windvec);
+    windvec_norm = normalize(windvec_norm - rocket_dir);
+    Projection aero_profile(PROJECTION_SIZE, PROJECTION_RES);
+    auto rot1 = gen_rot(windvec_norm)
+    auto rot2 = gen_rot(reflect_z(rocket_dir));
+    auto rot = combine_rotations(rot1, rot2);
+    auto undo_rot = gen_rot(reflect_z(windvec_norm));
+    rocket.project(&aero_profile, rot);
+    Vec center_of_pressure = aero_profile.get_cop();
+    float drag = center_of_pressure.z;
 
+    //Use these to draw line of aero force
+    Point cop1(center_of_pressure.x, center_of_pressure.y, 0);
+    Point cop2(center_of_pressure.x, center_of_pressure.y, 1);
+    cop1 = undo_rot(cop1);
+    cop2 = undo_rot(cop2);
+    Vec drag_vec = cop1 - cop2; // Should already be unit-length
+    float drag_torque = dot(drag_vec, rocket_pos );
+
+
+
+    // Update values
+    rocket_vel = rocket_vel + accel / simspeed;
+    rocket_pos = rocket_pos + rocket_vel / simspeed;
     ticks += 1;
   }
 
-  Simulation(Rocket rocket) : rocket(rocket), rocketpos(0, 0, 0), rocketvel(0, 0, 0), rocketdir(0, 0, 1) { }
+  Simulation(Rocket rocket, Vec windspeed) :
+      rocket(rocket),
+      rocket_pos(0, 0, 0),
+      rocket_vel(0, 0, 0),
+      rocket_rotational_vel(0, 0, 0),
+      last_rocket_accel(0, 0, -9.81),
+      last_rocket_rotational_accel(0, 0, 0),
+      rocket_dir(0, 0, 1),
+      windspeed(windspeed)
+      { }
 };
 
 int main () {
@@ -440,7 +558,7 @@ int main () {
     ConFrustum body4(Point(0, 0, 1.4), Point(0, 0, 1.5), 0.02, 0);
     Triangle fin1(Point(-0.1, 0, 0), Point(-0.2, 0, 0), Point(-0.1, 0, 0.2));
     Triangle fin2(Point(0.1, 0, 0), Point(0.2, 0, 0), Point(0.1, 0, 0.2));
-    Triangle fin3(Point(0, -0.1, 0), Point(0, -0.2, 0), Point(0, 0.1, 0.2));
+    Triangle fin3(Point(0, -0.1, 0), Point(0, -0.2, 0), Point(0, -0.1, 0.2));
     Triangle fin4(Point(0, 0.1, 0), Point(0, 0.2, 0), Point(0, 0.1, 0.2));
     // body.project(&proj, Vec(1, 0, 0));
     // body.project(&proj, Vec(0.7071067812, 0, 0.7071067812));
@@ -461,40 +579,25 @@ int main () {
     // body2.project(&proj, Vec(0, cos(i), sin(i)));
     // body3.project(&proj, Vec(0, cos(i), sin(i)));
 
-    string str = "";
-    for (int i = 0; i < PROJECTION_RES * PROJECTION_SIZE - 1; i += 2) {
-      string str2 = "";
-      for (int j = 0; j < PROJECTION_RES * PROJECTION_SIZE; j++) {
-        if (proj.data[j][i] && proj.data[j][i + 1]) {
-          str2 += "█";
-        } else if (proj.data[j][i] && !proj.data[j][i + 1]) {
-          str2 += "▄";
-        } else if (!proj.data[j][i] && proj.data[j][i + 1]) {
-          str2 += "▀";
-        } else {
-          str2 += " ";
-        }
-      }
-      str = str2 + '\n' + str;
-    }
-    cout << str << endl;
+    cout << proj.render() << endl;
 
     usleep(100000);
   }
 
-  // Point center_of_mass(0, 0, 0.5);
-  // Point rotational_inertia(0.083333, 0.083333, 0.00005);
-  // float mass = 1;
-  // float impulse = 100;
-  // float burntime = 1;
-  //
-  //
-  // Rocket rocket(center_of_mass, rotational_inertia, mass, impulse, burntime);
-  // Simulation sim(rocket);
-  //
-  // while (sim.rocketpos.z > 0 || sim.ticks == 0) {
-  //   sim.tick();
-  //   cout << "Pos: " << sim.rocketpos << endl;
-  //   // cout << sim.rocketpos.z << " ";
-  // }
+  Point center_of_mass(0, 0, 0.5);
+  Point rotational_inertia(0.083333, 0.083333, 0.00005);
+  float mass = 1;
+  float impulse = 100;
+  float burntime = 1;
+
+  Vec windspeed(0, 0, 0); // In m/s
+
+  Rocket rocket(center_of_mass, rotational_inertia, mass, impulse, burntime);
+  Simulation sim(rocket, windspeed);
+
+  while (sim.rocket_pos.z > 0 || sim.ticks == 0) {
+    sim.tick();
+    cout << "Pos: " << sim.rocket_pos << endl;
+    // cout << sim.rocket_pos.z << " ";
+  }
 }
