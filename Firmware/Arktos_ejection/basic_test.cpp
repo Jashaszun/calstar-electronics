@@ -41,9 +41,8 @@ LIS331HH accelerometer(0); // tie SAO to ground
 
 #define SERVO_1_PIN 6
 
-#define DEPLOYMENT_SIGNAL_PIN 9
-#define XTR_EF_PIN 8
-#define XTR_OD_PIN 7
+#define DEPLOYMENT_SIGNAL_PIN 8
+
 
 void initPins(void) {
 	pinMode(RED_LED_PIN, OUTPUT);
@@ -54,10 +53,6 @@ void initPins(void) {
 
 	pinMode(DEPLOYMENT_SIGNAL_PIN, OUTPUT); // deployment voltage signal
 	digitalWrite(DEPLOYMENT_SIGNAL_PIN, false);
-
-	pinMode(XTR_EF_PIN, INPUT_PULLUP); // error flag from current loop
-	pinMode(XTR_OD_PIN, OUTPUT); // deployment current loop output disable
-	digitalWrite(XTR_OD_PIN, true);
 
 	scissorLiftServo.attach(SERVO_1_PIN);
 	scissorLiftServo.write(90); // don't move
@@ -96,8 +91,6 @@ void startSensors(void) {
 
 void setDeplSignal(bool output) {
 	digitalWrite(DEPLOYMENT_SIGNAL_PIN, output);
-	digitalWrite(XTR_OD_PIN, !output);
-	digitalWrite(RED_LED_PIN, output);
 }
 
 int main(void) {
@@ -235,7 +228,7 @@ int main(void) {
 				servoStartTime = 0;
 			}
 		}
-		// digitalWrite(GREEN_LED_PIN, !digitalRead(XTR_EF_PIN)); // green = error flag from current loop
+
 	}
   	return 0;
 }

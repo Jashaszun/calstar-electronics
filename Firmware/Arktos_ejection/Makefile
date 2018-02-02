@@ -3,8 +3,8 @@ TARGET = basic_test
 # the C source files
 SRC =
 # the C++ source files
-PSRC = basic_test.cpp LIS331HH.cpp
+PSRC = basic_test.cpp
 # extra Arduino libraries
-ARDLIBS = RFM69 Servo Wire MPL3115A2 SPI
+ARDLIBS = RFM69 Servo Wire MPL3115A2 SPI LIS311HH
 
 include ../Makefile.base

@@ -13,14 +13,14 @@
 #define LED_IO DDRD
 #define LED_PORT PORTD
 #define LED_PIN_RED 5
-#define LED_PIN_GREEN 6
-#define LED_PIN_BLUE 7
+#define LED_PIN_GREEN 7
+#define LED_PIN_BLUE 6
 
 int main() {
   // Setup
   // LVDS receiver defaults to input
-  LED_PORT = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs to output
-  TRANSMITTER_PORT |= (1 << TRANSMITTER_PIN); // set LVDS transmitter as output
+  LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs to output
+  TRANSMITTER_IO |= (1 << TRANSMITTER_PIN); // set LVDS transmitter as output
 
   // Test
   TRANSMITTER_PORT = (1 << TRANSMITTER_PIN); // transmit to ejection on LVDS

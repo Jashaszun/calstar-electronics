@@ -4,11 +4,11 @@
 #include <util/delay.h>
 
 #define F_CPU 16000000
-#define LED_IO DDRD
-#define LED_PORT PORTD
-#define LED_PIN_RED 5
-#define LED_PIN_GREEN 7
-#define LED_PIN_BLUE 6
+#define LED_IO DDRC
+#define LED_PORT PORTC
+#define LED_PIN_RED 3
+#define LED_PIN_GREEN 1
+#define LED_PIN_BLUE 2
 
 void delay(int ms) {
   for (int i = 0; i < (ms / 10); i++) {

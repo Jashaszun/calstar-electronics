@@ -19,8 +19,8 @@
 #define LED_IO DDRD
 #define LED_PORT PORTD
 #define LED_PIN_RED 5
-#define LED_PIN_GREEN 6
-#define LED_PIN_BLUE 7
+#define LED_PIN_GREEN 7
+#define LED_PIN_BLUE 6
 #define BUZZER_IO DDRB
 #define BUZZER_PORT PORTB
 #define BUZZER_PIN 1
