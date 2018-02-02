@@ -2,9 +2,6 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
-#include <Arduino.h>
-#include "Wire.h"
-#include "SparkFunMPL3115A2.h"
 
 #define F_CPU 16000000
 #define RECEIVER_IO DDRD
@@ -25,7 +22,11 @@ int main() {
 
   // Test
   TRANSMITTER_PORT = (1 << TRANSMITTER_PIN); // transmit to ejection on LVDS
-  LED_PORT = (1 << LED_PIN_RED); // indicates no received signal from ejection
-  while (!(RECEIVER_PORT & (1 << RECEIVER_PIN))); // wait for signal from ejection
-  LED_PORT = (1 << LED_PIN_GREEN) // received signal from ejection; test successful
+  while(true) {
+    if (RECEIVER_PORT & (1 << RECEIVER_PIN)) { // signal from ejection?
+      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_GREEN) // received signal from ejection; test successful
+    } else {
+      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_RED); // indicates no received signal from ejection
+    }
+  }
 }
