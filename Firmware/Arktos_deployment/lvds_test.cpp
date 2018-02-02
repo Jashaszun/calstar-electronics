@@ -18,7 +18,9 @@
 
 int main() {
   // Setup
-  DDRD = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set outputs and inputs; receiver defaults to input
+  // LVDS receiver defaults to input
+  LED_PORT = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs to output
+  TRANSMITTER_PORT |= (1 << TRANSMITTER_PIN); // set LVDS transmitter as output
 
   // Test
   TRANSMITTER_PORT = (1 << TRANSMITTER_PIN); // transmit to ejection on LVDS
