@@ -77,6 +77,9 @@ int main() {
 
 	CHARGE_PORT = (1 << CHARGE_PIN); // trigger solenoid
 	LED_PORT = (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
+	while (true) {
+		beep(start_time, buzzer_time, buzzer);
+	}
 	return 0;
 }
 
