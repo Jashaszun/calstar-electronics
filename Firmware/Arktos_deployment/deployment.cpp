@@ -41,6 +41,7 @@ int main() {
 	4. Actuate solenoid. */
 
 	// Setup
+	init(); // always do this when using Arduino.h!
 	// Signal receiver and continuity default to input
 	LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // configure LEDs as output
 	CHARGE_IO = 0xFF; // configure black powder as output
