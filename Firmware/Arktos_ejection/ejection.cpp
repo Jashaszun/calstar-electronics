@@ -21,7 +21,7 @@
 #define LED_PIN_RED 5
 #define LED_PIN_GREEN 7
 #define LED_PIN_BLUE 6
-#define ALT_LAND 50
+#define ALT_LAND 200
 #define ALT_LAUNCHED 200
 #define VERIF_SAMPLES 5
 #define SERVO_PIN 6

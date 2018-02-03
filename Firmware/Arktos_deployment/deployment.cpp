@@ -28,7 +28,7 @@
 #define CONTINUITY_PORT PIND
 #define CONTINUITY_PIN 4
 #define ACCEL_TOLERANCE 1
-#define ALT_LAND 50
+#define ALT_LAND 200
 #define ALT_LAUNCHED 200
 #define ACCEL_ADDR 0x00
 #define ALT_ADDR 0x60
