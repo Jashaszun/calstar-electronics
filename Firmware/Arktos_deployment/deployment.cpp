@@ -44,6 +44,13 @@ unsigned long buzzer_time;
 // Altimeter
 MPL3115A2 altimeter;
 
+char waitForSignal();
+void beep();
+short detectContinuity();
+short launched(int alt);
+short landed();
+short deploymentSignal();
+
 int main() {
 	/* Pseudocode for deployment sequence:
 	1. Verify vehicle has launched with altimeter
@@ -95,7 +102,7 @@ int main() {
 
 char waitForSignal() {
 	short signal_received = 0;
-	int count;
+	int count = 0;
 	while (!(signal_received)) { // wait for signal from ejection
 		if (deploymentSignal()) { // low voltage means signal!
 			count++;

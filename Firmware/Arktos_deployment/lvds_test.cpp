@@ -26,7 +26,7 @@ int main() {
   TRANSMITTER_PORT = (1 << TRANSMITTER_PIN); // transmit to ejection on LVDS
   while(true) {
     if (RECEIVER_PORT & (1 << RECEIVER_PIN)) { // signal from ejection?
-      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_GREEN) // received signal from ejection; test successful
+      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_GREEN); // received signal from ejection; test successful
     } else {
       LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_RED); // indicates no received signal from ejection
     }

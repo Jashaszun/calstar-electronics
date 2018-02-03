@@ -19,7 +19,7 @@ void delay(int ms) {
 
 int main() {
   // Setup
-  LED_IO = 0xFF // set LED port to output
+  LED_IO = 0xFF; // set LED port to output
 
   // Test
   while (true) { // cycle through R, G, B for one second each
