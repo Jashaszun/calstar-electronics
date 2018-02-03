@@ -5,6 +5,9 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <SparkFunMPL3115A2.h>
+#include <LIS331HH.h>
+#include <RFM69.h>
+#include <Servo.h>
 
 #define F_CPU 16000000
 #define RECEIVER_IO DDRD
@@ -18,24 +21,18 @@
 #define LED_PIN_RED 5
 #define LED_PIN_GREEN 7
 #define LED_PIN_BLUE 6
-#define ACCEL_TOLERANCE 1
 #define ALT_LAND 50
 #define ALT_LAUNCHED 200
-#define ACCEL_ADDR 0x00
-#define ALT_ADDR 0x60
-#define ALT_WRITE_ADDR 0xC0
-#define ALT_READ_ADDR 0xC1
 #define BASE_ALT 0
 #define VERIF_SAMPLES 5
 #define SERVO_PIN 6
 // From old code - update
-#define RADIO_RESET 14
-#define NODEID (3)
+#define RADIO_RESET_PIN A0
+#define NODEID (4)
 #define NETWORKID (100)
 #define TRANSMIT_TO (255) // broadcast
 #define FREQUENCY RF69_433MHZ
 #define ENCRYPTKEY "sampleEncryptKey"
-#define ATC_RSSI -80
 
 enum State {
   INIT,
@@ -45,15 +42,23 @@ enum State {
   DEPLOY,
   LVDS_WAIT,
   SCISSOR_LIFT_ACTIVATE,
-  END
-}
+  DISABLED
+};
+
+short launched(int alt);
+short landed(MPL3115A2 &altimeter);
+short deploymentDisconnect();
 
 int main() {
   init(); // always call this first if using Arduino.h!
   Wire.begin(); // for I2C
   // Create peripherals
   MPL3115A2 altimeter;
+#ifdef ENABLE_ATC
   RFM69_ATC radio;
+#else
+  RFM69 radio;
+#endif
   Servo servo;
   LIS331HH accelerometer(0);
 
@@ -61,6 +66,8 @@ int main() {
   LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs as outputs
   TRANSMITTER_IO = 0xFF; // set LVDS transmitter as output
   TRANSMITTER_PORT |= (1 << TRANSMITTER_PIN);
+
+  pinMode(RADIO_RESET_PIN, OUTPUT);
 
   State state = INIT;
 
@@ -73,48 +80,75 @@ int main() {
         altimeter.setOversampleRate(7);
         altimeter.enableEventFlags();
 
+        digitalWrite(RADIO_RESET_PIN, HIGH);
+        delay(500);
+        digitalWrite(RADIO_RESET_PIN, LOW);
+        delay(500);
+
         radio.initialize(FREQUENCY, NODEID, NETWORKID);
         radio.setHighPower();
         radio.encrypt(ENCRYPTKEY);
-        radio.enableAutoPower(ATC_RSSI);
+        #ifdef ENABLE_ATC
+        radio.enableAutoPower(ATC_RSSI)
+        #endif
 
         servo.attach(SERVO_PIN);
-        servo.write(90);
+
+        // CHANGE
+        //  |
+        //  |
+        //  |
+        //  |
+        // \/
+        servo.write(90); // NEEDS TO BE CHANGED <--------- CHANGE
+        // /\
+        // |
+        // |
+        // |
+        // |
+        // CHANGE
+
 
         accelerometer.write_reg(LIS331HH_CTRL_REG1, 0x3F); // Normal power mode, 1000 Hz data rate, x y and z axes enabled
         accelerometer.write_reg(LIS331HH_CTRL_REG4, 0x90); // Block data update, +- 12g scale
 
-        state = RADIO_WAIT;
+        state = LAUNCH_PAD;
         break;
       case LAUNCH_PAD:
-        if (launched()) {
+        if (launched(altimeter.readAltitudeFt())) {
           state = LAUNCHED;
         }
         break;
-      case LANDED:
-        if (landed()) {
+      case LAUNCHED:
+        if (landed(altimeter)) {
           state = RADIO_WAIT;
         }
         break;
       case RADIO_WAIT:
-        if (radio.receiveDone()) {
-          char signal[RADIO_SIGNAL_LEN];
-          // if length of recieved data is not same as expected size ignore
-          if (radio.DATALEN != RADIO_SIGNAL_LEN)
-            break;
+        // ARE WE WAITING FOR A DEPLOYMENT SIGNAL?????
 
-          for (byte i = 0; i < radio.DATALEN; ++i)
-            signal[i] = (char)radio.DATA[i];
+        // if (radio.receiveDone()) {
+        //   if (radio.ACKRequested()) {
+        //     radio.sendACK();
+        //   }
+        //   char signal[RADIO_SIGNAL_LEN];
+        //   // if length of recieved data is not same as expected size ignore
+        //   if (radio.DATALEN != RADIO_SIGNAL_LEN)
+        //     break;
 
-          if (strcmp(signal, NORMAL_DEPLOY_SIGNAL) == 0) {
-            state = VERIFICATION;
-          } else if (strcmp(signal, FORCE_DEPLOY_SIGNAL) == 0) {
-            state = DEPLOY;
-          }
-        }
+        //   for (byte i = 0; i < radio.DATALEN; ++i)
+        //     signal[i] = (char)radio.DATA[i];
+
+        //   if (strcmp(signal, NORMAL_DEPLOY_SIGNAL) == 0) {
+        //     state = VERIFICATION;
+        //   } else if (strcmp(signal, FORCE_DEPLOY_SIGNAL) == 0) {
+        //     state = DEPLOY;
+        //   }
+        // }
         break;
       case DEPLOY:
         TRANSMITTER_PORT &= !(1 << TRANSMITTER_PIN); // send deployment signal
+        state = LVDS_WAIT;
         break;
       case LVDS_WAIT:
         if (deploymentDisconnect()) {
@@ -122,13 +156,16 @@ int main() {
         }
         break;
       case SCISSOR_LIFT_ACTIVATE:
-        // servo1.write(100 or 80);
-        delay(SERVO_ACTUATION_TIME_MS);
-        servo1.write(90);
-
+        // NEED TO WRITE
+        // NEED TO WRITE
+        // NEED TO WRITE
+        // NEED TO WRITE
+        // NEED TO WRITE
+        // NEED TO WRITE
+        // NEED TO WRITE
         state = DISABLED;
         break;
-      case END:
+      case DISABLED:
         break;
     }
   }
@@ -147,7 +184,7 @@ short launched(int alt) {
 	return 0;
 }
 
-short landed() {
+short landed(MPL3115A2 &altimeter) {
 	for (int i = 0; i < VERIF_SAMPLES; i++) {
 		if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAND) {
 			return 0; // if any of the first five signals disagree, return - resend radio signal to retrigger
@@ -158,7 +195,7 @@ short landed() {
 
 short deploymentDisconnect() {
   for (int i = 0; i < VERIF_SAMPLES; i++) {
-    if !(RECEIVER_PORT & (1 << RECEIVER_PIN)) {
+    if (!(RECEIVER_PORT & (1 << RECEIVER_PIN))) {
       return 0;
     }
     delay(10);
