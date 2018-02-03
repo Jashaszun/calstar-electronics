@@ -23,16 +23,17 @@
 #define LED_PIN_BLUE 6
 #define ALT_LAND 50
 #define ALT_LAUNCHED 200
-#define BASE_ALT 0
 #define VERIF_SAMPLES 5
 #define SERVO_PIN 6
-// From old code - update
 #define RADIO_RESET_PIN A0
 #define NODEID (4)
 #define NETWORKID (100)
 #define TRANSMIT_TO (255) // broadcast
 #define FREQUENCY RF69_433MHZ
 #define ENCRYPTKEY "sampleEncryptKey"
+#define DEPLOY_SIGNAL "DEPLOY"
+#define RADIO_SIGNAL_LEN strlen(DEPLOY_SIGNAL)
+#define TRANSMIT_INTERVAL 200 // ms
 
 enum State {
   INIT,
@@ -45,8 +46,8 @@ enum State {
   DISABLED
 };
 
-short launched(MPL3115A2 &altimeter);
-short landed(MPL3115A2 &altimeter);
+short launched(MPL3115A2 &altimeter, float altZero);
+short landed(MPL3115A2 &altimeter, float altZero);
 short deploymentDisconnect();
 
 int main() {
@@ -61,6 +62,9 @@ int main() {
 #endif
   Servo servo;
   LIS331HH accelerometer(0);
+  unsigned long lastTransmitTime = 0;
+  float altMovingAvg = 0;
+  float currentAltZero = 0;
 
   // Set outputs and inputs; receiver defaults to input
   LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs as outputs
@@ -110,41 +114,52 @@ int main() {
 
 
         accelerometer.write_reg(LIS331HH_CTRL_REG1, 0x3F); // Normal power mode, 1000 Hz data rate, x y and z axes enabled
-        accelerometer.write_reg(LIS331HH_CTRL_REG4, 0x90); // Block data update, +- 12g scale
+        accelerometer.write_reg(LIS331HH_CTRL_REG4, 0xB0); // Block data update, +- 12g scale
 
         state = LAUNCH_PAD;
         break;
       case LAUNCH_PAD:
-        if (launched(altimeter)) {
+        if (launched(altimeter, currentAltZero)) {
           state = LAUNCHED;
+        }
+        if (radio.receiveDone()) {
+          if (radio.ACKRequested()) {
+            radio.sendACK();
+          }
+          if (radio.DATALEN != 1) {
+            break;
+          }
+          if (radio.DATA[0] == 'z') { // zero altitude
+            currentAltZero = altMovingAvg;
+            radio.sendWithRetry(TRANSMIT_TO, "ALT_ZERO", strlen("ALT_ZERO"), 5, 200);
+          }
         }
         break;
       case LAUNCHED:
-        if (landed(altimeter)) {
+        if (landed(altimeter, currentAltZero)) {
           state = RADIO_WAIT;
         }
         break;
       case RADIO_WAIT:
-        // ARE WE WAITING FOR A DEPLOYMENT SIGNAL?????
 
-        // if (radio.receiveDone()) {
-        //   if (radio.ACKRequested()) {
-        //     radio.sendACK();
-        //   }
-        //   char signal[RADIO_SIGNAL_LEN];
-        //   // if length of recieved data is not same as expected size ignore
-        //   if (radio.DATALEN != RADIO_SIGNAL_LEN)
-        //     break;
+        if (radio.receiveDone()) {
+          if (radio.ACKRequested()) {
+            radio.sendACK();
+          }
+          char signal[RADIO_SIGNAL_LEN];
+          // if length of recieved data is not same as expected size ignore
+          if (radio.DATALEN != RADIO_SIGNAL_LEN) {
+            break;
+          }
 
-        //   for (byte i = 0; i < radio.DATALEN; ++i)
-        //     signal[i] = (char)radio.DATA[i];
+          for (byte i = 0; i < radio.DATALEN; ++i) {
+            signal[i] = (char)radio.DATA[i];
+          }
 
-        //   if (strcmp(signal, NORMAL_DEPLOY_SIGNAL) == 0) {
-        //     state = VERIFICATION;
-        //   } else if (strcmp(signal, FORCE_DEPLOY_SIGNAL) == 0) {
-        //     state = DEPLOY;
-        //   }
-        // }
+          if (strcmp(signal, DEPLOY_SIGNAL) == 0) {
+            state = DEPLOY;
+          }
+        }
         break;
       case DEPLOY:
         TRANSMITTER_PORT &= ~(1 << TRANSMITTER_PIN); // send deployment signal
@@ -168,12 +183,32 @@ int main() {
       case DISABLED:
         break;
     }
+
+    // Send Telemetry
+    if (millis() - lastTransmitTime >= TRANSMIT_INTERVAL) {
+      float accelX = accelerometer.get_x_g();
+			float accelY = accelerometer.get_y_g();
+			float accelZ = accelerometer.get_z_g();
+			float alt = altimeter.readAltitudeFt();
+
+			char outbuf[100];
+			sprintf(outbuf, "Ac: x: %+07i y: %+07i z: %+07i  Al: %+07i\n",
+				(int)(1000*accelX), (int)(1000*accelY), (int)(1000*accelZ), (int)(alt-currentAltZero));
+
+			radio.send(TRANSMIT_TO, outbuf, strlen(outbuf));
+
+      #define ALPHA (.75f)
+			altMovingAvg = ALPHA*altMovingAvg + (1-ALPHA)*alt;
+
+			lastTransmitTime = millis();
+    }
+
   }
 }
 
-short launched(MPL3115A2 &altimeter) {
+short launched(MPL3115A2 &altimeter, float altZero) {
 	static int count = 0;
-	if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAUNCHED) {
+	if (altimeter.readAltitudeFt() - altZero > ALT_LAUNCHED) {
 		count++;
 		if (count >= VERIF_SAMPLES) { // need five signals to verify
 			return 1; // yay we launched
@@ -184,9 +219,9 @@ short launched(MPL3115A2 &altimeter) {
 	return 0;
 }
 
-short landed(MPL3115A2 &altimeter) {
+short landed(MPL3115A2 &altimeter, float altZero) {
 	for (int i = 0; i < VERIF_SAMPLES; i++) {
-		if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAND) {
+		if (altimeter.readAltitudeFt() - altZero > ALT_LAND) {
 			return 0; // if any of the first five signals disagree, return - resend radio signal to retrigger
 		}
 	}
