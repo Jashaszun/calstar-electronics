@@ -45,7 +45,7 @@ enum State {
   DISABLED
 };
 
-short launched(int alt);
+short launched(MPL3115A2 &altimeter);
 short landed(MPL3115A2 &altimeter);
 short deploymentDisconnect();
 
@@ -101,7 +101,7 @@ int main() {
         //  |
         // \/
         servo.write(90); // NEEDS TO BE CHANGED <--------- CHANGE
-        // /\
+        // ^
         // |
         // |
         // |
@@ -115,7 +115,7 @@ int main() {
         state = LAUNCH_PAD;
         break;
       case LAUNCH_PAD:
-        if (launched(altimeter.readAltitudeFt())) {
+        if (launched(altimeter)) {
           state = LAUNCHED;
         }
         break;
@@ -147,7 +147,7 @@ int main() {
         // }
         break;
       case DEPLOY:
-        TRANSMITTER_PORT &= !(1 << TRANSMITTER_PIN); // send deployment signal
+        TRANSMITTER_PORT &= ~(1 << TRANSMITTER_PIN); // send deployment signal
         state = LVDS_WAIT;
         break;
       case LVDS_WAIT:
@@ -171,9 +171,9 @@ int main() {
   }
 }
 
-short launched(int alt) {
+short launched(MPL3115A2 &altimeter) {
 	static int count = 0;
-	if (alt - BASE_ALT > ALT_LAUNCHED) {
+	if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAUNCHED) {
 		count++;
 		if (count >= VERIF_SAMPLES) { // need five signals to verify
 			return 1; // yay we launched
