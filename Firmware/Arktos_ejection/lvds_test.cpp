@@ -21,15 +21,16 @@ int main() {
   // LVDS receiver defaults to input
   LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs to output
   TRANSMITTER_IO = (1 << TRANSMITTER_PIN); // set LVDS transmitter as output
+  TRANSMITTER_PORT = (1 << TRANSMITTER_PIN); // no signal
 
   // Test
   while(true) {
     if (RECEIVER_PORT & (1 << RECEIVER_PIN)) { // signal from deployment?
-      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_GREEN) // received signal from deployment
-      break;
+      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_RED) // high; no signal
     } else {
-      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_RED); // indicates no received signal from deployment
+      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_GREEN); // low; signal received
+      break; // exit so we can transmit back
     }
   }
-  TRANSMITTER_PORT = (1 << TRANSMITTER_PIN); // transmit to ejection on LVDS; test complete
+  TRANSMITTER_PORT = 0x00; // transmit to ejection on LVDS; test complete
 }
