@@ -28,7 +28,7 @@
 #define CONTINUITY_PORT PIND
 #define CONTINUITY_PIN 4
 #define ACCEL_TOLERANCE 1
-#define ALT_LAND 50
+#define ALT_LAND 200
 #define ALT_LAUNCHED 200
 #define ACCEL_ADDR 0x00
 #define ALT_ADDR 0x60
@@ -42,7 +42,7 @@ unsigned long start_time;
 unsigned long buzzer_time;
 
 // Altimeter
-MPL3115A2 altimeter;
+// MPL3115A2 altimeter;
 
 char waitForSignal();
 void beep();
@@ -61,39 +61,52 @@ int main() {
 	// Setup
 	init(); // always do this when using Arduino.h!
 	// LVDS receiver and continuity default to input
-	LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // configure LEDs as output
-	TRANSMITTER_IO |= (1 << TRANSMITTER_PIN); // configure LVDS transmitter as output
+	// LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // configure LEDs as output
+	// TRANSMITTER_IO |= (1 << TRANSMITTER_PIN); // configure LVDS transmitter as output
 	CHARGE_IO = 0xFF; // configure black powder as output
 	BUZZER_IO = 0xFF; // configure buzzer as output
-	LED_PORT = 0x00; // set LEDs and transmitter output to low
+	// LED_PORT = 0x00; // set LEDs and transmitter output to low
 	CHARGE_PORT = 0x00; // set charge to low
 	BUZZER_PORT = 0x00; // set buzzer to low
 
+	pinMode(RECEIVER_PIN, INPUT);
+	pinMode(TRANSMITTER_PIN, OUTPUT);
+	pinMode(LED_PIN_BLUE, OUTPUT);
+	pinMode(LED_PIN_GREEN, OUTPUT);
+	pinMode(LED_PIN_RED, OUTPUT);
+	digitalWrite(TRANSMITTER_PIN, LOW);
+
 	// Configure accelerometer
-	Wire.begin();
-	altimeter.begin();
-	altimeter.setModeAltimeter();
-	altimeter.setOversampleRate(7);
-	altimeter.enableEventFlags();
+	// Wire.begin();
+	// altimeter.begin();
+	// altimeter.setModeAltimeter();
+	// altimeter.setOversampleRate(7);
+	// altimeter.enableEventFlags();
 
 	// Initialize timer vars
 	start_time = millis();
 	buzzer_time = micros();
 
 	// Main program thread
-	while (!launched(altimeter.readAltitudeFt())) { // wait for vehicle to launch
-		beep();
-	}
-	LED_PORT |= (1 << LED_PIN_RED); // set LED to red to indicate launch
+	// while (!launched(altimeter.readAltitudeFt())) { // wait for vehicle to launch
+	// 	beep();
+	// }
+	// LED_PORT |= (1 << LED_PIN_RED); // set LED to red to indicate launch
+	digitalWrite(LED_PIN_RED, HIGH);
 	while (waitForSignal() == 0) { // wait for ejection signal and cross-check with sensor
 		beep();
 	}
-	LED_PORT &= !(1 << LED_PIN_RED); // turn red LED off
-	LED_PORT |= (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
+	// LED_PORT &= !(1 << LED_PIN_RED); // turn red LED off
+	digitalWrite(LED_PIN_RED, LOW);
+	digitalWrite(LED_PIN_GREEN, HIGH);
+	// LED_PORT |= (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
 
 	CHARGE_PORT = (1 << CHARGE_PIN); // trigger black powder
-	LED_PORT &= !(1 << LED_PIN_GREEN); // turn green LED off
-	LED_PORT |= (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
+
+	digitalWrite(LED_PIN_GREEN, LOW);
+	digitalWrite(LED_PIN_BLUE, HIGH);
+	// LED_PORT &= !(1 << LED_PIN_GREEN); // turn green LED off
+	// LED_PORT |= (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
 	while (true) {
 		beep();
 	}
@@ -103,7 +116,7 @@ int main() {
 char waitForSignal() {
 	short signal_received = 0;
 	int count = 0;
-	while (!(signal_received)) { // wait for signal from ejection
+	while (!signal_received) { // wait for signal from ejection
 		if (deploymentSignal()) { // low voltage means signal!
 			count++;
 			if (count >= VERIF_SAMPLES) { // need five signals to verify
@@ -155,14 +168,15 @@ short launched(int alt) {
 }
 
 short landed() {
-	for (int i = 0; i < VERIF_SAMPLES; i++) {
-		if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAND) {
-			return 0; // if any of the first five signals disagree, return - resend radio signal to retrigger
-		}
-	}
+	// for (int i = 0; i < VERIF_SAMPLES; i++) {
+	// 	if (altimeter.readAltitudeFt() - BASE_ALT > ALT_LAND) {
+	// 		return 0; // if any of the first five signals disagree, return - resend radio signal to retrigger
+	// 	}
+	// }
 	return 1;
 }
 
 short deploymentSignal() {
-	return !(RECEIVER_PORT & (1 << RECEIVER_PIN));
+	// return !(RECEIVER_PORT & (1 << RECEIVER_PIN));
+	return digitalRead(RECEIVER_PIN) == HIGH;
 }

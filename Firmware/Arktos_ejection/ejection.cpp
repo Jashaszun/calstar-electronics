@@ -15,13 +15,13 @@
 #define RECEIVER_PIN 7
 #define TRANSMITTER_IO DDRB
 #define TRANSMITTER_PORT PORTB
-#define TRANSMITTER_PIN 0
+#define TRANSMITTER_PIN 8 // 0 PB0
 #define LED_IO DDRD
 #define LED_PORT PORTD
-#define LED_PIN_RED 5
-#define LED_PIN_GREEN 7
-#define LED_PIN_BLUE 6
-#define ALT_LAND 50
+#define LED_PIN_RED 17 // 3
+#define LED_PIN_GREEN 15 // 1
+#define LED_PIN_BLUE 16 // 2
+#define ALT_LAND 200
 #define ALT_LAUNCHED 200
 #define VERIF_SAMPLES 5
 #define SERVO_PIN 6
@@ -66,10 +66,17 @@ int main() {
   float altMovingAvg = 0;
   float currentAltZero = 0;
 
+  pinMode(RECEIVER_PIN, INPUT_PULLUP);
+  pinMode(TRANSMITTER_PIN, OUTPUT);
+  pinMode(LED_PIN_BLUE, OUTPUT);
+  pinMode(LED_PIN_RED, OUTPUT);
+  pinMode(LED_PIN_GREEN, OUTPUT);
+
+  digitalWrite(TRANSMITTER_PIN, LOW);
   // Set outputs and inputs; receiver defaults to input
-  LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs as outputs
-  TRANSMITTER_IO = 0xFF; // set LVDS transmitter as output
-  TRANSMITTER_PORT |= (1 << TRANSMITTER_PIN);
+  // LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs as outputs
+  // TRANSMITTER_IO = 0xFF; // set LVDS transmitter as output
+  // TRANSMITTER_PORT |= (1 << TRANSMITTER_PIN);
 
   pinMode(RADIO_RESET_PIN, OUTPUT);
 
@@ -162,7 +169,8 @@ int main() {
         }
         break;
       case DEPLOY:
-        TRANSMITTER_PORT &= ~(1 << TRANSMITTER_PIN); // send deployment signal
+        // TRANSMITTER_PORT &= ~(1 << TRANSMITTER_PIN); // send deployment signal
+        digitalWrite(TRANSMITTER_PIN, HIGH);
         state = LVDS_WAIT;
         break;
       case LVDS_WAIT:
@@ -230,9 +238,12 @@ short landed(MPL3115A2 &altimeter, float altZero) {
 
 short deploymentDisconnect() {
   for (int i = 0; i < VERIF_SAMPLES; i++) {
-    if (!(RECEIVER_PORT & (1 << RECEIVER_PIN))) {
+    if (digitalRead(RECEIVER_PIN) == LOW) { // RECIEVER_PIN is pulled up, so when it is LOW that means deployment is transmitting that
       return 0;
     }
+    // if (!(RECEIVER_PORT & (1 << RECEIVER_PIN))) {
+    //   return 0;
+    // }
     delay(10);
   }
   return 1;

@@ -18,20 +18,43 @@
 #define LED_PIN_BLUE 6
 
 int main() {
-  // Setup
-  // LVDS receiver defaults to input
-  LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs to output
-  TRANSMITTER_IO |= (1 << TRANSMITTER_PIN); // set LVDS transmitter as output
 
-  // Test
-  TRANSMITTER_PORT = (1 << TRANSMITTER_PIN); // high (no signal), should be red
-  delay(1000); // wait 1 second
-  TRANSMITTER_PORT = 0x00; // transmit to ejection on LVDS
+  pinMode(RECEIVER_PIN, INPUT);
+  pinMode(TRANSMITTER_PIN, OUTPUT);
+  pinMode(LED_PIN_BLUE, OUTPUT);
+  pinMode(LED_PIN_GREEN, OUTPUT);
+  pinMode(LED_PIN_RED, OUTPUT);
+
+  // digitalWrite(LED_PIN_BLUE, HIGH);
+
+  // digitalWrite(TRANSMITTER_PIN, HIGH);
+  // delay(1000);
+  digitalWrite(TRANSMITTER_PIN, LOW);
   while(true) {
-    if (RECEIVER_PORT & (1 << RECEIVER_PIN)) { // signal from ejection?
-      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_RED); // high; indicates no received signal from ejection
+    if (digitalRead(RECEIVER_PIN) == HIGH) {
+      digitalWrite(LED_PIN_RED, HIGH);
+      digitalWrite(LED_PIN_GREEN, LOW);
     } else {
-      LED_PORT = (1 << TRANSMITTER_PIN) | (1 << LED_PIN_GREEN); // low; received signal from ejection; test successful
+      digitalWrite(LED_PIN_RED, LOW);
+      digitalWrite(LED_PIN_GREEN, HIGH);
     }
   }
+  // Setup
+  // LVDS receiver defaults to input
+  // LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs to output
+  // TRANSMITTER_IO |= (1 << TRANSMITTER_PIN); // set LVDS transmitter as output
+
+  // // Test
+  // TRANSMITTER_PORT |= (1 << TRANSMITTER_PIN); // high (no signal), should be red
+  // delay(1000); // wait 1 second
+  // TRANSMITTER_PORT &= ~(1 << TRANSMITTER_PIN); // transmit to ejection on LVDS
+  // while(true) {
+  //   if (RECEIVER_PORT & (1 << RECEIVER_PIN)) { // signal from ejection?
+  //     LED_PORT &= ~(1 << LED_PIN_GREEN);
+  //     LED_PORT |= (1 << LED_PIN_RED); // high; indicates no received signal from ejection
+  //   } else {
+  //     LED_PORT &= ~(1 << LED_PIN_RED);
+  //     LED_PORT |= (1 << LED_PIN_GREEN); // low; received signal from ejection; test successful
+  //   }
+  // }
 }
