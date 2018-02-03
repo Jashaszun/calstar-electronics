@@ -1,7 +1,7 @@
 // Access control: CalSTAR MR
 #include <avr/io.h>
 #include <util/delay.h>
-#include "SparkFunMPL3115A2.h"
+#include <SparkFunMPL3115A2.h>
 
 #define F_CPU 16000000
 

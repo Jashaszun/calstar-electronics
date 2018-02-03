@@ -1,9 +1,9 @@
 # the name of your main file, with no extension
-TARGET = sensors_test
+TARGET = altitude_calibration
 # the C source files
 SRC =
 # the C++ source files
-PSRC = sensors_test.cpp
+PSRC = altitude_calibration.cpp
 # extra Arduino libraries
 ARDLIBS = Wire MPL3115A2 LIS331HH
 
