@@ -77,14 +77,16 @@ int main() {
 	while (!launched(altimeter.readAltitudeFt())) { // wait for vehicle to launch
 		beep();
 	}
-	LED_PORT = (1 << LED_PIN_RED); // set LED to red to indicate launch
+	LED_PORT |= (1 << LED_PIN_RED); // set LED to red to indicate launch
 	while (waitForSignal() == 0) { // wait for ejection signal and cross-check with sensor
 		beep();
 	}
-	LED_PORT = (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
+	LED_PORT &= !(1 << LED_PIN_RED); // turn red LED off
+	LED_PORT |= (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
 
 	CHARGE_PORT = (1 << CHARGE_PIN); // trigger black powder
-	LED_PORT = (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
+	LED_PORT &= !(1 << LED_PIN_GREEN); // turn green LED off
+	LED_PORT |= (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
 	while (true) {
 		beep();
 	}
@@ -95,7 +97,7 @@ char waitForSignal() {
 	short signal_received = 0;
 	int count;
 	while (!(signal_received)) { // wait for signal from ejection
-		if (RECEIVER_PORT & (1 << RECEIVER_PIN)) {
+		if (deploymentSignal()) { // low voltage means signal!
 			count++;
 			if (count >= VERIF_SAMPLES) { // need five signals to verify
 				signal_received = 1; // break loop and return
@@ -152,4 +154,8 @@ short landed() {
 		}
 	}
 	return 1;
+}
+
+short deploymentSignal() {
+	return !(RECEIVER_PORT & (1 << RECEIVER_PIN));
 }
