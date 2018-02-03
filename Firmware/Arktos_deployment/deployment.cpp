@@ -3,8 +3,8 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <Arduino.h>
-#include "Wire.h"
-#include "SparkFunMPL3115A2.h"
+#include <Wire.h>
+#include <SparkFunMPL3115A2.h>
 
 #define F_CPU 16000000
 #define RECEIVER_IO DDRD
