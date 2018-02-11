@@ -216,7 +216,7 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) #-P $(AVRDUDE_PORT)
 
 # Define directories, if needed.
 ifeq ($(OSNAME),OSX)
-    DIRAVR = /usr/local/Cellar/avr-gcc/7.2.0
+    DIRAVR = /usr/local/Cellar/avr-gcc/7.3.0
     DIRAVRUTILS = /usr/local/Cellar/avr-binutils/2.29
 endif
 ifeq ($(OSNAME),WINDOWS)
