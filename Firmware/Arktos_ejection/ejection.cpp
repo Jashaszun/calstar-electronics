@@ -36,19 +36,22 @@
 #define TRANSMIT_INTERVAL 200 // ms
 
 enum State {
-  INIT,
-  LAUNCH_PAD,
-  LAUNCHED,
-  RADIO_WAIT,
-  DEPLOY,
-  LVDS_WAIT,
-  SCISSOR_LIFT_ACTIVATE,
+  INIT, // Blue only
+  LAUNCH_PAD, // Green only
+  LAUNCHED, // Blue Green
+  RADIO_WAIT, // Red only
+  DEPLOY, // Red Blue
+  LVDS_WAIT, // Red Green
+  SCISSOR_LIFT_ACTIVATE, // Red Green Blue
   DISABLED
 };
 
 short launched(MPL3115A2 &altimeter, float altZero);
 short landed(MPL3115A2 &altimeter, float altZero);
 short deploymentDisconnect();
+
+// Sets RGB LED pins to these respective states (HIGH or LOW)
+void setLEDs(uint8_t red, uint8_t green, uint8_t blue);
 
 int main() {
   init(); // always call this first if using Arduino.h!
@@ -86,6 +89,8 @@ int main() {
     switch (state) {
       case INIT:
         // Initialize
+        setLEDs(LOW, LOW, HIGH);
+
         altimeter.begin();
         altimeter.setModeAltimeter();
         altimeter.setOversampleRate(7);
@@ -126,6 +131,8 @@ int main() {
         state = LAUNCH_PAD;
         break;
       case LAUNCH_PAD:
+        setLEDs(LOW, HIGH, LOW);
+
         if (launched(altimeter, currentAltZero)) {
           state = LAUNCHED;
         }
@@ -143,11 +150,13 @@ int main() {
         }
         break;
       case LAUNCHED:
+        setLEDs(LOW, HIGH, HIGH);
         if (landed(altimeter, currentAltZero)) {
           state = RADIO_WAIT;
         }
         break;
       case RADIO_WAIT:
+        setLEDs(HIGH, LOW, LOW);
 
         if (radio.receiveDone()) {
           if (radio.ACKRequested()) {
@@ -169,16 +178,19 @@ int main() {
         }
         break;
       case DEPLOY:
+        setLEDs(HIGH, LOW, HIGH);
         // TRANSMITTER_PORT &= ~(1 << TRANSMITTER_PIN); // send deployment signal
         digitalWrite(TRANSMITTER_PIN, HIGH);
         state = LVDS_WAIT;
         break;
       case LVDS_WAIT:
+        setLEDs(HIGH, HIGH, LOW);
         if (deploymentDisconnect()) {
           state = SCISSOR_LIFT_ACTIVATE;
         }
         break;
       case SCISSOR_LIFT_ACTIVATE:
+        setLEDs(HIGH, HIGH, HIGH);
         // NEED TO WRITE
         // NEED TO WRITE
         // NEED TO WRITE
@@ -248,3 +260,19 @@ short deploymentDisconnect() {
   }
   return 1;
 }
+
+// Turn on/off 3 LEDs
+void setLEDs(uint8_t red, uint8_t green, uint8_t blue) {
+    digitalWrite(LED_PIN_RED, red);
+    digitalWrite(LED_PIN_GREEN, green);
+    digitalWrite(LED_PIN_BLUE, blue);
+}
+
+
+
+
+// // Turn on red LED
+// LED_PORT |= 1 << LED_PIN_RED;
+//
+// // Turn off red LED
+// LED_PORT &= ~(1 << LED_PIN_RED);
