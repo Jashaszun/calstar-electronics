@@ -3,8 +3,8 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <Arduino.h>
-#include <Wire.h>
-#include <SparkFunMPL3115A2.h>
+//#include <Wire.h>
+//#include <SparkFunMPL3115A2.h>
 
 #define F_CPU 16000000
 #define RECEIVER_IO DDRD
@@ -16,6 +16,7 @@
 #define CHARGE_IO DDRC
 #define CHARGE_PORT PORTC
 #define CHARGE_PIN 1
+#define BLACK_POWDER_PIN_ARDUINO A1
 #define LED_IO DDRD
 #define LED_PORT PORTD
 #define LED_PIN_RED 5
@@ -35,7 +36,7 @@
 #define ALT_WRITE_ADDR 0xC0
 #define ALT_READ_ADDR 0xC1
 #define BASE_ALT 0
-#define VERIF_SAMPLES 5
+#define VERIF_SAMPLES 20
 
 // Create global timer vars
 unsigned long start_time;
@@ -63,18 +64,20 @@ int main() {
 	// LVDS receiver and continuity default to input
 	// LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // configure LEDs as output
 	// TRANSMITTER_IO |= (1 << TRANSMITTER_PIN); // configure LVDS transmitter as output
-	CHARGE_IO = 0xFF; // configure black powder as output
+	//CHARGE_IO = 0xFF; // configure black powder as output
 	BUZZER_IO = 0xFF; // configure buzzer as output
 	// LED_PORT = 0x00; // set LEDs and transmitter output to low
-	CHARGE_PORT = 0x00; // set charge to low
+	//CHARGE_PORT = 0x00; // set charge to low
 	BUZZER_PORT = 0x00; // set buzzer to low
 
-	pinMode(RECEIVER_PIN, INPUT);
+	pinMode(RECEIVER_PIN, INPUT_PULLUP);
 	pinMode(TRANSMITTER_PIN, OUTPUT);
 	pinMode(LED_PIN_BLUE, OUTPUT);
 	pinMode(LED_PIN_GREEN, OUTPUT);
 	pinMode(LED_PIN_RED, OUTPUT);
 	digitalWrite(TRANSMITTER_PIN, LOW);
+	pinMode(BLACK_POWDER_PIN_ARDUINO, OUTPUT);
+	digitalWrite(BLACK_POWDER_PIN_ARDUINO, LOW);
 
 	// Configure accelerometer
 	// Wire.begin();
@@ -101,7 +104,10 @@ int main() {
 	digitalWrite(LED_PIN_GREEN, HIGH);
 	// LED_PORT |= (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
 
-	CHARGE_PORT = (1 << CHARGE_PIN); // trigger black powder
+	//CHARGE_PORT = (1 << CHARGE_PIN); // trigger black powder
+	digitalWrite(BLACK_POWDER_PIN_ARDUINO, HIGH);
+	delay(1000);
+	digitalWrite(BLACK_POWDER_PIN_ARDUINO, LOW);
 
 	digitalWrite(LED_PIN_GREEN, LOW);
 	digitalWrite(LED_PIN_BLUE, HIGH);
@@ -178,5 +184,5 @@ short landed() {
 
 short deploymentSignal() {
 	// return !(RECEIVER_PORT & (1 << RECEIVER_PIN));
-	return digitalRead(RECEIVER_PIN) == HIGH;
+	return digitalRead(RECEIVER_PIN) == LOW;
 }
