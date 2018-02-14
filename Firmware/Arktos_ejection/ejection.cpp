@@ -43,6 +43,7 @@ enum State {
   DEPLOY, // Red Blue
   LVDS_WAIT, // Red Green
   SCISSOR_LIFT_ACTIVATE, // Red Green Blue
+  TEST_MODE,
   DISABLED
 };
 
@@ -52,6 +53,10 @@ short deploymentDisconnect();
 
 // Sets RGB LED pins to these respective states (HIGH or LOW)
 void setLEDs(uint8_t red, uint8_t green, uint8_t blue);
+
+bool command_available = false;
+String command = "";
+void resetSerial();
 
 int main() {
   init(); // always call this first if using Arduino.h!
@@ -82,6 +87,8 @@ int main() {
   // TRANSMITTER_PORT |= (1 << TRANSMITTER_PIN);
 
   pinMode(RADIO_RESET_PIN, OUTPUT);
+
+  Serial.begin(19200);
 
   State state = INIT;
 
@@ -200,6 +207,45 @@ int main() {
         // NEED TO WRITE
         state = DISABLED;
         break;
+      case TEST_MODE:
+        if (command_available) {
+          if (command == "INIT") {
+            state = INIT;
+          }
+          else if (command == "LAUNCH_PAD") {
+            state = LAUNCH_PAD;
+          }
+          else if (command == "LAUNCHED") {
+            state = LAUNCHED;
+          }
+          else if (command == "RADIO_WAIT") {
+            state = RADIO_WAIT;
+          }
+          else if (command == "DEPLOY") {
+            state = DEPLOY;
+          }
+          else if (command == "LVDS_WAIT") {
+            state = LVDS_WAIT;
+          }
+          else if (command == "SCISSOR_LIFT_ACTIVATE") {
+            state = SCISSOR_LIFT_ACTIVATE;
+          }
+          else if (command == "DISABLED") {
+            state = DISABLED;
+          }
+          else if (command == "z") {
+            currentAltZero = altMovingAvg;
+          }
+          else if (command.length() > 6 && command.substring(0, 6) == "radio ") {
+            const char* tempstr = command.substring(6).c_str();
+            radio.send(TRANSMIT_TO, tempstr, strlen(tempstr));
+          }
+          else if (command.length() == 7 && command.substring(0, 4) == "led ") {
+            setLEDs(command[4] == '1', command[5] == '1', command[6] == '1');
+          }
+        }
+
+
       case DISABLED:
         break;
     }
@@ -221,6 +267,28 @@ int main() {
 			altMovingAvg = ALPHA*altMovingAvg + (1-ALPHA)*alt;
 
 			lastTransmitTime = millis();
+    }
+
+
+    // Read serial and radio, check to enter test mode
+    if (Serial.available()) {
+      command_available = true;
+      command = Serial.readString();
+    }
+    else if (radio.receiveDone()) {
+      if (radio.ACKRequested()) {
+        radio.sendACK();
+      }
+      command_available = true;
+      command = "";
+      for (int i = 0; i < radio.DATALEN; i++) {
+        command += radio.DATA[i];
+      }
+    }
+
+    if (command_available && command == "test") {
+      state = TEST_MODE;
+      setLEDs(LOW, LOW, LOW);
     }
 
   }
@@ -268,7 +336,10 @@ void setLEDs(uint8_t red, uint8_t green, uint8_t blue) {
     digitalWrite(LED_PIN_BLUE, blue);
 }
 
-
+void resetSerial() {
+  command_available = false;
+  command = "";
+}
 
 
 // // Turn on red LED
