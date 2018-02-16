@@ -56,7 +56,7 @@ void setLEDs(uint8_t red, uint8_t green, uint8_t blue);
 
 bool command_available = false;
 String command = "";
-void resetSerial();
+void resetCommand();
 
 int main() {
   init(); // always call this first if using Arduino.h!
@@ -202,6 +202,7 @@ int main() {
         // NEED TO WRITE
         // NEED TO WRITE
         // NEED TO WRITE
+        // servo.write(90);
         // NEED TO WRITE
         // NEED TO WRITE
         // NEED TO WRITE
@@ -240,9 +241,20 @@ int main() {
             const char* tempstr = command.substring(6).c_str();
             radio.send(TRANSMIT_TO, tempstr, strlen(tempstr));
           }
+          else if (command.length() > 7 && command.substring(0, 7) == "serial ") {
+            Serial.println(command.substring(7));
+          }
           else if (command.length() == 7 && command.substring(0, 4) == "led ") {
             setLEDs(command[4] == '1', command[5] == '1', command[6] == '1');
           }
+          else if (command.length() > 6 && command.substring(0, 6) == "servo ") {
+            servo.write(atoi(command.substring(6).c_str()));
+          }
+          else {
+            Serial.print("Invalid command received: ");
+            Serial.println(command);
+          }
+          resetCommand();
         }
 
 
@@ -286,9 +298,10 @@ int main() {
       }
     }
 
-    if (command_available && command == "test") {
+    if (command_available && command == "test" && state != TEST_MODE) {
       state = TEST_MODE;
       setLEDs(LOW, LOW, LOW);
+      resetCommand();
     }
 
   }
@@ -336,7 +349,7 @@ void setLEDs(uint8_t red, uint8_t green, uint8_t blue) {
     digitalWrite(LED_PIN_BLUE, blue);
 }
 
-void resetSerial() {
+void resetCommand() {
   command_available = false;
   command = "";
 }
