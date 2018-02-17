@@ -51,6 +51,7 @@ short detectContinuity();
 short launched(int alt);
 short landed();
 short deploymentSignal();
+void setLEDs(uint8_t red, uint8_t green, uint8_t blue);
 
 int main() {
 	/* Pseudocode for deployment sequence:
@@ -94,25 +95,66 @@ int main() {
 	// while (!launched(altimeter.readAltitudeFt())) { // wait for vehicle to launch
 	// 	beep();
 	// }
-	// LED_PORT |= (1 << LED_PIN_RED); // set LED to red to indicate launch
-	digitalWrite(LED_PIN_RED, HIGH);
+	// set LED to red to indicate launch
+	setLEDs(HIGH, LOW, LOW);
+
+	// Wait 5 seconds, check for test mode in that time
+	while (millis() - start_time < 5000) {
+		if (Serial.available() && (Serial.readString() == "test")) {
+			Serial.println("Deployment entering test mode.");
+			// Test mode loop
+			String command = "";
+			while (true) {
+				if (!Serial.available()) {
+					continue;
+				}
+				command = Serial.readString();
+				if (command == "EXIT") {
+					Serial.println("Deployment exiting test mode.");
+					break;
+				}
+				else if (command.length() == 7 && command.substring(0, 4) == "led ") {
+					setLEDs(command[4] == '1', command[5] == '1', command[6] == '1');
+				}
+				else if (command == "LVDS_RECEIVE") {
+					Serial.print("LVDS received: ");
+					Serial.println(digitalRead(RECEIVER_PIN));
+				}
+				else if (command == "TRANSMIT_HIGH") {
+					digitalWrite(TRANSMITTER_PIN, HIGH);
+				}
+				else if (command == "TRANSMIT_LOW") {
+					digitalWrite(TRANSMITTER_PIN, LOW);
+				}
+				else if (command == "BP_ON") {
+					digitalWrite(BLACK_POWDER_PIN_ARDUINO, HIGH);
+				}
+				else if (command == "BP_OFF") {
+					digitalWrite(BLACK_POWDER_PIN_ARDUINO, LOW);
+				}
+			}
+			break;
+		}
+	}
+
+	setLEDs(LOW, HIGH, HIGH);
 	while (waitForSignal() == 0) { // wait for ejection signal and cross-check with sensor
 		beep();
 	}
-	// LED_PORT &= !(1 << LED_PIN_RED); // turn red LED off
-	digitalWrite(LED_PIN_RED, LOW);
-	digitalWrite(LED_PIN_GREEN, HIGH);
-	// LED_PORT |= (1 << LED_PIN_GREEN); // set LED to green to indicate receipt of signal
+	// turn red LED off
+	setLEDs(LOW, LOW, LOW);
+	// set LED to green to indicate receipt of signal
+	setLEDs(LOW, HIGH, LOW);
 
-	//CHARGE_PORT = (1 << CHARGE_PIN); // trigger black powder
+	// trigger black powder
 	digitalWrite(BLACK_POWDER_PIN_ARDUINO, HIGH);
 	delay(1000);
 	digitalWrite(BLACK_POWDER_PIN_ARDUINO, LOW);
 
-	digitalWrite(LED_PIN_GREEN, LOW);
-	digitalWrite(LED_PIN_BLUE, HIGH);
-	// LED_PORT &= !(1 << LED_PIN_GREEN); // turn green LED off
-	// LED_PORT |= (1 << LED_PIN_BLUE); // set LED to blue to indicate completion of program
+	// turn green LED off
+	setLEDs(LOW, LOW, LOW);
+	// set LED to blue to indicate completion of program
+	setLEDs(LOW, LOW, HIGH);
 	while (true) {
 		beep();
 	}
@@ -180,6 +222,13 @@ short landed() {
 	// 	}
 	// }
 	return 1;
+}
+
+// Turn on/off 3 LEDs
+void setLEDs(uint8_t red, uint8_t green, uint8_t blue) {
+    digitalWrite(LED_PIN_RED, red);
+    digitalWrite(LED_PIN_GREEN, green);
+    digitalWrite(LED_PIN_BLUE, blue);
 }
 
 short deploymentSignal() {

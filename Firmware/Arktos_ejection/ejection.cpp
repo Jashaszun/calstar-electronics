@@ -234,6 +234,9 @@ int main() {
           else if (command == "DISABLED") {
             state = DISABLED;
           }
+          else if(command == "EXIT"){
+              state = prevState;
+          }
           else if (command == "z") {
             currentAltZero = altMovingAvg;
           }
@@ -264,7 +267,7 @@ int main() {
 
     // Send Telemetry
     if (millis() - lastTransmitTime >= TRANSMIT_INTERVAL) {
-      float accelX = accelerometer.get_x_g();
+            float accelX = accelerometer.get_x_g();
 			float accelY = accelerometer.get_y_g();
 			float accelZ = accelerometer.get_z_g();
 			float alt = altimeter.readAltitudeFt();
@@ -299,6 +302,7 @@ int main() {
     }
 
     if (command_available && command == "test" && state != TEST_MODE) {
+      prevState = state;
       state = TEST_MODE;
       setLEDs(LOW, LOW, LOW);
       resetCommand();
