@@ -80,6 +80,8 @@ int main() {
 	pinMode(BLACK_POWDER_PIN_ARDUINO, OUTPUT);
 	digitalWrite(BLACK_POWDER_PIN_ARDUINO, LOW);
 
+	Serial.begin(19200);
+
 	// Configure accelerometer
 	// Wire.begin();
 	// altimeter.begin();
@@ -122,13 +124,13 @@ int main() {
 				}
 				else if (command.length() == 3 && command[0] == 'T') {
 					// should be a space after the T
+					Serial.println("Toggling transmitter pin");
 					digitalWrite(TRANSMITTER_PIN, command[2] == '1');
 				}
-				else if (command == "BP_ON") {
-					digitalWrite(BLACK_POWDER_PIN_ARDUINO, HIGH);
-				}
-				else if (command == "BP_OFF") {
-					digitalWrite(BLACK_POWDER_PIN_ARDUINO, LOW);
+				else if (command.length() == 4 && command[0] == 'B') {
+					// should be a space after the BP
+					Serial.println("Toggling black powder pin");
+					digitalWrite(BLACK_POWDER_PIN_ARDUINO, command[3] == '1')
 				}
 			}
 			break;
@@ -139,8 +141,6 @@ int main() {
 	while (waitForSignal() == 0) { // wait for ejection signal and cross-check with sensor
 		beep();
 	}
-	// turn red LED off
-	setLEDs(LOW, LOW, LOW);
 	// set LED to green to indicate receipt of signal
 	setLEDs(LOW, HIGH, LOW);
 
