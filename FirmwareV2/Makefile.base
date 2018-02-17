@@ -1,0 +1,130 @@
+# Top-level makefile for FirmwareV2
+
+
+# Get current directory using git because make sucks
+CURDIR = $(shell git rev-parse --show-toplevel)/FirmwareV2
+
+# Detect OS
+OSNAME = NULL
+ifeq ($(OS),Windows_NT)
+    OSNAME = WINDOWS
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        OSNAME = LINUX
+    endif
+    ifeq ($(UNAME_S),Darwin)
+        OSNAME = OSX
+    endif
+endif
+$(call assert,$(call sne,$(OSNAME),NULL),OS could not be determined)
+$(call assert,$(call sne,$(OSNAME),LINUX),Linux currently not supported)
+
+# TODO: Move windows toolchain to this directory
+TOOLCHAINDIR = $(CURDIR)/../Firmware/toolchain
+
+# Set up bin and lib directories
+ifeq ($(OSNAME),OSX)
+    DIRAVR = /usr/local/Cellar/avr-gcc/7.3.0
+    DIRAVRUTILS = /usr/local/Cellar/avr-binutils/2.30
+endif
+ifeq ($(OSNAME),WINDOWS)
+    DIRAVR = $(TOOLCHAINDIR)/windows
+    DIRAVRUTILS = $(DIRAVR)/utils
+endif
+DIRAVRBIN = $(DIRAVR)/bin
+DIRAVRUTILSBIN = $(DIRAVRUTILS)/bin
+AVRINC = $(DIRAVR)/avr/include
+AVRLIB = $(DIRAVR)/avr/lib
+
+# Define executables
+CXX = $(DIRAVRBIN)/avr-gcc
+ifeq ($(OSNAME),OSX)
+NM = $(DIRAVRUTILSBIN)/avr-nm
+OBJCOPY = $(DIRAVRUTILSBIN)/avr-objcopy
+OBJDUMP = $(DIRAVRUTILSBIN)/avr-objdump
+SIZE = $(DIRAVRUTILSBIN)/avr-size
+AVRDUDE = avrdude
+endif
+ifeq ($(OSNAME),WINDOWS)
+NM = $(DIRAVRBIN)/avr-nm
+OBJCOPY = $(DIRAVRBIN)/avr-objcopy
+OBJDUMP = $(DIRAVRBIN)/avr-objdump
+SIZE = $(DIRAVRBIN)/avr-size
+AVRDUDE = avrdude.exe
+endif
+REMOVE = rm -f
+COPY = cp
+
+HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
+ELFSIZE = $(SIZE) -A $(TARGET).elf
+
+# Define Messages
+MSG_ERRORS_NONE = Errors: none
+MSG_BEGIN = -------- begin --------
+MSG_END = --------  end  --------
+MSG_SIZE_BEFORE = Size before:
+MSG_SIZE_AFTER = Size after:
+MSG_COFF = Converting to AVR COFF:
+MSG_EXTENDED_COFF = Converting to AVR Extended COFF:
+MSG_FLASH = Creating load file for Flash:
+MSG_EEPROM = Creating load file for EEPROM:
+MSG_EXTENDED_LISTING = Creating Extended Listing:
+MSG_SYMBOL_TABLE = Creating Symbol Table:
+MSG_LINKING = Linking:
+MSG_COMPILING = Compiling:
+MSG_ASSEMBLING = Assembling:
+MSG_CLEANING = Cleaning project:
+
+
+# Check if makefile vars are set up
+ifndef TARGET
+$(error TARGET is not set)
+endif
+ifndef SRC
+$(error SRC is not set)
+endif
+
+# Set default variables
+ifndef MCU
+MCU = atmega328p
+endif
+ifndef AVRDUDE_PROGRAMMER
+AVRDUDE_PROGRAMMER = usbasp
+endif
+ifndef AVRDUDE_MCU
+AVRDUDE_MCU = m328
+endif
+ifndef BAUDRATE
+BAUDRATE = 19200
+endif
+ifndef F_CPU
+F_CPU = 16000000
+endif
+CFLAGS += -DF_CPU=$(F_CPU)
+
+
+
+# Default make
+all: $(TOOLCHAINDIR)/INSTALLED
+
+
+$(TOOLCHAINDIR)/INSTALLED:
+ifeq ($(OSNAME),OSX)
+	sh $(TOOLCHAINDIR)/install_deps_osx.sh
+endif
+ifeq ($(OSNAME),WINDOWS)
+	@echo "" > $(TOOLCHAINDIR)/INSTALLED # Assume windows toolchain is packaged already
+endif
+
+
+
+# Fancy stuff to compile all c++ files with dependencies
+%.o : %.cpp
+        @$(CXX) -MD -c -o $@ $<
+        @cp $*.d $*.P; \
+             sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+                 -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+             rm -f $*.d
+
+-include *.P
