@@ -120,11 +120,9 @@ int main() {
 					Serial.print("LVDS received: ");
 					Serial.println(digitalRead(RECEIVER_PIN));
 				}
-				else if (command == "TRANSMIT_HIGH") {
-					digitalWrite(TRANSMITTER_PIN, HIGH);
-				}
-				else if (command == "TRANSMIT_LOW") {
-					digitalWrite(TRANSMITTER_PIN, LOW);
+				else if (command.length() == 3 && command[0] == 'T') {
+					// should be a space after the T
+					digitalWrite(TRANSMITTER_PIN, command[2] == '1');
 				}
 				else if (command == "BP_ON") {
 					digitalWrite(BLACK_POWDER_PIN_ARDUINO, HIGH);
