@@ -146,7 +146,7 @@ ASRC +=
 #  -Wall...:  warning level
 #  -Wa,...:   tell GCC to pass this to the assembler.
 #    -ahlms:  create assembler listing
-CFLAGS += -g -O$(OPT) \
+CFLAGS += -O$(OPT) \
 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums \
 -Wall \
 $(patsubst %,-I%,$(EXTRAINCDIRS))
