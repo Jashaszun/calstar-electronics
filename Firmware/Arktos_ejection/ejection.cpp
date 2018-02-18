@@ -91,6 +91,7 @@ int main() {
   Serial.begin(19200);
 
   State state = INIT;
+  State prevState;
 
   while (true) {
     switch (state) {
@@ -234,8 +235,9 @@ int main() {
           else if (command == "DISABLED") {
             state = DISABLED;
           }
-          else if(command == "EXIT"){
-              state = prevState;
+          else if(command == "EXIT") {
+            state = prevState;
+            Serial.println("Ejection exiting test mode.");
           }
           else if (command == "z") {
             currentAltZero = altMovingAvg;
@@ -305,6 +307,7 @@ int main() {
       prevState = state;
       state = TEST_MODE;
       setLEDs(LOW, LOW, LOW);
+      Serial.println("Ejection entering test mode.");
       resetCommand();
     }
 
