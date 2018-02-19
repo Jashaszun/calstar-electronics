@@ -38,15 +38,18 @@
 #define BASE_ALT 0
 #define VERIF_SAMPLES 20
 
-// Create global timer vars
-unsigned long start_time;
-unsigned long buzzer_time;
-
 // Altimeter
 // MPL3115A2 altimeter;
 
 char waitForSignal();
+
+void start_beep(unsigned short);
 void beep();
+void stop_beep();
+bool beep_for_ms(unsigned long, unsigned short);
+void start_beep_then_pause(unsigned long, unsigned long, unsigned short);
+bool beep_then_pause();
+
 short detectContinuity();
 short launched(int alt);
 short landed();
@@ -62,6 +65,7 @@ int main() {
 
 	// Setup
 	init(); // always do this when using Arduino.h!
+	Serial.begin(19200);
 	// LVDS receiver and continuity default to input
 	// LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // configure LEDs as output
 	// TRANSMITTER_IO |= (1 << TRANSMITTER_PIN); // configure LVDS transmitter as output
@@ -90,47 +94,56 @@ int main() {
 	// altimeter.enableEventFlags();
 
 	// Initialize timer vars
-	start_time = millis();
-	buzzer_time = micros();
+	//buzzer_time = micros();
 
 	// Main program thread
 	// while (!launched(altimeter.readAltitudeFt())) { // wait for vehicle to launch
 	// 	beep();
 	// }
 	// set LED to red to indicate launch
+	setLEDs(HIGH, HIGH, HIGH);
+
+	while (beep_for_ms(500, 880)) { }
 	setLEDs(HIGH, LOW, LOW);
 
 	// Wait 5 seconds, check for test mode in that time
+	unsigned long start_time = millis();
 	while (millis() - start_time < 5000) {
 		if (Serial.available() && (Serial.readString() == "test")) {
 			Serial.println("Deployment entering test mode.");
 			// Test mode loop
-			String command = "";
 			while (true) {
 				if (!Serial.available()) {
 					continue;
 				}
-				command = Serial.readString();
+				String command = Serial.readString();
 				if (command == "EXIT") {
 					Serial.println("Deployment exiting test mode.");
 					break;
-				}
-				else if (command.length() == 7 && command.substring(0, 4) == "led ") {
+				} else if (command.length() == 7 && command.substring(0, 4) == "led ") {
 					setLEDs(command[4] == '1', command[5] == '1', command[6] == '1');
-				}
-				else if (command == "LVDS_RECEIVE") {
+				} else if (command == "LVDS_RECEIVE") {
 					Serial.print("LVDS received: ");
 					Serial.println(digitalRead(RECEIVER_PIN));
-				}
-				else if (command.length() == 3 && command[0] == 'T') {
+				} else if (command.length() == 3 && command[0] == 'T') {
 					// should be a space after the T
 					Serial.println("Toggling transmitter pin");
 					digitalWrite(TRANSMITTER_PIN, command[2] == '1');
-				}
-				else if (command.length() == 4 && command[0] == 'B') {
-					// should be a space after the BP
-					Serial.println("Toggling black powder pin");
-					digitalWrite(BLACK_POWDER_PIN_ARDUINO, command[3] == '1')
+				} else if (command == "BP_ON") {
+					Serial.println("BP = ON");
+					digitalWrite(BLACK_POWDER_PIN_ARDUINO, HIGH);
+				} else if (command == "BP_OFF") {
+					Serial.println("BP = OFF");
+					digitalWrite(BLACK_POWDER_PIN_ARDUINO, LOW);
+				} else if (command == "CONTINUITY") {
+					Serial.println(detectContinuity() ? "Continuity" : "Disconnected");
+				} else if (command == "BEEP") {
+					Serial.print("Beeping... ");
+					Serial.flush();
+
+					while (beep_for_ms(1000, 800)) { }
+
+					Serial.println("done.");
 				}
 			}
 			break;
@@ -138,8 +151,12 @@ int main() {
 	}
 
 	setLEDs(LOW, HIGH, HIGH);
-	while (waitForSignal() == 0) { // wait for ejection signal and cross-check with sensor
-		beep();
+	while (!deploymentSignal()) { // wait for ejection signal and cross-check with sensor
+		if (!beep_then_pause()) { // if done beeping then pausing, then ...
+			if (detectContinuity()) { // check for continuity...
+				start_beep_then_pause(500, 1500, 900); // and if so, then start a beep then pause
+			}
+		}
 	}
 	// set LED to green to indicate receipt of signal
 	setLEDs(LOW, HIGH, LOW);
@@ -154,7 +171,12 @@ int main() {
 	// set LED to blue to indicate completion of program
 	setLEDs(LOW, LOW, HIGH);
 	while (true) {
-		beep();
+		if (!beep_then_pause()) { // if done beeping then pausing, then ...
+			if (detectContinuity()) { // check for continuity...
+				start_beep_then_pause(500, 1500, 900); // and if so, then start a beep then pause
+				Serial.println("Beeping then pausing.");
+			}
+		}
 	}
 	return 0;
 }
@@ -171,7 +193,9 @@ char waitForSignal() {
 		} else {
 			count = 0;
 		}
-		beep();
+		if (detectContinuity()) {
+			beep();
+		}
 	}
 	if (landed()) { // landed!
 		return 1;
@@ -179,21 +203,86 @@ char waitForSignal() {
 	return 0; // not on ground
 }
 
+//unsigned long beep_start_time_ms;
+unsigned long buzzer_on_start_time_us;
+unsigned long buzzer_period_us;
+bool beeping = false;
+void start_beep(unsigned short frequency) {
+	buzzer_on_start_time_us = micros();
+	buzzer_period_us = 500000 / frequency; // frequency = 1/(2*period_us)
+	beeping = true;
+}
 void beep() {
 	static short buzzer = 0;
-	unsigned long current_time_ms = millis();
+	//unsigned long current_time_ms = millis();
 	unsigned long current_time_us = micros();
-	if (current_time_ms - start_time >= 1000) { // Counts up to one second then resets
-		start_time = current_time_ms;
-	}
-	if (current_time_us - buzzer_time >= 500) { // Run every 500us
-		buzzer_time = current_time_us;
-		// buzzer frequency = 1/(2*500us) = 1000 Hz
-		if ((current_time_ms - start_time <= 400) && (detectContinuity())) { // If in first 400ms of the second and still detecting continuity
+	//if (current_time_ms - start_time >= 1000) { // Counts up to one second then resets
+	//	start_time = current_time_ms;
+	//}
+	if (current_time_us - buzzer_on_start_time_us >= buzzer_period_us) { // Alternate every period_us us.
+		buzzer_on_start_time_us = current_time_us;
+		// buzzer frequency = 1/(2*period_us) = 1000 Hz if period_us = 500
+		//if (current_time_ms - beep_start_time_ms <= 400) { // If in first 400ms of the second and still detecting continuity
+		if (beeping) {
 			buzzer = !buzzer;
 			BUZZER_PORT = (buzzer << BUZZER_PIN);
 		}
 	}
+}
+void stop_beep() {
+	beeping = false;
+}
+bool beep_for_ms(unsigned long ms, unsigned short frequency) {
+
+	static unsigned long beep_start_time_ms;
+	static unsigned long duration_ms;
+	if (beeping)
+	{
+		beep();
+		if (millis() - beep_start_time_ms >= duration_ms) {
+			stop_beep();
+			return false;
+		}
+		return true;
+	}
+
+	duration_ms = ms;
+	beep_start_time_ms = millis();
+	start_beep(frequency);
+	return true;
+}
+
+bool beeping_then_pausing = false;
+unsigned long beep_then_pause_beep_ms;
+unsigned long beep_then_pause_pause_ms;
+unsigned short beep_then_pause_freq;
+bool beep_then_pause_beeped;
+void start_beep_then_pause(unsigned long beep_ms, unsigned long pause_ms, unsigned short frequency) {
+	beeping_then_pausing = true;
+
+	beep_then_pause_beep_ms = beep_ms;
+	beep_then_pause_pause_ms = pause_ms;
+	beep_then_pause_freq = frequency;
+
+	beep_then_pause_beeped = false;
+}
+bool beep_then_pause() {
+	static unsigned long pause_start_ms;
+
+	if (!beeping_then_pausing) {
+		return false;
+	}
+	if (!beep_then_pause_beeped) {
+		if (!beep_for_ms(beep_then_pause_beep_ms, beep_then_pause_freq)) {
+			beep_then_pause_beeped = true;
+			pause_start_ms = millis();
+		}
+	} else {
+		if (millis() - pause_start_ms >= beep_then_pause_pause_ms) {
+			beeping_then_pausing = false;
+		}
+	}
+	return beeping_then_pausing;
 }
 
 short detectContinuity() {

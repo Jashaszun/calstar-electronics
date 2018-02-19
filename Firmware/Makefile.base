@@ -105,20 +105,20 @@ CFLAGS += -D F_CPU=$(F_CPU)
 
 
 ### These macros pertain to supporting Arduino libs
-ifndef NO_ARDUINO
-	LDFLAGS += -lm # -lm = math library
-	ARDLIBDIR 		= $(ARDDIR)/libraries
-	ARDCOREDIR 		= $(ARDDIR)/core
-	# add Arduino sources and include directories to PSRC and EXTRAINCDIRS
-	ASRC = $(wildcard $(ARDCOREDIR)/*.S)
-	PSRC += $(wildcard $(ARDCOREDIR)/*.cpp)#$(fiter-out $(ARDCOREDIR)/main.cpp, $(wildcard $(ARDCOREDIR)/*.cpp))
-	SRC += $(wildcard $(ARDCOREDIR)/*.c)
-	EXTRAINCDIRS += $(ARDCOREDIR)
-	SRC += $(wildcard $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src/*.c))
-	PSRC += $(wildcard $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src/*.cpp))
-	EXTRAINCDIRS += $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src)
-endif
+LDFLAGS += -lm # -lm = math library
+ARDLIBDIR 		= $(ARDDIR)/libraries
+ARDCOREDIR 		= $(ARDDIR)/core
+# add Arduino sources and include directories to PSRC and EXTRAINCDIRS
+ARDCOREOBJECTS += $(foreach lib,$(ARDCORELIBS),$(ARDCOREDIR)/$(lib).o)
+ARDLIBCFILES += $(wildcard $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src/*.c))
+ARDLIBCPPFILES += $(wildcard $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src/*.cpp))
+ARDLIBOBJECTS += $(ARDLIBCFILES:.c=.o) $(ARDLIBCPPFILES:.cpp=.o)
+EXTRAINCDIRS += $(ARDCOREDIR)
+EXTRAINCDIRS += $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src)
+$(info  [${ARDLIBOBJECTS}])
 
+ARDOBJECTS += $(ARDCOREOBJECTS)
+ARDOBJECTS += $(ARDLIBOBJECTS)
 
 ############# Don't need to change below here for most purposes  (Elliot)
 
@@ -137,7 +137,7 @@ FORMAT = ihex
 # Even though the DOS/Win* filesystem matches both .s and .S the same,
 # it will preserve the spelling of the filenames, and gcc itself does
 # care about how the name is spelled on its command-line.
-ASRC +=
+# ASRC +=
 
 # Optional compiler flags.
 #  -g:        generate debugging information (for GDB, or for COFF conversion)
@@ -287,10 +287,10 @@ MSG_CLEANING = Cleaning project:
 
 
 # Define all object files.
-OBJ = $(SRC:.c=.o) $(ASRC:.S=.o) $(PSRC:.cpp=.o)
+OBJ = $(SRC:.c=.o) $(PSRC:.cpp=.o)
 
 # Define all listing files.
-LST = $(ASRC:.S=.lst) $(SRC:.c=.lst) $(PSRC:.cpp=.lst)
+LST = $(SRC:.c=.lst) $(PSRC:.cpp=.lst)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
@@ -407,10 +407,10 @@ program-avrispv2: $(TARGET).hex
 # Link: create ELF output file from object files.
 .SECONDARY: $(TARGET).elf
 .PRECIOUS: $(OBJ)
-%.elf: $(OBJ)
+%.elf: $(OBJ) $(ARDOBJECTS)
 	@echo
 	@echo $(MSG_LINKING) $@
-	$(CC) $(ALL_CFLAGS) $(OBJ) --output $@ $(LDFLAGS)
+	$(CC) $(ALL_CFLAGS) $(ARDOBJECTS) $(OBJ) --output $@ $(LDFLAGS)
 
 
 # Compile: create object files from C source files.
