@@ -2,25 +2,20 @@
 
 void pinMode(uint8_t port, uint8_t pin, uint8_t direction) {
   switch (port) {
-    case A:
-      DDRA = (direction == OUTPUT) ? (DDRA | (1 << pin)) : (DDRA & ~(1 << pin));
-      break;
     case B:
-      DDRB = (direction == OUTPUT) ? (DDRB | (1 << pin)) : (DDRB & ~(1 << pin));
+      DDRB = ((direction == OUTPUT) ? DDRB | (1 << pin) : DDRB & ~(1 << pin));
       break;
     case C:
-      DDRC = (direction == OUTPUT) ? (DDRC | (1 << pin)) : (DDRC & ~(1 << pin));
+      DDRC = ((direction == OUTPUT) ? DDRC | (1 << pin) : DDRC & ~(1 << pin));
       break;
     case D:
-      DDRD = (direction == OUTPUT) ? (DDRD | (1 << pin)) : (DDRD & ~(1 << pin));
+      DDRD = ((direction == OUTPUT) ? DDRD | (1 << pin) : DDRD & ~(1 << pin));
       break;
   }
 }
 
 uint8_t getMode(uint8_t port, uint8_t pin) {
   switch (port) {
-    case A:
-      return DDRA & (1 << pin);
     case B:
       return DDRB & (1 << pin);
     case C:
@@ -32,17 +27,9 @@ uint8_t getMode(uint8_t port, uint8_t pin) {
 
 uint8_t digitalWrite(uint8_t port, uint8_t pin, uint8_t state) {
   switch (port) {
-    case A:
-      if (getMode(port, pin) == OUTPUT) {
-        PORTA = (state == HIGH) ? (PORTA | (1 << pin)) : (PORTA & ~(1 << pin));
-        return 1;
-      } else {
-        return 0;
-      }
-      break;
     case B:
       if (getMode(port, pin) == OUTPUT) {
-        PORTB = (state == HIGH) ? (PORTB | (1 << pin)) : (PORTB & ~(1 << pin));
+        PORTB = (state == HIGH ? PORTB | (1 << pin) : PORTB & ~(1 << pin));
         return 1;
       } else {
         return 0;
@@ -50,15 +37,15 @@ uint8_t digitalWrite(uint8_t port, uint8_t pin, uint8_t state) {
       break;
     case C:
       if (getMode(port, pin) == OUTPUT) {
-        PORTC = (state == HIGH) ? (PORTC | (1 << pin)) : (PORTC & ~(1 << pin));
+        PORTC = (state == HIGH ? PORTC | (1 << pin) : PORTC & ~(1 << pin));
         return 1;
       } else {
         return 0;
       }
-      break
+      break;
     case D:
       if (getMode(port, pin) == OUTPUT) {
-        PORTD = (state == HIGH) ? (PORTD | (1 << pin)) : (PORTD & ~(1 << pin));
+        PORTD = (state == HIGH ? PORTD | (1 << pin) : PORTD & ~(1 << pin));
         return 1;
       } else {
         return 0;
@@ -72,8 +59,6 @@ uint8_t digitalWrite(uint8_t port, uint8_t pin, uint8_t state) {
 
 uint8_t digitalRead(uint8_t port, uint8_t pin) {
   switch (port) {
-    case A:
-      return (PINA & (1 << pin)) >> pin;
     case B:
       return (PINB & (1 << pin)) >> pin;
     case C:
