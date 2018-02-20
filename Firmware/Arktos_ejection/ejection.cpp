@@ -89,6 +89,7 @@ int main() {
   pinMode(RADIO_RESET_PIN, OUTPUT);
 
   Serial.begin(19200);
+  Serial.println("Ejection board started");
 
   State state = INIT;
   State prevState;
@@ -292,7 +293,7 @@ int main() {
       command_available = true;
       command = Serial.readString();
     }
-    else if (radio.receiveDone()) {
+    if (radio.receiveDone()) {
       if (radio.ACKRequested()) {
         radio.sendACK();
       }
@@ -301,6 +302,8 @@ int main() {
       for (int i = 0; i < radio.DATALEN; i++) {
         command += radio.DATA[i];
       }
+      Serial.print("Received command: ");
+      Serial.println(command);
     }
 
     if (command_available && command == "test" && state != TEST_MODE) {
