@@ -2,6 +2,7 @@
 #include "String.h"
 
 #define _SERIAL_BUF_SIZE 64
+#define _SERIAL_DEFAULT_TIMEOUT_MS 1000
 
 class _Serial {
 private:
@@ -14,24 +15,28 @@ private:
         bool full() const;
         bool empty() const;
         bool put(uint8_t byte);
-        uint8_t pop();
-        uint8_t peek() const;
+        int16_t pop();
+        int16_t peek() const;
         uint8_t size() const;
     };
 
     _Stack rxBuf;
     _Stack txBuf;
+
+    uint32_t timeout;
 public:
+    _Serial();
+
     void begin(int baudRate);
 
     uint8_t available() const;
 
-    uint8_t peek() const;
+    int16_t peek() const;
 
     // Returns a single byte
-    uint8_t readByte();
+    int16_t readByte();
 
-    // Places len number of bytes into buf, and returns number of bytes placed into buf.
+    // Blocks, until either timeout or len number of bytes are read
     uint8_t readBytes(uint8_t *buf, uint8_t len);
 
     void write(uint8_t byte);
@@ -39,6 +44,8 @@ public:
     uint8_t write(const uint8_t *buf, uint8_t len);
 
     void print(const String &str);
+
+    void setTimeout(uint32_t timeout);
 
     // pls no use
     void _rx_isr_();

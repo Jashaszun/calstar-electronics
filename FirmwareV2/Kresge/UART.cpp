@@ -26,18 +26,18 @@ bool _Serial::_Stack::put(uint8_t byte) {
     }
 }
 
-uint8_t _Serial::_Stack::pop() {
+int16_t _Serial::_Stack::pop() {
     if (empty()) {
-        // idk???
+        return -1;
     } else {
         ++nextTop;
         return buf[nextTop - 1];
     }
 }
 
-uint8_t _Serial::_Stack::peek() const {
+int16_t _Serial::_Stack::peek() const {
     if (empty()) {
-        // idk???
+        return -1;
     } else {
         return buf[nextTop - 1];
     }
@@ -47,19 +47,24 @@ uint8_t _Serial::_Stack::size() const {
     return _SERIAL_BUF_SIZE - nextTop - 1;
 }
 
+_Serial::_Serial():
+    timeout(_SERIAL_DEFAULT_TIMEOUT_MS) {
+
+}
+
 void _Serial::begin(int baudRate) {
 
 }
 
 uint8_t _Serial::available() const {
-    return !rxBuf.empty();
+    return rxBuf.size();
 }
 
-uint8_t _Serial::peek() const {
+int16_t _Serial::peek() const {
     return rxBuf.peek();
 }
 
-uint8_t _Serial::readByte() {
+int16_t _Serial::readByte() {
     return rxBuf.pop();
 }
 
@@ -72,9 +77,24 @@ uint8_t min(uint8_t a, uint8_t b) {
 }
 
 uint8_t _Serial::readBytes(uint8_t *buf, uint8_t len) {
-    uint8_t numBytes = min(len, rxBuf.size());
-    memcpy(buf, &rxBuf.buf, numBytes);
-    return numBytes;
+    // time(0) and such return time in seconds. need Timer class implemented before this
+    // can be completed
+
+
+    // time_t last_recieved = time(0);
+    // uint8_t i = 0;
+    // while (i != len) {
+    //     if (available() > 0) {
+    //         buf[i] = readByte();
+    //         ++i;
+    //         last_recieved = time(0);
+    //     }
+    //     if (difftime(time(0), last_recieved) > timeout) {
+    //         break;
+    //     }
+    // }
+    // return i;
+    return 0;
 }
 
 void _Serial::write(uint8_t byte) {
@@ -87,6 +107,10 @@ uint8_t _Serial::write(const uint8_t *buf, uint8_t len) {
 
 void _Serial::print(const String &str) {
     write((uint8_t *)str.const_c_str(), str.length());
+}
+
+void _Serial::setTimeout(uint32_t timeout) {
+    this->timeout = timeout;
 }
 
 void _Serial::_rx_isr_() {
