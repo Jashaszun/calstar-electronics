@@ -20,6 +20,7 @@ public:
 
 	int length() const;
 	char* c_str();
+	const char *const_c_str() const;
 
 	String substr(unsigned int start, unsigned int len);
 	// char charAt(unsigned int index) const;

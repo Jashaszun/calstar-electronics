@@ -80,6 +80,10 @@ char* String::c_str() {
 	return _buffer;
 }
 
+const char *String::const_c_str() const {
+	return _buffer;
+}
+
 const char* String::buffer() const {
 	return _buffer;
 }
