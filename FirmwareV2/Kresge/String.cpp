@@ -104,6 +104,22 @@ char String::operator[](unsigned int index) const {
 	return _buffer[index];
 }
 
+bool String::operator== (const String &rhs) const {
+	if (rhs.length() != this->length()) {
+		return false;
+	}
+	for (int i = 0; i < this->length(); i++) {
+		if (this->buffer()[i] != rhs[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool String::operator!= (const String &rhs) const {
+	return !(this->operator==(rhs));
+}
+
 String String::operator+ (const String& other) const {
 	String newstr;
 	newstr.init(_length + other.length());
