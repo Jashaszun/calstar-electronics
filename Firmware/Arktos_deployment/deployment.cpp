@@ -151,12 +151,12 @@ int main() {
 	}
 
 	setLEDs(LOW, HIGH, HIGH);
-	while (waitForSignal() == 0) { // wait for ejection signal and cross-check with sensor
-		//if (!beep_then_pause()) { // if done beeping then pausing, then ...
-		//	if (detectContinuity()) { // check for continuity...
-		//		start_beep_then_pause(500, 1500, 900); // and if so, then start a beep then pause
-		//	}
-		//}
+	while (!deploymentSignal()) { // wait for ejection signal and cross-check with sensor
+		if (!beep_then_pause()) { // if done beeping then pausing, then ...
+			if (detectContinuity()) { // check for continuity...
+				start_beep_then_pause(500, 1500, 900); // and if so, then start a beep then pause
+			}
+		}
 	}
 	// set LED to green to indicate receipt of signal
 	setLEDs(LOW, HIGH, LOW);
@@ -171,12 +171,12 @@ int main() {
 	// set LED to blue to indicate completion of program
 	setLEDs(LOW, LOW, HIGH);
 	while (true) {
-		//if (!beep_then_pause()) { // if done beeping then pausing, then ...
-		//	if (detectContinuity()) { // check for continuity...
-		//		start_beep_then_pause(500, 1500, 900); // and if so, then start a beep then pause
-		//		Serial.println("Beeping then pausing.");
-		//	}
-		//}
+		if (!beep_then_pause()) { // if done beeping then pausing, then ...
+			if (detectContinuity()) { // check for continuity...
+				start_beep_then_pause(500, 1500, 900); // and if so, then start a beep then pause
+				Serial.println("Beeping then pausing.");
+			}
+		}
 	}
 	return 0;
 }
@@ -276,12 +276,10 @@ bool beep_then_pause() {
 		if (!beep_for_ms(beep_then_pause_beep_ms, beep_then_pause_freq)) {
 			beep_then_pause_beeped = true;
 			pause_start_ms = millis();
-			Serial.println("Finished beeping.");
 		}
 	} else {
 		if (millis() - pause_start_ms >= beep_then_pause_pause_ms) {
 			beeping_then_pausing = false;
-			Serial.println("Finished pausing.");
 		}
 	}
 	return beeping_then_pausing;

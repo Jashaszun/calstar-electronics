@@ -106,7 +106,7 @@ CFLAGS += -DF_CPU=$(F_CPU)
 
 
 # Default make
-all: $(TOOLCHAINDIR)/INSTALLED
+all: $(TOOLCHAINDIR)/INSTALLED begin $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).lss $(TARGET).sym sizeafter finished end
 
 
 $(TOOLCHAINDIR)/INSTALLED:
@@ -116,6 +116,17 @@ endif
 ifeq ($(OSNAME),WINDOWS)
 	@echo "" > $(TOOLCHAINDIR)/INSTALLED # Assume windows toolchain is packaged already
 endif
+
+begin:
+	@echo
+	@echo $(MSG_BEGIN)
+
+finished:
+	@echo $(MSG_ERRORS_NONE)
+
+end:
+	@echo $(MSG_END)
+	@echo
 
 
 
