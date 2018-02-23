@@ -99,7 +99,9 @@ TOLINK = $(TOLINKSRC:.cpp=.o)
 
 FORMAT = ihex
 
-ALL_CXXFLAGS 	= -mmcu=$(MCU) -I. -I$(CURDIR)/Kresge/ $(CFLAGS)
+ALL_CXXFLAGS 	= -mmcu=$(MCU) -I. -I$(CURDIR)/Kresge/ $(CFLAGS) -ffunction-sections
+
+LINKFLAGS = -Wl,-gc-sections
 
 # Programming support using avrdude. Settings and variables.
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
@@ -170,7 +172,7 @@ program: $(TARGET).hex # $(TARGET).eep
 %.elf: $(OBJ) $(TOLINK)
 	@echo
 	@echo $(MSG_LINKING) $@
-	$(CXX) $(ALL_CXXFLAGS) $(OBJ) $(TOLINK) --output $@
+	$(CXX) $(ALL_CXXFLAGS) $(OBJ) $(TOLINK) --output $@ $(LINKFLAGS)
 
 
 # Compile: create object files from C++ source files
@@ -188,17 +190,10 @@ clean_list :
 	@echo $(MSG_CLEANING)
 	$(REMOVE) $(TARGET).hex
 	$(REMOVE) $(TARGET).eep
-	$(REMOVE) $(TARGET).obj
-	$(REMOVE) $(TARGET).cof
 	$(REMOVE) $(TARGET).elf
-	$(REMOVE) $(TARGET).map
-	$(REMOVE) $(TARGET).obj
-	$(REMOVE) $(TARGET).a90
-	$(REMOVE) $(TARGET).lnk
-	$(REMOVE) $(TARGET).lst
 	$(REMOVE) $(OBJ)
-#	$(REMOVE) $(SRC:.c=.s)
 	$(REMOVE) $(SRC:.cpp=.d)
+	$(REMOVE) $(wildcard $(CURDIR)/Kresge/*.o)
 	$(REMOVE) *~
 
 
