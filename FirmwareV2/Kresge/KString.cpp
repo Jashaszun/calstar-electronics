@@ -1,4 +1,5 @@
-#include "String.h"
+#include "KString.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 

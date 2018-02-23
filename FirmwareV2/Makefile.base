@@ -4,6 +4,8 @@
 # Get current directory using git because make sucks
 CURDIR = $(shell git rev-parse --show-toplevel)/FirmwareV2
 
+include $(CURDIR)/Programmer.base
+
 # Detect OS
 OSNAME = NULL
 ifeq ($(OS),Windows_NT)
@@ -65,25 +67,12 @@ MSG_BEGIN = -------- begin --------
 MSG_END = --------  end  --------
 MSG_SIZE_BEFORE = Size before:
 MSG_SIZE_AFTER = Size after:
-MSG_COFF = Converting to AVR COFF:
-MSG_EXTENDED_COFF = Converting to AVR Extended COFF:
 MSG_FLASH = Creating load file for Flash:
-MSG_EEPROM = Creating load file for EEPROM:
-MSG_EXTENDED_LISTING = Creating Extended Listing:
-MSG_SYMBOL_TABLE = Creating Symbol Table:
+MSG_EEPROM = Creating load file for EEPROM:f
 MSG_LINKING = Linking:
 MSG_COMPILING = Compiling:
 MSG_ASSEMBLING = Assembling:
 MSG_CLEANING = Cleaning project:
-
-
-# Check if makefile vars are set up
-ifndef TARGET
-$(error TARGET is not set)
-endif
-ifndef SRC
-$(error SRC is not set)
-endif
 
 # Set default variables
 ifndef MCU
@@ -103,11 +92,35 @@ F_CPU = 16000000
 endif
 CFLAGS += -DF_CPU=$(F_CPU)
 
+OBJ = $(SRC:.cpp=.o)
+
+TOLINKSRC = $(wildcard $(CURDIR)/Kresge/*.cpp)
+TOLINK = $(TOLINKSRC:.cpp=.o)
+
+FORMAT = ihex
+
+ALL_CXXFLAGS 	= -mmcu=$(MCU) -I. -I$(CURDIR)/Kresge/ $(CFLAGS)
+
+# Programming support using avrdude. Settings and variables.
+AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
+AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
+AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -c $(AVRDUDE_PROGRAMMER) -P $(AVRDUDE_PORT) # -b $(BAUDRATE)
+
+# Check if makefile vars are set up
+ifndef TARGET
+$(error TARGET is not set)
+endif
+ifndef SRC
+$(error SRC is not set)
+endif
+
 
 
 # Default make
-all: $(TOOLCHAINDIR)/INSTALLED begin $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).lss $(TARGET).sym sizeafter finished end
+all: $(TOOLCHAINDIR)/INSTALLED begin $(TARGET).elf $(TARGET).hex $(TARGET).eep sizeafter finished end
 
+# Keep intermediate object files
+.PRECIOUS: %.o
 
 $(TOOLCHAINDIR)/INSTALLED:
 ifeq ($(OSNAME),OSX)
@@ -128,14 +141,78 @@ end:
 	@echo $(MSG_END)
 	@echo
 
+sizebefore:
+	@if [ -f $(TARGET).elf ]; then echo; echo $(MSG_SIZE_BEFORE); $(ELFSIZE); echo; fi
+
+sizeafter:
+	@if [ -f $(TARGET).elf ]; then echo; echo $(MSG_SIZE_AFTER); $(ELFSIZE); echo; fi
+
+# Program the device.
+program: $(TARGET).hex # $(TARGET).eep
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
 
-# Fancy stuff to compile all c++ files with dependencies
-%.o : %.cpp
-        @$(CXX) -MD -c -o $@ $<
-        @cp $*.d $*.P; \
-             sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-                 -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
-             rm -f $*.d
+# Create final output files (.hex, .eep) from ELF output file.
+%.hex: %.elf
+	@echo
+	@echo $(MSG_FLASH) $@
+	$(OBJCOPY) -O $(FORMAT) -R .eeprom $< $@
 
--include *.P
+%.eep: %.elf
+	@echo
+	@echo $(MSG_EEPROM) $@
+	-$(OBJCOPY) -j .eeprom --set-section-flags=.eeprom="alloc,load" \
+	--change-section-lma .eeprom=0 -O $(FORMAT) $< $@
+
+# Link: create ELF output file from object files.
+.SECONDARY: $(TARGET).elf
+.PRECIOUS: $(OBJ)
+%.elf: $(OBJ) $(TOLINK)
+	@echo
+	@echo $(MSG_LINKING) $@
+	$(CXX) $(ALL_CXXFLAGS) $(OBJ) $(TOLINK) --output $@
+
+
+# Compile: create object files from C++ source files
+%.o: %.cpp
+	@echo
+	@echo $(MSG_COMPILING) $<
+	$(CXX) -c $(ALL_CXXFLAGS) $< -o $@
+
+
+# Target: clean project.
+clean: begin clean_list finished end
+
+clean_list :
+	@echo
+	@echo $(MSG_CLEANING)
+	$(REMOVE) $(TARGET).hex
+	$(REMOVE) $(TARGET).eep
+	$(REMOVE) $(TARGET).obj
+	$(REMOVE) $(TARGET).cof
+	$(REMOVE) $(TARGET).elf
+	$(REMOVE) $(TARGET).map
+	$(REMOVE) $(TARGET).obj
+	$(REMOVE) $(TARGET).a90
+	$(REMOVE) $(TARGET).lnk
+	$(REMOVE) $(TARGET).lst
+	$(REMOVE) $(OBJ)
+#	$(REMOVE) $(SRC:.c=.s)
+	$(REMOVE) $(SRC:.cpp=.d)
+	$(REMOVE) *~
+
+
+# Automatically generate C++ source code dependencies.
+# (Code originally taken from the GNU make user manual and modified
+# (See README.txt Credits).)
+#
+# Note that this will work with sh (bash) and sed that is shipped with WinAVR
+# (see the SHELL variable defined above).
+# This may not work with other shells or other seds.
+
+%.d: %.cpp
+	set -e; $(CXX) -MM $(ALL_CXXFLAGS) $< \
+	| sed 's,\(.*\)\.o[ :]*,\1.o \1.d : ,g' > $@; \
+	[ -s $@ ] || rm -f $@
+
+-include $(SRC:.cpp=.d)

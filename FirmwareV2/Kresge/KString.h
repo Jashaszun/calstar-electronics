@@ -2,7 +2,6 @@
 #define _KRESGE_STRING_H_
 
 #include <stddef.h>
-#include <string.h>
 
 /* Mostly copied from WString.h in the Arduino libraries */
 

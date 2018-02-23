@@ -1,0 +1,18 @@
+Possible commands over radio or uart for ejection:
+LAUNCH_PAD:
+  "z" - zero altitude (only over radio currently)
+TEST_MODE:
+  "INIT" - set state to INIT
+  "LAUNCH_PAD" - set state to LAUNCH_PAD
+  "LAUNCHED" - set state to LAUNCHED
+  "RADIO_WAIT" - set state to RADIO_WAIT
+  "DEPLOY" - set state to DEPLOY
+  "LVDS_WAIT" - set state to LVDS_WAIT
+  "SCISSOR_LIFT_ACTIVATE" - set state to SCISSOR_LIFT_ACTIVATE
+  "DISABLED" - set state to DISABLED
+  "z" - zero altitude
+  "radio <string>" - sends <string> over radio
+  "serial <string>" - sends <string> over serial
+  "led <RGB>" set LEDs to RGB pattern (e.g. 000=off, 100=red)
+ALL:
+  "test" - set state to TEST_MODE

@@ -2,7 +2,7 @@
 #define _KRESGE_UART_H_
 
 #include <stdint.h>
-#include "String.h"
+#include "KString.h"
 
 #define _SERIAL_BUF_SIZE 64
 #define _SERIAL_DEFAULT_TIMEOUT_MS 1000
