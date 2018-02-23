@@ -1,3 +1,6 @@
+#ifndef _KRESGE_STRING_H_
+#define _KRESGE_STRING_H_
+
 #include <stddef.h>
 #include <string.h>
 
@@ -55,3 +58,5 @@ private:
   const char* buffer() const;
 
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef _KRESGE_UART_H_
+#define _KRESGE_UART_H_
+
 #include <stdint.h>
 #include "String.h"
 
@@ -22,7 +25,6 @@ private:
         int16_t popLast();
         int16_t peekFirst() const;
         int16_t peekLast() const;
-        uint8_t size() const;
     };
 
     _CircQueue rxBuf;
@@ -35,6 +37,7 @@ public:
     void begin(int baudRate);
 
     uint8_t available() const;
+    bool availableForWrite() const;
 
     int16_t peek() const;
 
@@ -46,9 +49,11 @@ public:
 
     void write(uint8_t byte);
 
-    uint8_t write(const uint8_t *buf, uint8_t len);
+    void write(const uint8_t *buf, uint8_t len);
 
     void print(const String &str);
+
+    void println(const String &str);
 
     void setTimeout(uint32_t timeout);
 
@@ -56,4 +61,6 @@ public:
     void _rx_isr_();
     void _tx_isr_();
 };
-_Serial Serial;
+extern _Serial Serial;
+
+#endif
