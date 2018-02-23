@@ -1,0 +1,17 @@
+Git:
+  - DO NOT PULL/MERGE
+  - Instead, do a "git fetch" and "git rebase"
+    - In the event of rebase conflicts, fix the conflict in the file then "git add filename" and "git rebase --continue"
+    - This is so we don't have an insane mess of branches and merges in out git history
+    - Feel free to @Leo if you need help with conflicts
+
+Code:
+  - Set your editor to use two space soft tabs instead of hard tabs
+    - It should do this automatically when editing a file with two space tabs
+  - Initialize pointers like "int* foo;" NOT "int *foo;"
+    - Because of this and readability, initialize only one variable per line
+  - Should be obvious, but keep code out of .h files and declarations out of .cpp files (with the exception of helper functions only used in that .cpp file)
+
+Programming:
+  - If you experience an issue with the makefile when it comes to compiling or downloading code, let me (Leo) know
+    - This is to avoid everyone having a separate compilation script that only works with their computer
