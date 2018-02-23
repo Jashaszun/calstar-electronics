@@ -3,6 +3,7 @@ Git:
   - Instead, do a "git fetch" and "git rebase"
     - In the event of rebase conflicts, fix the conflict in the file then "git add filename" and "git rebase --continue"
     - This is so we don't have an insane mess of branches and merges in out git history
+    - If you don't want to have to fetch and rebase every time, run "git config --local pull.rebase true" in the repo
     - Feel free to @Leo if you need help with conflicts
 
 Code:
