@@ -1,7 +1,10 @@
 #include "UART.h"
 
+#include <avr/interrupt.h>
+#include <avr/io.h>
+
 _Serial::_CircQueue::_CircQueue():
-    nextFirst(0),
+    first(0),
     nextLast(0),
     size(0) {
 
@@ -28,18 +31,7 @@ uint8_t increment(uint8_t index) {
     return (index + 1) % _SERIAL_BUF_SIZE;
 }
 
-bool _Serial::_CircQueue::putFirst(uint8_t byte) {
-    if (full()) {
-        return false;
-    } else {
-        ++size;
-        buf[nextFirst] = byte;
-        nextFirst = decrement(nextFirst);
-        return true;
-    }
-}
-
-bool _Serial::_CircQueue::putLast(uint8_t byte) {
+bool _Serial::_CircQueue::put(uint8_t byte) {
     if (full()) {
         return false;
     } else {
@@ -50,39 +42,22 @@ bool _Serial::_CircQueue::putLast(uint8_t byte) {
     }
 }
 
-int16_t _Serial::_CircQueue::popFirst() {
+int16_t _Serial::_CircQueue::pop() {
     if (empty()) {
         return -1;
     } else {
         --size;
-        nextFirst = increment(nextFirst);
-        return buf[nextFirst];
+        uint8_t val = buf[first];
+        first = increment(first);
+        return val;
     }
 }
 
-int16_t _Serial::_CircQueue::popLast() {
+int16_t _Serial::_CircQueue::peek() const {
     if (empty()) {
         return -1;
     } else {
-        --size;
-        nextLast = decrement(nextLast);
-        return buf[nextLast];
-    }
-}
-
-int16_t _Serial::_CircQueue::peekFirst() const {
-    if (empty()) {
-        return -1;
-    } else {
-        return buf[increment(nextFirst)];
-    }
-}
-
-int16_t _Serial::_CircQueue::peekLast() const {
-    if (empty()) {
-        return -1;
-    } else {
-        return buf[decrement(nextLast)];
+        return buf[first];
     }
 }
 
@@ -92,19 +67,20 @@ _Serial::_Serial():
 }
 
 void _Serial::begin(int baudRate) {
+    timeout = _SERIAL_DEFAULT_TIMEOUT_MS;
+    uint16_t baudValue = ((((F_CPU / 16) + (baudRate / 2)) / (baudRate)) - 1);    
+    
     cli(); // disable interrupts
 
-    timeout = _SERIAL_DEFAULT_TIMEOUT_MS;
-
-    UCSR0B |= (1 << RXCIE0) | (1 << TXCIE0); // enable interrupts on uart recieve and transmit lines
     UCSR0B |= (1 << RXEN0) | (1 << TXEN0); // enable transmission and reception
 
     UCSR0C |= (1 << UCSZ01) | (1 << UCSZ00); // frame format: 8 bis, 1 stop bit, no parity
 
     // Set baud value
-    uint16_t baudValue = ((((F_CPU / 16) + (baudRate / 2)) / (baudRate)) - 1);
     UBRR0H = (uint8_t) (baudValue >> 8);
     UBRR0L = (uint8_t) baudValue;
+
+    UCSR0B |= (1 << RXCIE0) | (1 << TXCIE0); // enable interrupts on uart recieve and transmit lines    
 
     sei(); // re-enable interrupts
 }
@@ -118,47 +94,28 @@ bool _Serial::availableForWrite() const {
 }
 
 int16_t _Serial::peek() const {
-    return rxBuf.peekFirst();
+    return rxBuf.peek();
 }
 
 int16_t _Serial::readByte() {
-    return rxBuf.popFirst();
-}
-
-uint8_t min(uint8_t a, uint8_t b) {
-    if (a < b) {
-        return a;
-    } else {
-        return b;
-    }
+    while (rxBuf.empty()) {}
+    return rxBuf.pop();
 }
 
 uint8_t _Serial::readBytes(uint8_t *buf, uint8_t len) {
-    // time(0) and such return time in seconds. need Timer class implemented before this
-    // can be completed
-
-
-    // time_t last_recieved = time(0);
-    // uint8_t i = 0;
-    // while (i != len) {
-    //     if (available() > 0) {
-    //         buf[i] = readByte();
-    //         ++i;
-    //         last_recieved = time(0);
-    //     }
-    //     if (difftime(time(0), last_recieved) > timeout) {
-    //         break;
-    //     }
-    // }
-    // return i;
-    return 0;
+    uint8_t i = 0;
+    while (i != len) {
+        buf[i] = readByte();
+        ++i;
+    }
+    return i;
 }
 
 void _Serial::write(uint8_t byte) {
+    while (txBuf.full()) {}
+    txBuf.put(byte);
     if (availableForWrite()) {
-        UDR0 = byte;
-    } else {
-        txBuf.putLast(byte);
+        UDR0 = txBuf.pop();
     }
 }
 
@@ -173,32 +130,32 @@ void _Serial::print(const String &str) {
 }
 
 void _Serial::println(const String &str) {
-    print(str + "\n");
+    print(str + "\n\r");
 }
 
 void _Serial::setTimeout(uint32_t timeout) {
-    timeout = timeout;
+    this->timeout = timeout;
 }
 
 // place byte at end of rx buffer
 void _Serial::_rx_isr_() {
-    rxBuf.putLast(UDR0);
+    rxBuf.put(UDR0);
 }
 
 // send next first byte of tx buffer
 void _Serial::_tx_isr_() {
     if (!txBuf.empty()) {
-        UDR0 = txBuf.popFirst();
+        UDR0 = txBuf.pop();
     }
 }
 
 // these vector names are specifically for the ATmega328P.
 // For other devices, should probably do #defining in the .h to make everything uniform
-ISR(USART_TX_vect, ISR_BLOCK) {
+ISR(USART_TX_vect) {
     Serial._tx_isr_();
 }
 
-ISR(USART_RX_vect, ISR_BLOCK) {
+ISR(USART_RX_vect) {
     Serial._rx_isr_();
 }
 

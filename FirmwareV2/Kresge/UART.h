@@ -14,17 +14,14 @@ private:
     public:
         uint8_t buf[_SERIAL_BUF_SIZE];
         uint8_t size;
-        uint8_t nextFirst;
+        uint8_t first;
         uint8_t nextLast;
         _CircQueue();
         bool full() const;
         bool empty() const;
-        bool putFirst(uint8_t byte);
-        bool putLast(uint8_t byte);
-        int16_t popFirst();
-        int16_t popLast();
-        int16_t peekFirst() const;
-        int16_t peekLast() const;
+        bool put(uint8_t byte);
+        int16_t pop();
+        int16_t peek() const;
     };
 
     _CircQueue rxBuf;
@@ -37,6 +34,7 @@ public:
     void begin(int baudRate);
 
     uint8_t available() const;
+
     bool availableForWrite() const;
 
     int16_t peek() const;
