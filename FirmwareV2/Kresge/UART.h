@@ -45,9 +45,9 @@ public:
     // Blocks, until either timeout or len number of bytes are read
     uint8_t readBytes(uint8_t *buf, uint8_t len);
 
-    void write(uint8_t byte);
+    bool write(uint8_t byte);
 
-    void write(const uint8_t *buf, uint8_t len);
+    uint8_t write(const uint8_t *buf, uint8_t len);
 
     void print(const String &str);
 
@@ -59,6 +59,7 @@ public:
     void _rx_isr_();
     void _tx_isr_();
 };
+
 extern _Serial Serial;
 
 #endif

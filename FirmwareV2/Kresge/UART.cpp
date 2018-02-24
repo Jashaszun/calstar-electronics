@@ -1,5 +1,5 @@
 #include "UART.h"
-
+#include "Timer.h"
 #include <avr/interrupt.h>
 #include <avr/io.h>
 
@@ -98,30 +98,47 @@ int16_t _Serial::peek() const {
 }
 
 int16_t _Serial::readByte() {
-    while (rxBuf.empty()) {}
+    uint32_t t0 = millis();
+    while (rxBuf.empty()) {
+        if (millis() - t0 > timeout) {
+            return -1;
+        }
+    }
     return rxBuf.pop();
 }
 
 uint8_t _Serial::readBytes(uint8_t *buf, uint8_t len) {
     uint8_t i = 0;
     while (i != len) {
-        buf[i] = readByte();
+        uint8_t c = readByte();
+        if (c == -1) {
+            break;
+        }
+        buf[i] = c;
         ++i;
     }
     return i;
 }
 
-void _Serial::write(uint8_t byte) {
-    while (txBuf.full()) {}
+bool _Serial::write(uint8_t byte) {
+    uint32_t t0 = millis();
+    while (txBuf.full()) {
+        if (millis() - t0 > timeout) {
+            return false;
+        }
+    }
     txBuf.put(byte);
     if (availableForWrite()) {
         UDR0 = txBuf.pop();
     }
+    return true;
 }
 
-void _Serial::write(const uint8_t *buf, uint8_t len) {
+uint8_t _Serial::write(const uint8_t *buf, uint8_t len) {
     for (uint8_t i = 0; i < len; ++i) {
-        write(buf[i]);
+        if (!write(buf[i])) {
+            return i;
+        }
     }
 }
 
