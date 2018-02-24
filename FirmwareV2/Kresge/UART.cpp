@@ -1,9 +1,5 @@
 #include "UART.h"
 
-#include <string.h>
-#include <avr/interrupt.h>
-#include <avr/io.h>
-
 _Serial::_CircQueue::_CircQueue():
     nextFirst(0),
     nextLast(0),

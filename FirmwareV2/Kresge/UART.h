@@ -1,7 +1,7 @@
 #ifndef _KRESGE_UART_H_
 #define _KRESGE_UART_H_
 
-#include <stdint.h>
+#include "common.h"
 #include "KString.h"
 
 #define _SERIAL_BUF_SIZE 64

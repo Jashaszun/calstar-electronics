@@ -17,11 +17,11 @@ void pinMode(uint8_t port, uint8_t pin, uint8_t direction) {
 uint8_t getMode(uint8_t port, uint8_t pin) {
   switch (port) {
     case B:
-      return DDRB & (1 << pin);
+      return !!(DDRB & (1 << pin));
     case C:
-      return DDRC & (1 << pin);
+      return !!(DDRC & (1 << pin));
     case D:
-      return DDRD & (1 << pin);
+      return !!(DDRD & (1 << pin));
   }
 }
 
