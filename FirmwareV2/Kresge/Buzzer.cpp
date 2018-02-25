@@ -8,7 +8,7 @@ Buzzer::Buzzer(uint8_t port, uint8_t pin) {
   pinMode(port, pin, OUTPUT);
 }
 
-Buzzer::buzz() {
+void Buzzer::buzz() {
   _lastState = !_lastState;
   long ts = millis();
   // Flip every millis
