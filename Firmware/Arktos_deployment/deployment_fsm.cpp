@@ -203,7 +203,7 @@ char wait_for_signal() {
 }
 
 void beep() {
-	static short buzzer = 0;
+	short buzzer = 0;
 	unsigned long start_time_us = micros();
 	while (micros() - start_time_us < 1000000) {
 		buzzer = (micros() % 1000000 < 500000) ? 0 : 1;
