@@ -58,7 +58,7 @@ char wait_for_signal();
 
 void beep();
 
-short detect_continuity();
+short black_powder_present();
 short deployment_signal();
 void set_LEDs(uint8_t red, uint8_t green, uint8_t blue);
 short launched();
@@ -138,7 +138,7 @@ int main() {
 					Serial.println("BP = OFF");
 					digitalWrite(BLACK_POWDER_PIN_ARDUINO, LOW);
 				} else if (command == "CONTINUITY") {
-					Serial.println(detect_continuity() ? "Continuity" : "Disconnected");
+					Serial.println(black_powder_present() ? "Continuity - black powder present" : "Disconnected - black powder absent");
 				} else if (command == "BEEP") {
 					Serial.print("Beeping... ");
 					Serial.flush();
@@ -173,7 +173,9 @@ int main() {
 						break;
 					case DEPLOYED:
 						set_LEDs(LOW, LOW, HIGH); // program complete
-						beep();
+						if (black_powder_present()) {
+							beep();
+						}
 						delay(1000);
 						break;
 				}
@@ -193,7 +195,7 @@ char wait_for_signal() {
 		} else {
 			count = 0;
 		}
-		if (detect_continuity()) {
+		if (black_powder_present()) {
 			beep();
 		}
 	}
@@ -211,7 +213,7 @@ void beep() {
 	}
 }
 
-short detect_continuity() {
+short black_powder_present() {
 	return !(CONTINUITY_PORT & (1 << CONTINUITY_PIN));
 }
 
