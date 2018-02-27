@@ -3,8 +3,8 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <Arduino.h>
-#include <Wire.h>
-#include <SparkFunMPL3115A2.h>
+// #include <Wire.h>
+// #include <SparkFunMPL3115A2.h>
 
 #define F_CPU 16000000
 #define RECEIVER_IO DDRD
@@ -42,13 +42,13 @@
 // MPL3115A2 altimeter;
 
 enum State {
-	DEFAULT = 0,
+	INIT = 0,
 	LAUNCH = 1,
 	TEST = 2,
 };
 
 enum LaunchState {
-	INIT = 0,
+	PAD = 0,
 	FLIGHT = 1,
 	SIGNAL_RECEIVED = 2,
 	DEPLOYED = 3
@@ -61,9 +61,11 @@ void beep();
 short detect_continuity();
 short deployment_signal();
 void set_LEDs(uint8_t red, uint8_t green, uint8_t blue);
+short launched();
+short landed();
 
-short state = DEFAULT;
-short launch_state = INIT;
+short state = INIT;
+short launch_state = PAD;
 
 int main() {
 	/* Pseudocode for deployment sequence:
@@ -102,13 +104,9 @@ int main() {
 	// altimeter.setOversampleRate(7);
 	// altimeter.enableEventFlags();
 
-	while (beep_for_ms(500, 880)) { }
-	set_LEDs(HIGH, LOW, LOW);
-
-
 	while (1) {
 		switch (state) {
-			case DEFAULT:
+			case INIT:
 				if (Serial.available() && (Serial.readString() == "test")) {
 					state = TEST;
 				} else if (Serial.available() && (Serial.readString() == "launch")) {
@@ -116,13 +114,14 @@ int main() {
 				}
 				break;
 			case TEST:
+			{
 				if (!Serial.available()) {
-					continue;
+					Serial.println("No serial!");
+					break;
 				}
 				String command = Serial.readString();
 				if (command == "EXIT") {
 					Serial.println("Deployment exiting test mode.");
-					break;
 				} else if (command.length() == 7 && command.substring(0, 4) == "led ") {
 					set_LEDs(command[4] == '1', command[5] == '1', command[6] == '1');
 				} else if (command == "LVDS_RECEIVE") {
@@ -144,13 +143,15 @@ int main() {
 					Serial.print("Beeping... ");
 					Serial.flush();
 
-					while (beep_for_ms(1000, 800)) { }
+					for (int i = 0; i < 5; i++) beep();
 
 					Serial.println("done.");
 				}
+				break;
+			}
 			case LAUNCH:
 				switch(launch_state) {
-					case INIT:
+					case PAD:
 						set_LEDs(LOW, LOW, LOW);
 						for (int i = 0; i < 3; i++) {
 							beep();
@@ -224,4 +225,12 @@ void set_LEDs(uint8_t red, uint8_t green, uint8_t blue) {
 short deployment_signal() {
 	// return !(RECEIVER_PORT & (1 << RECEIVER_PIN));
 	return digitalRead(RECEIVER_PIN) == LOW;
+}
+
+short launched() {
+	return 1;
+}
+
+short landed() {
+	return 1;
 }
