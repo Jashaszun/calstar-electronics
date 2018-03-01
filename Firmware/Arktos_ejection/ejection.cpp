@@ -224,6 +224,17 @@ int main() {
             currentAltZero = altMovingAvg;
             Serial.println("Zeroing altitude");
           }
+          else if (command == "lvds r") {
+            Serial.println("LVDS Receive: " + digitalRead(RECEIVER_PIN));
+          }
+          else if (command == "lvds on") {
+            digitalWrite(TRANSMITTER_PIN, HIGH);
+            Serial.println("LVDS Transmit set to on.");
+          }
+          else if (command == "lvds off") {
+            digitalWrite(TRANSMITTER_PIN, LOW);
+            Serial.println("LVDS Transmit set to off.");
+          }
           else if (command == "t") {
             enableTelemetry = !enableTelemetry;
             if (enableTelemetry) {
