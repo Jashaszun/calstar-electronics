@@ -58,6 +58,8 @@ bool command_available = false;
 String command = "";
 void resetCommand();
 
+bool enableTelemetry = true;
+
 int main() {
   init(); // always call this first if using Arduino.h!
   Wire.begin(); // for I2C
@@ -125,7 +127,7 @@ int main() {
         //  |
         //  |
         // \/
-        servo.write(90); // NEEDS TO BE CHANGED <--------- CHANGE
+        servo.write(180); // NEEDS TO BE CHANGED <--------- CHANGE
         // ^
         // |
         // |
@@ -145,17 +147,9 @@ int main() {
         if (launched(altimeter, currentAltZero)) {
           state = LAUNCHED;
         }
-        if (radio.receiveDone()) {
-          if (radio.ACKRequested()) {
-            radio.sendACK();
-          }
-          if (radio.DATALEN != 1) {
-            break;
-          }
-          if (radio.DATA[0] == 'z') { // zero altitude
-            currentAltZero = altMovingAvg;
-            radio.sendWithRetry(TRANSMIT_TO, "ALT_ZERO", strlen("ALT_ZERO"), 5, 200);
-          }
+        if (command_available && command == "z") {
+          currentAltZero = altMovingAvg;
+          resetCommand();
         }
         break;
       case LAUNCHED:
@@ -167,23 +161,9 @@ int main() {
       case RADIO_WAIT:
         setLEDs(HIGH, LOW, LOW);
 
-        if (radio.receiveDone()) {
-          if (radio.ACKRequested()) {
-            radio.sendACK();
-          }
-          char signal[RADIO_SIGNAL_LEN];
-          // if length of recieved data is not same as expected size ignore
-          if (radio.DATALEN != RADIO_SIGNAL_LEN) {
-            break;
-          }
-
-          for (byte i = 0; i < radio.DATALEN; ++i) {
-            signal[i] = (char)radio.DATA[i];
-          }
-
-          if (strcmp(signal, DEPLOY_SIGNAL) == 0) {
-            state = DEPLOY;
-          }
+        if (command_available && command == DEPLOY_SIGNAL) {
+          state = DEPLOY;
+          resetCommand();
         }
         break;
       case DEPLOY:
@@ -204,7 +184,7 @@ int main() {
         // NEED TO WRITE
         // NEED TO WRITE
         // NEED TO WRITE
-        // servo.write(90);
+        servo.write(0);
         // NEED TO WRITE
         // NEED TO WRITE
         // NEED TO WRITE
@@ -242,9 +222,19 @@ int main() {
           }
           else if (command == "z") {
             currentAltZero = altMovingAvg;
+            Serial.println("Zeroing altitude");
+          }
+          else if (command == "t") {
+            enableTelemetry = !enableTelemetry;
+            if (enableTelemetry) {
+              Serial.println("Enabling telemetry");
+            } else {
+              Serial.println("Disabling telemetry");
+            }
           }
           else if (command.length() > 6 && command.substring(0, 6) == "radio ") {
-            const char* tempstr = command.substring(6).c_str();
+            const char* tempstr = command.c_str() + 6;
+            Serial.println("Sending over radio: " + String(tempstr));
             radio.send(TRANSMIT_TO, tempstr, strlen(tempstr));
           }
           else if (command.length() > 7 && command.substring(0, 7) == "serial ") {
@@ -269,7 +259,7 @@ int main() {
     }
 
     // Send Telemetry
-    if (millis() - lastTransmitTime >= TRANSMIT_INTERVAL) {
+    if (millis() - lastTransmitTime >= TRANSMIT_INTERVAL && enableTelemetry) {
             float accelX = accelerometer.get_x_g();
 			float accelY = accelerometer.get_y_g();
 			float accelZ = accelerometer.get_z_g();
@@ -299,8 +289,8 @@ int main() {
       }
       command_available = true;
       command = "";
-      for (int i = 0; i < radio.DATALEN; i++) {
-        command += radio.DATA[i];
+      for (int i = 0; i < radio.DATALEN - 1; i++) {
+        command += (char)radio.DATA[i];
       }
       Serial.print("Received command: ");
       Serial.println(command);
