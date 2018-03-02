@@ -200,23 +200,15 @@ int main() {
 }
 
 char wait_for_signal() {
-	short signal_received = 0;
-	int count = 0;
-	while (!signal_received) { // wait for signal from ejection
-		if (deployment_signal()) { // low voltage means signal!
-			count++;
-			if (count >= VERIF_SAMPLES) { // need five signals to verify
-				signal_received = 1; // break loop and return
-			}
-		} else {
-			count = 0;
-		}
-		beep_if_continuity();
+	static unsigned short count = 0;
+	if (deployment_signal() && landed()) { // low voltage means signal!
+		count++;
+		return (count >= VERIF_SAMPLES);
+	} else {
+		count = 0;
+		return 0;
 	}
-	if (landed()) { // landed!
-		return 1;
-	}
-	return 0; // not on ground
+	beep_if_continuity();
 }
 
 // ** PROCESSING BEEPING **
@@ -230,7 +222,7 @@ bool buzzer_state = 0; // the next voltage to be written to the buzzer pin
 This function should be called on every iteration of the while loop.
 If a beep does not need to be done, then it just returns.
 Otherwise, if enough time has passed since the last flip of the buzzer voltage, it will flip the
-voltage on the buzzer. 
+voltage on the buzzer.
 */
 void process_beep() {
 	if (beeping && micros() - last_buzzer_flip >= 500) { // beeps at 500 Hz
