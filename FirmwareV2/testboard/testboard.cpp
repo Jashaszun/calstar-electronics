@@ -34,8 +34,9 @@ int main() {
 
 int buzzerTest() {
   Buzzer b(0x00, 1);
-  for (int i = 0; i < 1000; i++) {
-    b.buzz();
+  b.startBuzz(1000000); // 1 second
+  while (b.isBuzzing()) {
+    b.updateBuzzer();
   }
   return 0;
 }
