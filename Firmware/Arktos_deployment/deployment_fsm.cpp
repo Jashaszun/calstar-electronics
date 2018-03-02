@@ -28,8 +28,9 @@
 MPL3115A2 altimeter;
 
 enum State {
-	LAUNCH = 0,
-	TEST_MODE = 1,
+	INIT = 0
+	LAUNCH = 1,
+	TEST_MODE = 2,
 };
 
 enum LaunchState {
@@ -49,7 +50,7 @@ void setLEDs(uint8_t red, uint8_t green, uint8_t blue);
 short launched();
 short landed();
 
-short state = LAUNCH;
+short state = INIT;
 short launch_state = PAD;
 
 float base_alt = altimeter.readAltitudeFt(); // used for zeroing altitude reading
@@ -97,6 +98,13 @@ int main() {
 
 	while (1) {
 		switch (state) {
+			case INIT:
+				*base_alt_ptr = 0;
+				for (int i = 0; i < 100; i++) {
+					*base_alt_ptr += altimeter.readAltitudeFt();
+				}
+				*base_alt_ptr /= 100;
+				state = TEST_MODE;
 			case TEST_MODE:
 				if (printAltimeterReading) {
 					Serial.print("Altimeter reading: ");
@@ -105,8 +113,7 @@ int main() {
 				if (command_available) {
 					if (command == "EXIT\n") {
 						Serial.println("Deployment exiting test mode.");
-						state = LAUNCH;
-						*base_alt_ptr = altimeter.readAltitudeFt(); // make sure we re-establish base altitude when we switch back into LAUNCH mode
+						state = INIT;
 					} else if (command.length() == 8 && command.substring(0, 4) == "led ") {
 						setLEDs(command[4] == '1', command[5] == '1', command[6] == '1');
 					} else if (command == "LVDS_RECEIVE\n") {
@@ -142,7 +149,6 @@ int main() {
 			case LAUNCH:
 				switch(launch_state) {
 					case PAD:
-						*base_alt_ptr = (*base_alt_ptr + altimeter.readAltitudeFt()) / 2; // moving exponential average filter
 						setLEDs(1, 1, 0);
 						for (int i = 0; i < 3; i++) {
 							setLEDs(1, 1, 1);
