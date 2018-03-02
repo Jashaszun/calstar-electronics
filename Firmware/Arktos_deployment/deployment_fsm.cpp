@@ -22,7 +22,6 @@
 #define ALT_ADDR 0x60
 #define ALT_WRITE_ADDR 0xC0
 #define ALT_READ_ADDR 0xC1
-#define BASE_ALT 0
 #define VERIF_SAMPLES 20
 
 // Altimeter
@@ -52,6 +51,9 @@ short landed();
 
 short state = LAUNCH;
 short launch_state = PAD;
+
+float base_alt = altimeter.readAltitudeFt(); // used for zeroing altitude reading
+float* base_alt_ptr = &base_alt; // so all functions can manipulate this
 
 bool command_available = false;
 String command = "";
@@ -97,12 +99,14 @@ int main() {
 		switch (state) {
 			case TEST_MODE:
 				if (printAltimeterReading) {
-					Serial.println("Altimeter reading: " + altimeter.readAltitudeFt());
+					Serial.print("Altimeter reading: ");
+					Serial.println(altimeter.readAltitudeFt());
 				}
 				if (command_available) {
 					if (command == "EXIT\n") {
 						Serial.println("Deployment exiting test mode.");
 						state = LAUNCH;
+						*base_alt_ptr = altimeter.readAltitudeFt(); // make sure we re-establish base altitude when we switch back into LAUNCH mode
 					} else if (command.length() == 8 && command.substring(0, 4) == "led ") {
 						setLEDs(command[4] == '1', command[5] == '1', command[6] == '1');
 					} else if (command == "LVDS_RECEIVE\n") {
@@ -129,7 +133,8 @@ int main() {
 						Serial.println("done.");
 					} else if (command == "ALTIMETER") {
 						printAltimeterReading = !printAltimeterReading;
-						Serial.println((printAltimeterReading ? "P" : "Not p") + "rinting altimeter reading");
+						Serial.print(printAltimeterReading ? "P" : "Not p");
+						Serial.println("rinting altimeter reading");
 					}
 					resetCommand();
 				}
@@ -137,6 +142,7 @@ int main() {
 			case LAUNCH:
 				switch(launch_state) {
 					case PAD:
+						*base_alt_ptr = (*base_alt_ptr + altimeter.readAltitudeFt()) / 2; // moving exponential average filter
 						setLEDs(1, 1, 0);
 						for (int i = 0; i < 3; i++) {
 							setLEDs(1, 1, 1);
@@ -183,6 +189,7 @@ int main() {
 		  else Serial.println("Test mode.");
 		}
 
+		// Switch into test mode with serial input
 		if (command_available && command == "test\n" && state != TEST_MODE) {
 		  state = TEST_MODE;
 		  setLEDs(0, 0, 0);
@@ -246,9 +253,9 @@ short deployment_signal() {
 }
 
 short launched() {
-	return 1;
+	return altimeter.readAltitudeFt() - *base_alt_ptr > ALT_LAUNCHED;
 }
 
 short landed() {
-	return 1;
+	return altimeter.readAltitudeFt() - *base_alt_ptr < ALT_LAND;
 }
