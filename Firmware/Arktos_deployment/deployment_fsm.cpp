@@ -28,16 +28,16 @@
 MPL3115A2 altimeter;
 
 enum State {
-	INIT = 0
-	LAUNCH = 1,
-	TEST_MODE = 2,
+	INIT,
+	LAUNCH,
+	TEST_MODE
 };
 
 enum LaunchState {
-	PAD = 0,
-	FLIGHT = 1,
-	SIGNAL_RECEIVED = 2,
-	DEPLOYED = 3
+	PAD,
+	FLIGHT,
+	SIGNAL_RECEIVED,
+	DEPLOYED
 };
 
 char wait_for_signal();
@@ -54,7 +54,6 @@ short state = INIT;
 short launch_state = PAD;
 
 float base_alt = altimeter.readAltitudeFt(); // used for zeroing altitude reading
-float* base_alt_ptr = &base_alt; // so all functions can manipulate this
 
 bool command_available = false;
 String command = "";
@@ -99,12 +98,13 @@ int main() {
 	while (1) {
 		switch (state) {
 			case INIT:
-				*base_alt_ptr = 0;
+				base_alt = 0;
 				for (int i = 0; i < 100; i++) {
-					*base_alt_ptr += altimeter.readAltitudeFt();
+					base_alt += altimeter.readAltitudeFt();
 				}
-				*base_alt_ptr /= 100;
+				base_alt /= 100;
 				state = TEST_MODE;
+				break;
 			case TEST_MODE:
 				if (printAltimeterReading) {
 					Serial.print("Altimeter reading: ");
@@ -259,9 +259,9 @@ short deployment_signal() {
 }
 
 short launched() {
-	return altimeter.readAltitudeFt() - *base_alt_ptr > ALT_LAUNCHED;
+	return altimeter.readAltitudeFt() - base_alt > ALT_LAUNCHED;
 }
 
 short landed() {
-	return altimeter.readAltitudeFt() - *base_alt_ptr < ALT_LAND;
+	return altimeter.readAltitudeFt() - base_alt < ALT_LAND;
 }
