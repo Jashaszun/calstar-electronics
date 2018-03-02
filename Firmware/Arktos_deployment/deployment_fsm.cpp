@@ -36,6 +36,7 @@ enum State {
 enum LaunchState {
 	PAD,
 	FLIGHT,
+	LANDED,
 	SIGNAL_RECEIVED,
 	DEPLOYED
 };
@@ -161,14 +162,18 @@ int main() {
 							if (black_powder_present()) beep();
 							else delay(1000);
 						}
-						launch_state = FLIGHT;
+						if (launched()) launch_state = FLIGHT;
 						break;
 					case FLIGHT:
-						setLEDs(1, 0, 0); // red LEDs indicate signal never received
+						setLEDs(1, 0, 0); // indicates launched condition met
+						if (landed()) launch_state = LANDED;
+						break;
+					case LANDED:
+						setLEDs(0, 1, 0); // indicates landing condition met
 						if (deployment_signal()) launch_state = SIGNAL_RECEIVED;
 						break;
 					case SIGNAL_RECEIVED:
-						setLEDs(0, 1, 0); // green LEDs indicate receipt of signal
+						setLEDs(0, 0, 1); // indicates receipt of signal
 						// trigger black powder
 						digitalWrite(BLACK_POWDER_PIN_ARDUINO, 1);
 						delay(1000);
@@ -176,7 +181,7 @@ int main() {
 						launch_state = DEPLOYED;
 						break;
 					case DEPLOYED:
-						setLEDs(0, 0, 1); // program complete
+						setLEDs(1, 1, 1); // program complete
 						if (black_powder_present()) {
 							beep();
 						}
@@ -259,9 +264,21 @@ short deployment_signal() {
 }
 
 short launched() {
-	return altimeter.readAltitudeFt() - base_alt > ALT_LAUNCHED;
+	static unsigned short counter = 0;
+	if (altimeter.readAltitudeFt() - base_alt < ALT_LAUNCHED) {
+		counter = 0;
+	} else {
+		counter ++;
+		return (counter >= VERIF_SAMPLES);
+	}
 }
 
 short landed() {
-	return altimeter.readAltitudeFt() - base_alt < ALT_LAND;
+	static unsigned short counter = 0;
+	if (altimeter.readAltitudeFt() - base_alt > ALT_LAND) {
+		counter = 0;
+	} else {
+		counter ++;
+		return (counter >= VERIF_SAMPLES);
+	}
 }
