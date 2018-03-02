@@ -83,17 +83,22 @@ int main() {
 	pinMode(BUZZER_PIN, OUTPUT);
 
 	// Configure accelerometer
-	// Wire.begin();
-	// altimeter.begin();
-	// altimeter.setModeAltimeter();
-	// altimeter.setOversampleRate(7);
-	// altimeter.enableEventFlags();
+	Wire.begin();
+	altimeter.begin();
+	altimeter.setModeAltimeter();
+	altimeter.setOversampleRate(7);
+	altimeter.enableEventFlags();
 
 	Serial.println("Deployment board started.");
+
+	bool printAltimeterReading = false;
 
 	while (1) {
 		switch (state) {
 			case TEST_MODE:
+				if (printAltimeterReading) {
+					Serial.println("Altimeter reading: " + altimeter.readAltitudeFt());
+				}
 				if (command_available) {
 					if (command == "EXIT\n") {
 						Serial.println("Deployment exiting test mode.");
@@ -122,6 +127,9 @@ int main() {
 						for (int i = 0; i < 5; i++) beep();
 
 						Serial.println("done.");
+					} else if (command == "ALTIMETER") {
+						printAltimeterReading = !printAltimeterReading;
+						Serial.println((printAltimeterReading ? "P" : "Not p") + "rinting altimeter reading");
 					}
 					resetCommand();
 				}
