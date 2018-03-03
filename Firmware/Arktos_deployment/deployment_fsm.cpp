@@ -42,6 +42,7 @@ enum LaunchState {
   FLIGHT,
   LANDED,
   SIGNAL_RECEIVED,
+  TRIGGER,
   DEPLOYED
 };
 
@@ -75,6 +76,8 @@ short state = INIT;
 short launch_state = PAD;
 
 float base_alt = 0; // used for zeroing altitude reading
+
+float accel_stable = 10; // Stable when near 0
 
 bool command_available = false;
 String command = "";
@@ -120,6 +123,7 @@ int main() {
   Serial.println("Deployment board started.");
 
   bool printAltimeterReading = false;
+  bool printAccelerometerReading = false;
 
   int num_init_beeps = 0;
   int current_altimeter_zeroing_reading = 0;
@@ -138,7 +142,7 @@ int main() {
       	} else if (current_altimeter_zeroing_reading < 100) {
           // collect 100 measurements to zero but delay in between each one
           if (!beeping) {
-            start_beep(0, 50); // 50 ms between readings
+            start_beep(0, 50); // 50 ms between readings // Side note this is like the jankiest timing I've ever seen in my life
             setLEDs(current_altimeter_zeroing_reading < 50, current_altimeter_zeroing_reading % 50 < 25, current_altimeter_zeroing_reading % 25 < 12);
             base_alt += altimeter.readAltitudeFt();
             current_altimeter_zeroing_reading++;
@@ -165,40 +169,56 @@ int main() {
           Serial.print("Altimeter reading: ");
           Serial.println(altimeter.readAltitudeFt());
         }
+        if (printAccelerometerReading) {
+          Serial.print("Accelerometer reading: (x: ");
+          Serial.print(accelerometer.get_x_g(), 2);
+          Serial.print(", y: ");
+          Serial.print(accelerometer.get_y_g(), 2);
+          Serial.print(", z: ");
+          Serial.print(accelerometer.get_z_g(), 2);
+          Serial.println(")");
+        }
         if (command_available) {
-          if (command == "EXIT\n") {
+          if (command == "EXIT") {
             Serial.println("Deployment exiting test mode.");
             state = INIT;
-          } else if (command.length() == 8 && command.substring(0, 4) == "led ") {
+          } else if (command == "SIGNAL_RECEIVED") {
+            Serial.println("Moving to SIGNAL_RECEIVED.");
+            state = LAUNCH;
+            launch_state = SIGNAL_RECEIVED;
+          } else if (command.length() == 7 && command.substring(0, 4) == "led ") {
             setLEDs(command[4] == '1', command[5] == '1', command[6] == '1');
-          } else if (command == "LVDS_RECEIVE\n") {
+          } else if (command == "LVDS_RECEIVE") {
             Serial.print("LVDS received: ");
             Serial.println(digitalRead(RECEIVER_PIN));
-          } else if (command.length() == 4 && command[0] == 'T') {
+          } else if (command.length() == 3 && command[0] == 'T') {
             // should be a space after the T
             Serial.println("Toggling transmitter pin");
             digitalWrite(TRANSMITTER_PIN, command[2] == '1');
-          } else if (command == "BP_ON\n") {
+          } else if (command == "BP_ON") {
             Serial.println("BP = ON");
             digitalWrite(BLACK_POWDER_PIN_ARDUINO, 1);
-          } else if (command == "BP_OFF\n") {
+          } else if (command == "BP_OFF") {
             Serial.println("BP = OFF");
             digitalWrite(BLACK_POWDER_PIN_ARDUINO, 0);
-          } else if (command == "CONTINUITY\n") {
+          } else if (command == "CONTINUITY") {
             Serial.println(black_powder_present() ? "Continuity - black powder present" : "Disconnected - black powder absent");
-          } else if (command == "BEEP\n") {
+          } else if (command == "BEEP") {
             Serial.println("Starting beep for 0.5s");
             start_beep(500, 0);
-          } else if (command == "ALTIMETER\n") {
+          } else if (command == "ALTIMETER") {
             printAltimeterReading = !printAltimeterReading;
             Serial.print(printAltimeterReading ? "P" : "Not p");
             Serial.println("rinting altimeter reading");
-          } else if (command == "ACCEL\n") {
-            Serial.print("Printing accelerometer (x y z): (");
-            Serial.print(accelerometer.get_x_g());
-            Serial.print(accelerometer.get_y_g());
-            Serial.print(accelerometer.get_z_g());
-            Serial.println(")");
+          } else if (command == "ACCEL") {
+            printAccelerometerReading = !printAccelerometerReading;
+            Serial.print(printAccelerometerReading ? "P" : "Not p");
+            Serial.println("rinting accelerometer reading");
+            // Serial.print("Printing accelerometer (x y z): (");
+            // Serial.print(accelerometer.get_x_g());
+            // Serial.print(accelerometer.get_y_g());
+            // Serial.print(accelerometer.get_z_g());
+            // Serial.println(")");
           } else {
             Serial.println("Invalid command.");
           }
@@ -208,10 +228,12 @@ int main() {
       case LAUNCH:
         // beep for .5s every 2s if continuity at the start of the period
         if (!beeping) {
-          if (black_powder_present())
+          if (black_powder_present()) {
             start_beep(500, 1500);
-          else
+          }
+          else {
             start_beep(0, 2000);
+          }
         }
         switch(launch_state) {
           case PAD:
@@ -230,6 +252,33 @@ int main() {
             break;
           case SIGNAL_RECEIVED:
             setLEDs(0, 1, 1); // indicates receipt of signal
+            // Wait for stable accelerometer values
+            {
+              static unsigned long lastmillis = 0;
+              if (millis() > lastmillis + 100) {
+                lastmillis = millis();
+                float xval = accelerometer.get_x_g();
+                float yval = accelerometer.get_y_g();
+                float zval = accelerometer.get_z_g();
+
+                float norm_squared = xval * xval + yval * yval + zval * zval;
+                float stability = abs(norm_squared - 1);
+
+                // Serial.print(stability);
+                // Serial.print("   ");
+                // Serial.println(accel_stable);
+
+                accel_stable = accel_stable * 0.5 + stability * 0.5; // Running average
+
+                if (accel_stable < 0.2) {
+                  launch_state = TRIGGER;
+                }
+              }
+            }
+
+            break;
+          case TRIGGER:
+            setLEDs(1, 0, 1); // Triggering
             // trigger black powder
             digitalWrite(BLACK_POWDER_PIN_ARDUINO, 1);
             delay(1000);
@@ -249,11 +298,14 @@ int main() {
     if (Serial.available()) {
       command_available = true;
       command = Serial.readString();
+      if (command.endsWith("\n")) {
+        command = command.substring(0, command.length() - 1);
+      }
     }
 
     // Switch into test mode with serial input
     if (command_available && state != TEST_MODE) {
-      if (command == "test\n") {
+      if (command == "test") {
         state = TEST_MODE;
         setLEDs(0, 0, 0);
         Serial.println("Deployment entering test mode.");
@@ -301,6 +353,7 @@ void process_beep() {
   }
   if (millis() - last_beep_start > curr_beep_duration + curr_pause_duration) {
     beeping = false;
+    digitalWrite(BUZZER_PIN, LOW);
   }
 }
 
