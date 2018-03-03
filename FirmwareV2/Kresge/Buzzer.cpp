@@ -1,7 +1,5 @@
 #include "Buzzer.h"
 
-// TODO replace all us with ms?
-
 Buzzer::Buzzer(uint8_t port, uint8_t pin) {
   _pin = pin;
   _port = port;
@@ -13,31 +11,31 @@ Buzzer::Buzzer(uint8_t port, uint8_t pin) {
   pinMode(port, pin, OUTPUT);
 }
 
-void Buzzer::_setValuesOnBuzzStart(long duration_us, short frequency) {
+void Buzzer::_setValuesOnBuzzStart(long duration_ms, short frequency) {
   _period = 1 / (2 * PI * frequency); // T = 1 / (2pi*f)
   _active = 1;
   _lastStart = micros();
-  _lastDuration = duration_us;
+  _lastDuration = duration_ms;
 }
 
-void Buzzer::blockingBuzz(long duration_us, short frequency) {
-  _setValuesOnBuzzStart(duration_us, frequency);
+void Buzzer::blockingBuzz(long duration_ms, short frequency) {
+  _setValuesOnBuzzStart(duration_ms, frequency);
   while (micros() - _lastStart > _lastDuration) {
     _flipVoltage();
   }
   stopBuzz();
 }
 
-void Buzzer::blockingBuzz(long duration_us) {
-  blockingBuzz(duration_us, DEFAULT_FREQUENCY);
+void Buzzer::blockingBuzz(long duration_ms) {
+  blockingBuzz(duration_ms, DEFAULT_FREQUENCY);
 }
 
-void Buzzer::startBuzz(long duration_us, short frequency) {
-  _setValuesOnBuzzStart(duration_us, frequency);
+void Buzzer::startBuzz(long duration_ms, short frequency) {
+  _setValuesOnBuzzStart(duration_ms, frequency);
 }
 
-void Buzzer::startBuzz(long duration_us) {
-  startBuzz(duration_us, DEFAULT_FREQUENCY);
+void Buzzer::startBuzz(long duration_ms) {
+  startBuzz(duration_ms, DEFAULT_FREQUENCY);
 }
 
 void Buzzer::stopBuzz() {
@@ -45,7 +43,7 @@ void Buzzer::stopBuzz() {
 }
 
 bool Buzzer::updateBuzzer() {
-  if (micros() - _lastStart > _lastDuration) {
+  if (millis() - _lastStart > _lastDuration) {
     stopBuzz();
     return 0;
   } else {
@@ -59,9 +57,9 @@ bool Buzzer::isBuzzing() {
 }
 
 void Buzzer::_flipVoltage() {
-  if (_active && micros() - _lastFlip >= _period) {
+  if (_active && millis() - _lastFlip >= _period) {
     _lastState = !_lastState;
-    _lastFlip = micros();
+    _lastFlip = millis();
     digitalWrite(_port, _pin, _lastState);
   }
 }

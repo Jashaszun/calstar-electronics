@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <SparkFunMPL3115A2.h>
+#include <LIS331HH.h>
 
 #define F_CPU 16000000
 #define RECEIVER_PIN 3
@@ -22,10 +23,13 @@
 #define ALT_ADDR 0x60
 #define ALT_WRITE_ADDR 0xC0
 #define ALT_READ_ADDR 0xC1
-#define VERIF_SAMPLES 20
+#define VERIF_SAMPLES 20 // number of samples needed to verify landing
+#define ACCEL_TOLERANCE 1 // maximum acceptable acceleration (in gs)
 
 // Altimeter
 MPL3115A2 altimeter;
+// accelerometer
+LIS331HH accelerometer(0);
 
 enum State {
   INIT,
@@ -101,12 +105,17 @@ int main() {
 
   pinMode(BUZZER_PIN, OUTPUT);
 
-  // Configure accelerometer
+  // Configure altimeter
   Wire.begin();
   altimeter.begin();
   altimeter.setModeAltimeter();
   altimeter.setOversampleRate(7);
   altimeter.enableEventFlags();
+
+  // Configure accelerometer
+  accelerometer.write_reg(LIS331HH_CTRL_REG1, 0x3F); // Normal power mode, 1000 Hz data rate, x y and z axes enabled
+  accelerometer.write_reg(LIS331HH_CTRL_REG4, 0xB0); // Block data update, +- 12g scale
+
 
   Serial.println("Deployment board started.");
 
@@ -184,6 +193,12 @@ int main() {
             printAltimeterReading = !printAltimeterReading;
             Serial.print(printAltimeterReading ? "P" : "Not p");
             Serial.println("rinting altimeter reading");
+          } else if (command == "ACCEL\n") {
+            Serial.print("Printing accelerometer (x y z): (");
+            Serial.print(accelerometer.get_x_g());
+            Serial.print(accelerometer.get_y_g());
+            Serial.print(accelerometer.get_z_g());
+            Serial.println(")");
           } else {
             Serial.println("Invalid command.");
           }
@@ -349,7 +364,11 @@ short launched() {
 
 short landed() {
   static unsigned short counter = 0;
-  if (altimeter.readAltitudeFt() - base_alt > ALT_LAND) {
+  // "Landed" means altimeter says we've landed AND accelerometer says we're not moving
+  if (altimeter.readAltitudeFt() - base_alt > ALT_LAND
+      || accelerometer.get_x_g() > ACCEL_TOLERANCE
+      || accelerometer.get_y_g() > ACCEL_TOLERANCE
+      || accelerometer.get_z_g() > ACCEL_TOLERANCE) {
     counter = 0;
     return 0;
   } else {
