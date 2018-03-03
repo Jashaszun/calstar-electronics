@@ -43,11 +43,23 @@ enum LaunchState {
 
 char wait_for_signal();
 
+// seconds to microseconds
+//#define S_TO_US(N) ((unsigned long)(N)*1000000)
+// milliseconds to microseconds
+#define MS_TO_US(N) ((unsigned long)(N)*1000)
+/* --- Nonblocking beep functions --- */
+bool beeping = false; // whether or not process_beep should attempt to emit noise
 void process_beep(); // runs each iteration of the while loop and flips voltage if necessary
-void beep_if_continuity(); // every 2 seconds, check for continuity - if there's continuity, beep for half a second
-void start_beep(long duration_us); // runs a beep that lasts for `duration` ms,
+//void beep_if_continuity(); // every 2 seconds, check for continuity - if there's continuity, beep for half a second
+void start_beep(unsigned long beep_ms, unsigned long pause_ms); // runs a beep that lasts for beep_ms, and pauses for pause_ms
                                    // if another call is made that will override any existing beep
-void stop_beep();
+void stop_beep(); // stops the currently running beep, if there is one.
+
+/* --- Nonblocking delay functions --- */
+/*bool delaying = false;
+void process_delay(); // runs each iteration of the while loop and stops delay if finished
+void start_delay(unsigned long ms); // delays for that many milliseconds. additional calls override existing delays.
+void stop_delay(); // stops the currently running delay, if there is one.*/
 
 short black_powder_present();
 short deployment_signal();
@@ -58,7 +70,7 @@ short landed();
 short state = INIT;
 short launch_state = PAD;
 
-float base_alt = altimeter.readAltitudeFt(); // used for zeroing altitude reading
+float base_alt = 0; // used for zeroing altitude reading
 
 bool command_available = false;
 String command = "";
@@ -100,15 +112,44 @@ int main() {
 
   bool printAltimeterReading = false;
 
+  int num_init_beeps = 0;
+  int current_altimeter_zeroing_reading = 0;
+  int num_zero_done_beeps = 0;
   while (1) {
     switch (state) {
       case INIT:
-        base_alt = 0;
-        for (int i = 0; i < 100; i++) {
-          base_alt += altimeter.readAltitudeFt();
+      	// run 3 of [1 second beep, 1 second delay]
+      	if (num_init_beeps < 3) {
+          if (!beeping) {
+      	  	start_beep(1000, 1000); // 1s beep, 1s pause
+      	  	num_init_beeps++;
+            Serial.print("Beeping ");
+            Serial.println(num_init_beeps);
+          }
+      	} else if (current_altimeter_zeroing_reading < 100) {
+          // collect 100 measurements to zero but delay in between each one
+          if (!beeping) {
+            start_beep(0, 50); // 50 ms between readings
+            setLEDs(current_altimeter_zeroing_reading < 50, current_altimeter_zeroing_reading % 50 < 25, current_altimeter_zeroing_reading % 25 < 12);
+            base_alt += altimeter.readAltitudeFt();
+            current_altimeter_zeroing_reading++;
+            if (current_altimeter_zeroing_reading % 10 == 0) {
+              Serial.print("Altimeter reading ");
+              Serial.println(current_altimeter_zeroing_reading);
+            }
+          }
+        } else if (num_zero_done_beeps < 3) {
+          if (!beeping) {
+            start_beep(250, 250); // 250 ms beep, 250 ms pause
+            num_zero_done_beeps++;
+          }
+        } else {
+	        base_alt /= 100;
+          Serial.print("Base Altitude: ");
+          Serial.println(base_alt);
+          state = LAUNCH;
+          launch_state = PAD;
         }
-        base_alt /= 100;
-        state = TEST_MODE;
         break;
       case TEST_MODE:
         if (printAltimeterReading) {
@@ -137,21 +178,29 @@ int main() {
           } else if (command == "CONTINUITY\n") {
             Serial.println(black_powder_present() ? "Continuity - black powder present" : "Disconnected - black powder absent");
           } else if (command == "BEEP\n") {
-            Serial.print("Starting beep for 0.5s");
-            start_beep(500000);
-            Serial.println("done.");
-          } else if (command == "ALTIMETER") {
+            Serial.println("Starting beep for 0.5s");
+            start_beep(500, 0);
+          } else if (command == "ALTIMETER\n") {
             printAltimeterReading = !printAltimeterReading;
             Serial.print(printAltimeterReading ? "P" : "Not p");
             Serial.println("rinting altimeter reading");
+          } else {
+            Serial.println("Invalid command.");
           }
           resetCommand();
         }
         break;
       case LAUNCH:
-        beep_if_continuity();
+        // beep for .5s every 2s if continuity at the start of the period
+        if (!beeping) {
+          if (black_powder_present())
+            start_beep(500, 1500);
+          else
+            start_beep(0, 2000);
+        }
         switch(launch_state) {
           case PAD:
+          	setLEDs(0, 0, 1);
             if (launched()) launch_state = FLIGHT;
             break;
           case FLIGHT:
@@ -165,7 +214,7 @@ int main() {
             }
             break;
           case SIGNAL_RECEIVED:
-            setLEDs(0, 0, 1); // indicates receipt of signal
+            setLEDs(0, 1, 1); // indicates receipt of signal
             // trigger black powder
             digitalWrite(BLACK_POWDER_PIN_ARDUINO, 1);
             delay(1000);
@@ -180,25 +229,24 @@ int main() {
     }
     // check if a beep should be made
     process_beep();
+
     // Read serial and radio, check to enter test mode
     if (Serial.available()) {
       command_available = true;
       command = Serial.readString();
-      Serial.println("Received command: " + command);
-      if (state == LAUNCH) {
-        Serial.println("Launch mode.");
-      }
-      else {
-        Serial.println("Test mode.");
-      }
     }
 
     // Switch into test mode with serial input
-    if (command_available && command == "test\n" && state != TEST_MODE) {
-      state = TEST_MODE;
-      setLEDs(0, 0, 0);
-      Serial.println("Deployment entering test mode.");
-      resetCommand();
+    if (command_available && state != TEST_MODE) {
+      if (command == "test\n") {
+        state = TEST_MODE;
+        setLEDs(0, 0, 0);
+        Serial.println("Deployment entering test mode.");
+        resetCommand();
+      } else {
+        Serial.println("Not in test mode.");
+        resetCommand();
+      }
     }
   }
 }
@@ -217,10 +265,10 @@ char wait_for_signal() {
 }
 
 // ** PROCESSING BEEPING **
-bool beeping = false; // whether or not process_beep should attempt to emit noise
 unsigned long last_buzzer_flip = 0; // the time of the last flip of the buzzer voltage
-unsigned long last_beep_start = 0; // the most recent time where start_beep was called
-unsigned long curr_beep_duration = 0; // the duration in us of the current beep
+unsigned long last_beep_start = 0; // the most recent time, in ms, where start_beep was called
+unsigned long curr_beep_duration = 0; // the duration in ms of the current beep
+unsigned long curr_pause_duration = 0; // the duration in ms of the current pause (post-beep)
 bool buzzer_state = 0; // the next voltage to be written to the buzzer pin
 
 /*
@@ -230,25 +278,40 @@ Otherwise, if enough time has passed since the last flip of the buzzer voltage, 
 voltage on the buzzer.
 */
 void process_beep() {
-  if (beeping && micros() - last_buzzer_flip >= 500) { // beeps at 500 Hz
+  unsigned long current_time_ms = millis();
+  if (beeping && current_time_ms - last_beep_start < curr_beep_duration && micros() - last_buzzer_flip >= 600) { // beeps at some number of Hz
     buzzer_state = !buzzer_state;
     last_buzzer_flip = micros();
     digitalWrite(BUZZER_PIN, buzzer_state);
   }
-  if (micros() - last_beep_start > curr_beep_duration) {
-    stop_beep();
+  if (millis() - last_beep_start > curr_beep_duration + curr_pause_duration) {
+    beeping = false;
   }
 }
 
-void start_beep(long duration_us) {
+void start_beep(unsigned long beep_ms, unsigned long pause_ms) {
   beeping = true;
-  last_beep_start = micros();
-  curr_beep_duration = duration_us;
+  last_beep_start = millis();
+  curr_beep_duration = beep_ms;
+  curr_pause_duration = pause_ms;
 }
 
-void stop_beep() {
-  beeping = false;
+/*// *** Processing delaying ***
+unsigned long last_delay_start; // most recent time start_delay was called
+unsigned long curr_delay_duration; // duration in ms of current delay
+void start_delay(unsigned long ms) {
+	delaying = true;
+	last_delay_start = millis();
+	curr_delay_duration = ms;
 }
+void process_delay() {
+	if (millis() - last_delay_start >= curr_delay_duration)
+		stop_delay();
+}
+void stop_delay() {
+	delaying = false;
+}
+
 
 unsigned long last_continuity_check = 0; // last time continuity check was performed
 void beep_if_continuity() {
@@ -256,7 +319,7 @@ void beep_if_continuity() {
       && black_powder_present()) { // continuity detected
     start_beep(500000); // beep for 0.5 seconds
   }
-}
+}*/
 
 short black_powder_present() {
   return !digitalRead(CONTINUITY_PIN);
