@@ -70,7 +70,7 @@ int main() {
 #else
   RFM69 radio;
 #endif
-  // Servo servo;
+  Servo servo;
   LIS331HH accelerometer(0);
   unsigned long lastTransmitTime = 0;
   float altMovingAvg = 0;
@@ -107,6 +107,12 @@ int main() {
         altimeter.setOversampleRate(7);
         altimeter.enableEventFlags();
 
+        currentAltZero = 0;
+        for (int i = 0; i < 100; i++) {
+          currentAltZero += altimeter.readAltitudeFt() / 100;
+          delay(50);
+        }
+
         digitalWrite(RADIO_RESET_PIN, HIGH);
         delay(500);
         digitalWrite(RADIO_RESET_PIN, LOW);
@@ -119,7 +125,7 @@ int main() {
         radio.enableAutoPower(ATC_RSSI)
         #endif
 
-        // servo.attach(SERVO_PIN);
+        servo.attach(SERVO_PIN);
 
         // CHANGE
         //  |
@@ -127,7 +133,7 @@ int main() {
         //  |
         //  |
         // \/
-        // servo.write(180); // NEEDS TO BE CHANGED <--------- CHANGE
+        servo.write(180); // NEEDS TO BE CHANGED <--------- CHANGE
         // ^
         // |
         // |
@@ -184,7 +190,7 @@ int main() {
         // NEED TO WRITE
         // NEED TO WRITE
         // NEED TO WRITE
-        // servo.write(0);
+        servo.write(0);
         // NEED TO WRITE
         // NEED TO WRITE
         // NEED TO WRITE
@@ -255,7 +261,7 @@ int main() {
             setLEDs(command[4] == '1', command[5] == '1', command[6] == '1');
           }
           else if (command.length() > 6 && command.substring(0, 6) == "servo ") {
-            // servo.write(atoi(command.substring(6).c_str()));
+            servo.write(atoi(command.substring(6).c_str()));
           }
           else {
             Serial.print("Invalid command received: ");
