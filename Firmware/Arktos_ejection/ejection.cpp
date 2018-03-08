@@ -198,50 +198,50 @@ int main() {
         break;
       case TEST_MODE:
         if (command_available) {
-          if (command == "INIT\n") {
+          if (command == "INIT") {
             state = INIT;
           }
-          else if (command == "LAUNCH_PAD\n") {
+          else if (command == "LAUNCH_PAD") {
             state = LAUNCH_PAD;
           }
-          else if (command == "LAUNCHED\n") {
+          else if (command == "LAUNCHED") {
             state = LAUNCHED;
           }
-          else if (command == "RADIO_WAIT\n") {
+          else if (command == "RADIO_WAIT") {
             state = RADIO_WAIT;
           }
-          else if (command == "DEPLOY\n") {
+          else if (command == "DEPLOY") {
             state = DEPLOY;
           }
-          else if (command == "LVDS_WAIT\n") {
+          else if (command == "LVDS_WAIT") {
             state = LVDS_WAIT;
           }
-          else if (command == "SCISSOR_LIFT_ACTIVATE\n") {
+          else if (command == "SCISSOR_LIFT_ACTIVATE") {
             state = SCISSOR_LIFT_ACTIVATE;
           }
-          else if (command == "DISABLED\n") {
+          else if (command == "DISABLED") {
             state = DISABLED;
           }
-          else if(command == "EXIT\n") {
+          else if(command == "EXIT") {
             state = prevState;
             Serial.println("Ejection exiting test mode.");
           }
-          else if (command == "z\n") {
+          else if (command == "z") {
             currentAltZero = altMovingAvg;
             Serial.println("Zeroing altitude");
           }
-          else if (command == "lvds r\n") {
+          else if (command == "lvds r") {
             Serial.println("LVDS Receive: " + digitalRead(RECEIVER_PIN));
           }
-          else if (command == "lvds on\n") {
+          else if (command == "lvds on") {
             digitalWrite(TRANSMITTER_PIN, HIGH);
             Serial.println("LVDS Transmit set to on.");
           }
-          else if (command == "lvds off\n") {
+          else if (command == "lvds off") {
             digitalWrite(TRANSMITTER_PIN, LOW);
             Serial.println("LVDS Transmit set to off.");
           }
-          else if (command == "telemetry\n") {
+          else if (command == "telemetry") {
             enableTelemetry = !enableTelemetry;
             if (enableTelemetry) {
               Serial.println("Enabling telemetry");
@@ -300,6 +300,9 @@ int main() {
     if (Serial.available()) {
       command_available = true;
       command = Serial.readString();
+      if (command.endsWith("\n")) {
+        command = command.substring(0, command.length() - 1);
+      }
     }
     if (radio.receiveDone()) {
       if (radio.ACKRequested()) {
@@ -314,7 +317,7 @@ int main() {
       Serial.println(command);
     }
 
-    if (command_available && command == "test\n" && state != TEST_MODE) {
+    if (command_available && command == "test" && state != TEST_MODE) {
       prevState = state;
       state = TEST_MODE;
       setLEDs(LOW, LOW, LOW);
