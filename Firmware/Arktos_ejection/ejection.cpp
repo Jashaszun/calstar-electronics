@@ -287,6 +287,7 @@ int main() {
 				(int)(1000*accelX), (int)(1000*accelY), (int)(1000*accelZ), (int)(alt-currentAltZero));
 
 			radio.send(TRANSMIT_TO, outbuf, strlen(outbuf));
+      Serial.println(outbuf);
 
       #define ALPHA (.75f)
 			altMovingAvg = ALPHA*altMovingAvg + (1-ALPHA)*alt;
