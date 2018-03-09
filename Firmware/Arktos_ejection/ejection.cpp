@@ -23,7 +23,7 @@
 #define LED_PIN_BLUE 16 // 2
 #define ALT_LAND 200
 #define ALT_LAUNCHED 200
-#define VERIF_SAMPLES 5
+#define VERIF_SAMPLES 20
 #define SERVO_PIN 6
 #define RADIO_RESET_PIN A0
 #define NODEID (4)
@@ -82,7 +82,7 @@ int main() {
   pinMode(LED_PIN_RED, OUTPUT);
   pinMode(LED_PIN_GREEN, OUTPUT);
 
-  digitalWrite(TRANSMITTER_PIN, LOW);
+  digitalWrite(TRANSMITTER_PIN, HIGH);
   // Set outputs and inputs; receiver defaults to input
   // LED_IO = (1 << LED_PIN_RED) | (1 << LED_PIN_GREEN) | (1 << LED_PIN_BLUE); // set LEDs as outputs
   // TRANSMITTER_IO = 0xFF; // set LVDS transmitter as output
@@ -175,7 +175,7 @@ int main() {
       case DEPLOY:
         setLEDs(HIGH, LOW, HIGH);
         // TRANSMITTER_PORT &= ~(1 << TRANSMITTER_PIN); // send deployment signal
-        digitalWrite(TRANSMITTER_PIN, HIGH);
+        digitalWrite(TRANSMITTER_PIN, LOW);
         state = LVDS_WAIT;
         break;
       case LVDS_WAIT:
@@ -348,16 +348,15 @@ short landed(MPL3115A2 &altimeter, float altZero) {
 }
 
 short deploymentDisconnect() {
-  for (int i = 0; i < VERIF_SAMPLES; i++) {
-    if (digitalRead(RECEIVER_PIN) == LOW) { // RECIEVER_PIN is pulled up, so when it is LOW that means deployment is transmitting that
-      return 0;
-    }
-    // if (!(RECEIVER_PORT & (1 << RECEIVER_PIN))) {
-    //   return 0;
-    // }
-    delay(10);
+  static unsigned short counter = 0;
+  if (digitalRead(RECEIVER_PIN) == HIGH) {
+    counter += 1;
+    if (counter >= VERIF_SAMPLES) return 1;
+    else return 0;
+  } else {
+    counter = 0;
+    return 0;
   }
-  return 1;
 }
 
 // Turn on/off 3 LEDs
