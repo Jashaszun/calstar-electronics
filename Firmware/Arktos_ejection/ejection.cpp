@@ -34,6 +34,7 @@
 #define DEPLOY_SIGNAL "DEPLOY"
 #define RADIO_SIGNAL_LEN strlen(DEPLOY_SIGNAL)
 #define TRANSMIT_INTERVAL 200 // ms
+#define EJECT_WAIT_TIME 2000 // ms
 
 enum State {
   INIT, // Blue only
@@ -46,6 +47,16 @@ enum State {
   TEST_MODE,
   DISABLED
 };
+
+// Create peripherals
+MPL3115A2 altimeter;
+Servo servo;
+LIS331HH accelerometer(0);
+#ifdef ENABLE_ATC
+  RFM69_ATC radio;
+#else
+  RFM69 radio;
+#endif
 
 short launched(MPL3115A2 &altimeter, float altZero);
 short landed(MPL3115A2 &altimeter, float altZero);
@@ -60,18 +71,15 @@ void resetCommand();
 
 bool enableTelemetry = true;
 
+void log(String message) {
+  Serial.println(message);
+  const char* tempstr = message.c_str();
+  radio.send(TRANSMIT_TO, tempstr, message.length());
+}
+
 int main() {
   init(); // always call this first if using Arduino.h!
   Wire.begin(); // for I2C
-  // Create peripherals
-  MPL3115A2 altimeter;
-#ifdef ENABLE_ATC
-  RFM69_ATC radio;
-#else
-  RFM69 radio;
-#endif
-  Servo servo;
-  LIS331HH accelerometer(0);
   unsigned long lastTransmitTime = 0;
   float altMovingAvg = 0;
   float currentAltZero = 0;
@@ -180,8 +188,19 @@ int main() {
         break;
       case LVDS_WAIT:
         setLEDs(HIGH, HIGH, LOW);
-        if (deploymentDisconnect()) {
-          state = SCISSOR_LIFT_ACTIVATE;
+        {
+          static bool timerstarted = false;
+          static int starttime;
+          if (deploymentDisconnect()) {
+            if (!timerstarted) {
+              starttime = millis();
+            }
+            if (starttime + EJECT_WAIT_TIME < millis()) {
+              state = SCISSOR_LIFT_ACTIVATE;
+            }
+          } else {
+            timerstarted = false;
+          }
         }
         break;
       case SCISSOR_LIFT_ACTIVATE:
@@ -224,29 +243,29 @@ int main() {
           }
           else if(command == "EXIT") {
             state = prevState;
-            Serial.println("Ejection exiting test mode.");
+            log("Ejection exiting test mode.");
           }
           else if (command == "z") {
             currentAltZero = altMovingAvg;
-            Serial.println("Zeroing altitude");
+            log("Zeroing altitude");
           }
           else if (command == "lvds r") {
-            Serial.println("LVDS Receive: " + digitalRead(RECEIVER_PIN));
+            log("LVDS Receive: " + digitalRead(RECEIVER_PIN));
           }
           else if (command == "lvds on") {
             digitalWrite(TRANSMITTER_PIN, HIGH);
-            Serial.println("LVDS Transmit set to on.");
+            log("LVDS Transmit set to on.");
           }
           else if (command == "lvds off") {
             digitalWrite(TRANSMITTER_PIN, LOW);
-            Serial.println("LVDS Transmit set to off.");
+            log("LVDS Transmit set to off.");
           }
           else if (command == "telemetry") {
             enableTelemetry = !enableTelemetry;
             if (enableTelemetry) {
-              Serial.println("Enabling telemetry");
+              log("Enabling telemetry");
             } else {
-              Serial.println("Disabling telemetry");
+              log("Disabling telemetry");
             }
           }
           else if (command.length() > 6 && command.substring(0, 6) == "radio ") {
@@ -264,8 +283,7 @@ int main() {
             servo.write(atoi(command.substring(6).c_str()));
           }
           else {
-            Serial.print("Invalid command received: ");
-            Serial.println(command);
+            log("Invalid command received: " + command);
           }
           resetCommand();
         }
@@ -321,7 +339,7 @@ int main() {
       prevState = state;
       state = TEST_MODE;
       setLEDs(LOW, LOW, LOW);
-      Serial.println("Ejection entering test mode.");
+      log("Ejection entering test mode.");
       resetCommand();
     }
 
