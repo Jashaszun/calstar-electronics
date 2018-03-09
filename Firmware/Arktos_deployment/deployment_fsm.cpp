@@ -215,7 +215,7 @@ int main() {
         }
         switch(launch_state) {
           case PAD:
-          	setLEDs(0, 0, 1);
+          	setLEDs(deployment_signal(), 0, 1);
             if (launched()) launch_state = FLIGHT;
             break;
           case FLIGHT:
