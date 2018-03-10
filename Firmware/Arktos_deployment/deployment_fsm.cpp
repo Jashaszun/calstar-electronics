@@ -16,7 +16,7 @@
 #define LED_PIN_BLUE 6
 #define BUZZER_PIN 9
 #define CONTINUITY_PIN 4
-#define ACCEL_TOLERANCE 1
+//#define ACCEL_TOLERANCE 1
 #define ALT_LAND 200
 #define ALT_LAUNCHED 200
 #define ACCEL_ADDR 0x00
@@ -24,7 +24,7 @@
 #define ALT_WRITE_ADDR 0xC0
 #define ALT_READ_ADDR 0xC1
 #define VERIF_SAMPLES 20 // number of samples needed to verify landing
-#define ACCEL_TOLERANCE 1 // maximum acceptable acceleration (in gs)
+#define ACCEL_TOLERANCE .3 // maximum acceptable acceleration magnitude margin (in gs)
 
 // Altimeter
 MPL3115A2 altimeter;
@@ -170,13 +170,17 @@ int main() {
           Serial.println(altimeter.readAltitudeFt());
         }
         if (printAccelerometerReading) {
+          float ax = accelerometer.get_x_g();
+          float ay = accelerometer.get_y_g();
+          float az = accelerometer.get_z_g();
           Serial.print("Accelerometer reading: (x: ");
-          Serial.print(accelerometer.get_x_g(), 2);
+          Serial.print(ax, 2);
           Serial.print(", y: ");
-          Serial.print(accelerometer.get_y_g(), 2);
+          Serial.print(ay, 2);
           Serial.print(", z: ");
-          Serial.print(accelerometer.get_z_g(), 2);
-          Serial.println(")");
+          Serial.print(az, 2);
+          Serial.print("), Mag=");
+          Serial.println(ax*ax + ay*ay + az*az);
         }
         if (command_available) {
           if (command == "EXIT") {
@@ -219,6 +223,11 @@ int main() {
             // Serial.print(accelerometer.get_y_g());
             // Serial.print(accelerometer.get_z_g());
             // Serial.println(")");
+          } else if (command == "LANDED") {
+            for (int landed_try = 0; landed_try < 2*VERIF_SAMPLES; landed_try++) {
+              if (landed()) Serial.println("Landed.");
+              else Serial.println("Not landed.");
+            }
           } else {
             Serial.println("Invalid command.");
           }
@@ -418,10 +427,20 @@ short launched() {
 short landed() {
   static unsigned short counter = 0;
   // "Landed" means altimeter says we've landed AND accelerometer says we're not moving
+  float ax = accelerometer.get_x_g();
+  float ay = accelerometer.get_y_g();
+  float az = accelerometer.get_z_g();
+
+  float mag = ax*ax + ay*ay + az*az;
+  float margin = mag - 1;
+  if (margin < 0) margin = -margin;
+
   if (altimeter.readAltitudeFt() - base_alt > ALT_LAND
-      || accelerometer.get_x_g() > ACCEL_TOLERANCE
-      || accelerometer.get_y_g() > ACCEL_TOLERANCE
-      || accelerometer.get_z_g() > ACCEL_TOLERANCE) {
+    || margin > ACCEL_TOLERANCE) {
+      //|| accelerometer.get_x_g() > ACCEL_TOLERANCE
+      //|| accelerometer.get_y_g() > ACCEL_TOLERANCE
+      //|| accelerometer.get_z_g() > ACCEL_TOLERANCE) {
+    
     counter = 0;
     return 0;
   } else {
