@@ -194,6 +194,7 @@ int main() {
           if (deploymentDisconnect()) {
             if (!timerstarted) {
               starttime = millis();
+              timerstarted = true;
             }
             if (starttime + EJECT_WAIT_TIME < millis()) {
               state = SCISSOR_LIFT_ACTIVATE;
