@@ -35,6 +35,7 @@
 #define RADIO_SIGNAL_LEN strlen(DEPLOY_SIGNAL)
 #define TRANSMIT_INTERVAL 200 // ms
 #define EJECT_WAIT_TIME 2000 // ms
+#define BITLEN 100 // ms
 
 enum State {
   INIT = 0, // Blue only
@@ -71,13 +72,16 @@ bool command_available = false;
 String command = "";
 void resetCommand();
 
+void log(String message);
+
 bool enableTelemetry = true;
 
-void log(String message) {
-  Serial.println(message);
-  const char* tempstr = message.c_str();
-  radio.send(TRANSMIT_TO, tempstr, message.length());
-}
+void processConnection();
+void sendMessage(uint8_t message);
+bool sendingMessage = false;
+bool receivingMessage = false;
+bool receivedMessage = false;
+uint8_t messageReceiving;
 
 int main() {
   init(); // always call this first if using Arduino.h!
@@ -192,7 +196,7 @@ int main() {
         setLEDs(HIGH, HIGH, LOW);
         {
           static bool timerstarted = false;
-          static int starttime;
+          static unsigned int starttime;
           if (deploymentDisconnect()) {
             if (!timerstarted) {
               starttime = millis();
@@ -346,6 +350,17 @@ int main() {
       resetCommand();
     }
 
+    processConnection();
+
+    if (receivedMessage) {
+      switch (messageReceiving) {
+        default:
+          log("Received code: " + messageReceiving);
+          break;
+      }
+      receivedMessage = false;
+    }
+
   }
 }
 
@@ -393,4 +408,85 @@ void setLEDs(uint8_t red, uint8_t green, uint8_t blue) {
 void resetCommand() {
   command_available = false;
   command = "";
+}
+
+void log(String message) {
+  Serial.println(message);
+  const char* tempstr = message.c_str();
+  radio.send(TRANSMIT_TO, tempstr, message.length());
+}
+
+
+
+uint8_t messageToSend;
+unsigned int startMessageSend;
+unsigned int startMessageReceive = 0;
+void processConnection() {
+  if (sendingMessage) {
+    static int lastStage = -1;
+    int stage = (millis() - startMessageSend) / BITLEN;
+    if (stage > lastStage) {
+      switch (stage) {
+        case 0: // Write low then high to signal sending message
+          digitalWrite(TRANSMITTER_PIN, LOW);
+          break;
+        case 1:
+          digitalWrite(TRANSMITTER_PIN, HIGH);
+          break;
+        case 9: // Set sending to false on last bit
+          sendingMessage = false;
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8: // Shift over message when not on first bit
+          messageToSend >>= 1;
+        case 2:
+          digitalWrite(TRANSMITTER_PIN, messageToSend & 1);
+          break;
+      }
+      lastStage = stage;
+    }
+  }
+
+  if (receivingMessage) {
+    if (millis() > startMessageReceive) {
+      static int lastStage = -1;
+      int stage = (millis() - startMessageReceive) / BITLEN;
+      if (stage > lastStage) {
+        switch (stage) {
+          case 7:
+            receivingMessage = false;
+            receivedMessage = true;
+          case 1:
+          case 2:
+          case 3:
+          case 4:
+          case 5:
+          case 6:
+            messageReceiving <<= 1;
+          case 0:
+            messageReceiving |= digitalRead(RECEIVER_PIN);
+            break;
+        }
+      }
+    }
+  } else {
+    static uint8_t lastReceive = HIGH;
+    uint8_t receive = digitalRead(RECEIVER_PIN);
+    if (lastReceive == LOW && receive == HIGH && millis() > startMessageReceive + 10 * BITLEN) {
+      receivingMessage = true;
+      receivedMessage = false;
+      startMessageReceive = millis() + (BITLEN * 3 / 2); // Start receiving in the middle of the first bit
+      messageReceiving = 0;
+    }
+  }
+}
+void sendMessage(uint8_t m) {
+  if (!sendingMessage) {
+    messageToSend = m;
+    startMessageSend = millis();
+    sendingMessage = true;
+  }
 }
