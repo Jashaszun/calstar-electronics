@@ -52,7 +52,7 @@ public:
     // Writes byte to tx buffer. Does nothing if tx buffer is already full.
     bool writeByte(uint8_t byte);
 
-    // Writes len number of bytes in buf to tx buffer.
+    // Blocks, until either timeout or len number of bytes are written
     // Returns number of bytes written.
     uint8_t writeBytes(const uint8_t *buf, uint8_t len);
 
