@@ -1,6 +1,8 @@
+#include "common.h"
 #include "Buzzer.h"
+#include "AIO.h"
 
-Buzzer::Buzzer(uint8_t port, uint8_t pin) {
+ManualBuzzer::ManualBuzzer(uint8_t port, uint8_t pin) {
   _pin = pin;
   _port = port;
   _lastFlip = 0;
@@ -11,14 +13,14 @@ Buzzer::Buzzer(uint8_t port, uint8_t pin) {
   pinMode(port, pin, OUTPUT);
 }
 
-void Buzzer::_setValuesOnBuzzStart(long duration_ms, short frequency) {
+void ManualBuzzer::_setValuesOnBuzzStart(long duration_ms, short frequency) {
   _period = 1 / (2 * PI * frequency); // T = 1 / (2pi*f)
   _active = 1;
   _lastStart = micros();
   _lastDuration = duration_ms;
 }
 
-void Buzzer::blockingBuzz(long duration_ms, short frequency) {
+void ManualBuzzer::blockingBuzz(long duration_ms, short frequency) {
   _setValuesOnBuzzStart(duration_ms, frequency);
   while (micros() - _lastStart > _lastDuration) {
     _flipVoltage();
@@ -26,23 +28,23 @@ void Buzzer::blockingBuzz(long duration_ms, short frequency) {
   stopBuzz();
 }
 
-void Buzzer::blockingBuzz(long duration_ms) {
+void ManualBuzzer::blockingBuzz(long duration_ms) {
   blockingBuzz(duration_ms, DEFAULT_FREQUENCY);
 }
 
-void Buzzer::startBuzz(long duration_ms, short frequency) {
+void ManualBuzzer::startBuzz(long duration_ms, short frequency) {
   _setValuesOnBuzzStart(duration_ms, frequency);
 }
 
-void Buzzer::startBuzz(long duration_ms) {
+void ManualBuzzer::startBuzz(long duration_ms) {
   startBuzz(duration_ms, DEFAULT_FREQUENCY);
 }
 
-void Buzzer::stopBuzz() {
+void ManualBuzzer::stopBuzz() {
   _active = 0;
 }
 
-bool Buzzer::updateBuzzer() {
+bool ManualBuzzer::updateBuzzer() {
   if (millis() - _lastStart > _lastDuration) {
     stopBuzz();
     return 0;
@@ -52,14 +54,42 @@ bool Buzzer::updateBuzzer() {
   }
 }
 
-bool Buzzer::isBuzzing() {
+bool ManualBuzzer::isBuzzing() {
   return _active;
 }
 
-void Buzzer::_flipVoltage() {
+void ManualBuzzer::_flipVoltage() {
   if (_active && millis() - _lastFlip >= _period) {
     _lastState = !_lastState;
     _lastFlip = millis();
     digitalWrite(_port, _pin, _lastState);
   }
+}
+
+
+
+AutoBuzzer::AutoBuzzer(uint8_t port, uint8_t pin) {
+  _pin = pin;
+  _port = port;
+  _active = false;
+  pinMode(port, pin, OUTPUT);
+}
+
+void AutoBuzzer::startBuzz(long duration_ms) {
+  _lastStart = millis();
+  _duration = duration_ms;
+  _active = true;
+  analogWrite(_port, _pin, 127);
+}
+
+bool AutoBuzzer::update() {
+  if (_active && millis() > _lastStart + _duration) {
+    this->stopBuzz();
+  }
+  return _active;
+}
+
+void AutoBuzzer::stopBuzz() {
+  analogWrite(_port, _pin, 0);
+  _active = false;
 }

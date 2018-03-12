@@ -11,7 +11,7 @@ void StepperMotor::update() {
 }
 
 void StepperMotor::step(int32_t steps) {
-    if (dir == 0 && step == 0) {
+    if (dir == 0 && steps == 0) {
         // do nothing
     } else if (dir == 0 || reachedTarget()) {
         // set dir to sign of steps
@@ -36,7 +36,7 @@ void StepperMotor::step(int32_t steps) {
         currPos = -steps;
     } else if (steps == 0) { // target where currently is
         currPos = 0;
-        
+
     }
 }
 

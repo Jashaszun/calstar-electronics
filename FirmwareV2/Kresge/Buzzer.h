@@ -1,10 +1,14 @@
+#include "common.h"
 #include "DIO.h"
 #include "Timer.h"
 
-class Buzzer {
+#define DEFAULT_FREQUENCY 500
+
+// Flips manually
+class ManualBuzzer {
 public:
   /* Specifies the port and pin of the buzzer and sets it to output mode. Should be off by default. */
-  Buzzer(uint8_t port, uint8_t pin);
+  ManualBuzzer(uint8_t port, uint8_t pin);
   /* The rest of the functions will set the state of the buzzer so that it will buzz if necessary
    if updateBuzzer is called within the main control loop.
    Starts a blocking buzz at a given duration at a given frequency.
@@ -38,8 +42,21 @@ private:
   bool _lastState;
   bool _active;
   short _period; // in ms
-  const float PI = 3.14159265358979;
-  const short DEFAULT_FREQUENCY = 500; // Hz
   void _setValuesOnBuzzStart(long duration_ms, short frequency); // should be called on all startBuzz calls
   void _flipVoltage();
+};
+
+// Uses analogWrite instead of manually flipping
+class AutoBuzzer {
+public:
+  AutoBuzzer(uint8_t port, uint8_t pin);
+  void startBuzz(long duration_ms); // Start buzz for duration
+  bool update(); // Stop if past duration
+  void stopBuzz(); // Stop at any point
+private:
+  bool _active;
+  long _duration;
+  long _lastStart;
+  uint8_t _pin;
+  uint8_t _port;
 };

@@ -33,10 +33,8 @@ int main() {
 }
 
 int buzzerTest() {
-  Buzzer b(0x00, 1);
-  b.startBuzz(1000000); // 1 second
-  while (b.isBuzzing()) {
-    b.updateBuzzer();
-  }
+  AutoBuzzer b(B, 1);
+  b.startBuzz(1000); // 1 second
+  while (b.update()) { }
   return 0;
 }

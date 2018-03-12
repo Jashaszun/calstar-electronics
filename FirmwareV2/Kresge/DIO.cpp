@@ -1,30 +1,5 @@
 #include "DIO.h"
 
-void pinMode(uint8_t port, uint8_t pin, uint8_t direction) {
-  switch (port) {
-    case B:
-      DDRB = ((direction == OUTPUT) ? DDRB | (1 << pin) : DDRB & ~(1 << pin));
-      break;
-    case C:
-      DDRC = ((direction == OUTPUT) ? DDRC | (1 << pin) : DDRC & ~(1 << pin));
-      break;
-    case D:
-      DDRD = ((direction == OUTPUT) ? DDRD | (1 << pin) : DDRD & ~(1 << pin));
-      break;
-  }
-}
-
-uint8_t getMode(uint8_t port, uint8_t pin) {
-  switch (port) {
-    case B:
-      return !!(DDRB & (1 << pin));
-    case C:
-      return !!(DDRC & (1 << pin));
-    case D:
-      return !!(DDRD & (1 << pin));
-  }
-}
-
 uint8_t digitalWrite(uint8_t port, uint8_t pin, uint8_t state) {
   switch (port) {
     case B:
