@@ -357,14 +357,11 @@ voltage on the buzzer.
 */
 void process_beep() {
   unsigned long current_time_ms = millis();
-  if (beeping && current_time_ms - last_beep_start < curr_beep_duration && micros() - last_buzzer_flip >= 600) { // beeps at some number of Hz
-    buzzer_state = !buzzer_state;
-    last_buzzer_flip = micros();
-    digitalWrite(BUZZER_PIN, buzzer_state);
+  if (millis() - last_beep_start > curr_beep_duration) {
+    digitalWrite(BUZZER_PIN, LOW);
   }
   if (millis() - last_beep_start > curr_beep_duration + curr_pause_duration) {
     beeping = false;
-    digitalWrite(BUZZER_PIN, LOW);
   }
 }
 
@@ -373,6 +370,9 @@ void start_beep(unsigned long beep_ms, unsigned long pause_ms) {
   last_beep_start = millis();
   curr_beep_duration = beep_ms;
   curr_pause_duration = pause_ms;
+  if (beep_ms != 0) {
+    analogWrite(BUZZER_PIN, 127);
+  }
 }
 
 /*// *** Processing delaying ***
