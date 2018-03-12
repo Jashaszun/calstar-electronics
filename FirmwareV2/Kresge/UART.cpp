@@ -15,20 +15,20 @@ bool _Serial::_CircQueue::empty() const {
 }
 
 bool _Serial::_CircQueue::full() const {
-    return size == _SERIAL_BUF_SIZE;
+    return size == _SERIAL_BUF_CAPACITY;
 }
 
 uint8_t decrement(uint8_t index) {
     --index;
     if (index < 0) {
-        return _SERIAL_BUF_SIZE - 1;
+        return _SERIAL_BUF_CAPACITY - 1;
     } else {
         return index;
     }
 }
 
 uint8_t increment(uint8_t index) {
-    return (index + 1) % _SERIAL_BUF_SIZE;
+    return (index + 1) % _SERIAL_BUF_CAPACITY;
 }
 
 bool _Serial::_CircQueue::put(uint8_t byte) {
@@ -89,7 +89,11 @@ uint8_t _Serial::available() const {
     return rxBuf.size;
 }
 
-bool _Serial::availableForWrite() const {
+uint8_t _Serial::availableForWrite() const {
+    return _SERIAL_BUF_CAPACITY - txBuf.size;
+}
+
+bool _Serial::txRegEmpty() const {
     return UCSR0A & (1 << UDRE0); // returns whether transmission buffer is empty
 }
 
@@ -124,7 +128,7 @@ bool _Serial::writeByte(uint8_t byte) {
     if (!txBuf.put(byte)) {
         return false;
     }
-    if (availableForWrite()) {
+    if (txRegEmpty()) {
         UDR0 = txBuf.pop();
     }
     return true;

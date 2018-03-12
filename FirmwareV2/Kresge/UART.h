@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "KString.h"
 
-#define _SERIAL_BUF_SIZE 64
+#define _SERIAL_BUF_CAPACITY 64
 #define _SERIAL_DEFAULT_TIMEOUT_MS 1000
 
 class _Serial {
@@ -12,7 +12,7 @@ private:
 
     class _CircQueue {
     public:
-        uint8_t buf[_SERIAL_BUF_SIZE];
+        uint8_t buf[_SERIAL_BUF_CAPACITY];
         uint8_t size;
         uint8_t first;
         uint8_t nextLast;
@@ -28,6 +28,8 @@ private:
     _CircQueue txBuf;
 
     uint32_t timeout;
+
+    bool txRegEmpty() const;
 public:
     _Serial();
 
@@ -36,8 +38,8 @@ public:
     // Returns how many bytes are in the rx buffer
     uint8_t available() const;
 
-    // Returns whether the transmission buffer is empty
-    bool availableForWrite() const;
+    // Returns how many bytes of space are free in the tx buffer
+    uint8_t availableForWrite() const;
 
     // Returns (without removing) the first byte in the rx buffer
     int16_t peek() const;
