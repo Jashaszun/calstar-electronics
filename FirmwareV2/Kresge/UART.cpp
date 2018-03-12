@@ -98,52 +98,57 @@ int16_t _Serial::peek() const {
 }
 
 int16_t _Serial::readByte() {
-    uint32_t t0 = millis();
-    while (rxBuf.empty()) {
-        if (millis() - t0 > timeout) {
-            return -1;
-        }
-    }
     return rxBuf.pop();
 }
 
 uint8_t _Serial::readBytes(uint8_t *buf, uint8_t len) {
     uint8_t i = 0;
+    uint32_t t0 = millis();
     while (i != len) {
         uint8_t c = readByte();
         if (c == -1) {
-            break;
+            if (millis() - t0 > timeout) {
+                break;
+            } else {
+                continue;
+            }
         }
+        t0 = millis();
         buf[i] = c;
         ++i;
     }
     return i;
 }
 
-bool _Serial::write(uint8_t byte) {
-    uint32_t t0 = millis();
-    while (txBuf.full()) {
-        if (millis() - t0 > timeout) {
-            return false;
-        }
+bool _Serial::writeByte(uint8_t byte) {
+    if (!txBuf.put(byte)) {
+        return false;
     }
-    txBuf.put(byte);
     if (availableForWrite()) {
         UDR0 = txBuf.pop();
     }
     return true;
 }
 
-uint8_t _Serial::write(const uint8_t *buf, uint8_t len) {
-    for (uint8_t i = 0; i < len; ++i) {
-        if (!write(buf[i])) {
-            return i;
+uint8_t _Serial::writeBytes(const uint8_t *buf, uint8_t len) {
+    uint32_t t0 = millis();
+    uint8_t i = 0;
+    while (i != len) {
+        if (!writeByte(buf[i])) {
+            if (millis() - t0 > timeout) {
+                break;
+            } else {
+                continue;
+            }
         }
+        t0 = millis();
+        ++i;
     }
+    return i;
 }
 
 void _Serial::print(const String &str) {
-    write((uint8_t *)str.const_c_str(), str.length());
+    writeBytes((uint8_t *)str.const_c_str(), str.length());
 }
 
 void _Serial::println(const String &str) {

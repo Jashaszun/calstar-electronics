@@ -1,7 +1,7 @@
 #ifndef _KRESGE_UART_H_
 #define _KRESGE_UART_H_
 
-#include "common.h"
+#include <stdint.h>
 #include "KString.h"
 
 #define _SERIAL_BUF_SIZE 64
@@ -33,21 +33,28 @@ public:
 
     void begin(int baudRate);
 
+    // Returns how many bytes are in the rx buffer
     uint8_t available() const;
 
+    // Returns whether the transmission buffer is empty
     bool availableForWrite() const;
 
+    // Returns (without removing) the first byte in the rx buffer
     int16_t peek() const;
 
-    // Returns a single byte
+    // Returns a single byte, -1 if no byte in rx buffer
     int16_t readByte();
 
-    // Blocks, until either timeout or len number of bytes are read
+    // Blocks, until either timeout or len number of bytes are read.
+    // Returns number of bytes read
     uint8_t readBytes(uint8_t *buf, uint8_t len);
 
-    bool write(uint8_t byte);
+    // Writes byte to tx buffer. Does nothing if tx buffer is already full.
+    bool writeByte(uint8_t byte);
 
-    uint8_t write(const uint8_t *buf, uint8_t len);
+    // Writes len number of bytes in buf to tx buffer.
+    // Returns number of bytes written.
+    uint8_t writeBytes(const uint8_t *buf, uint8_t len);
 
     void print(const String &str);
 
