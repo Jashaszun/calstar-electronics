@@ -37,16 +37,18 @@
 #define EJECT_WAIT_TIME 2000 // ms
 
 enum State {
-  INIT, // Blue only
-  LAUNCH_PAD, // Green only
-  LAUNCHED, // Blue Green
-  RADIO_WAIT, // Red only
-  DEPLOY, // Red Blue
-  LVDS_WAIT, // Red Green
-  SCISSOR_LIFT_ACTIVATE, // Red Green Blue
-  TEST_MODE,
-  DISABLED
+  INIT = 0, // Blue only
+  LAUNCH_PAD = 1, // Green only
+  LAUNCHED = 2, // Blue Green
+  RADIO_WAIT = 3, // Red only
+  DEPLOY = 4, // Red Blue
+  LVDS_WAIT = 5, // Red Green
+  SCISSOR_LIFT_ACTIVATE = 6, // Red Green Blue
+  TEST_MODE = 7,
+  DISABLED = 8
 };
+
+const char* state_names[] = {"INIT", "LAUNCH_PAD", "LAUNCHED", "RADIO_WAIT", "DEPLOY", "LVDS_WAIT", "SCISSOR_LIFT_ACTIVATE", "TEST_MODE", "DISABLED"};
 
 // Create peripherals
 MPL3115A2 altimeter;
@@ -302,7 +304,7 @@ int main() {
 			float alt = altimeter.readAltitudeFt();
 
 			char outbuf[100];
-			sprintf(outbuf, "Ac: x: %+07i y: %+07i z: %+07i  Al: %+07i\n",
+			sprintf(outbuf, "State: %s   Ac: x: %+07i y: %+07i z: %+07i   Al: %+07i\n", state_names[state],
 				(int)(1000*accelX), (int)(1000*accelY), (int)(1000*accelZ), (int)(alt-currentAltZero));
 
 			radio.send(TRANSMIT_TO, outbuf, strlen(outbuf));

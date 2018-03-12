@@ -228,6 +228,8 @@ int main() {
               if (landed()) Serial.println("Landed.");
               else Serial.println("Not landed.");
             }
+          } else if (command = "MCUCR") {
+            Serial.println(MCUCR);
           } else {
             Serial.println("Invalid command.");
           }
@@ -440,7 +442,7 @@ short landed() {
       //|| accelerometer.get_x_g() > ACCEL_TOLERANCE
       //|| accelerometer.get_y_g() > ACCEL_TOLERANCE
       //|| accelerometer.get_z_g() > ACCEL_TOLERANCE) {
-    
+
     counter = 0;
     return 0;
   } else {

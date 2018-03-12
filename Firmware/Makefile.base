@@ -94,6 +94,12 @@ AVRDUDE_MCU = m328
 endif
 ifndef AVRDUDE_PORT
 AVRDUDE_PORT = COM12
+ifeq ($(OSNAME),OSX)
+    AVRDUDE_PORT = /dev/tty.usbserial-A900927f
+endif
+ifeq ($(OSNAME),WINDOWS)
+    AVRDUDE_PORT = COM12
+endif
 endif
 ifndef BAUDRATE
 BAUDRATE = 19200
@@ -254,7 +260,12 @@ endif
 
 
 # Programming support using avrdude.
-AVRDUDE = avrdude.exe
+ifeq ($(OSNAME),OSX)
+    AVRDUDE = avrdude
+endif
+ifeq ($(OSNAME),WINDOWS)
+    AVRDUDE = avrdude.exe
+endif
 
 
 REMOVE = rm -f
