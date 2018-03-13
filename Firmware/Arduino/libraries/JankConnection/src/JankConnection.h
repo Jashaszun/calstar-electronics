@@ -3,13 +3,13 @@ bool receivingMessage = false;
 bool receivedMessage = false;
 uint8_t messageReceiving;
 uint8_t messageToSend;
-unsigned int startMessageSend;
-unsigned int startMessageReceive = 0;
+unsigned long startMessageSend;
+unsigned long startMessageReceive = 0;
 
 void processConnection() {
   if (sendingMessage) {
-    static int lastStage = -1;
-    int stage = (millis() - startMessageSend) / BITLEN;
+    static long lastStage = -1;
+    long stage = (millis() - startMessageSend) / BITLEN;
     if (stage > lastStage) {
       Serial.println(stage);
       switch (stage) {
@@ -42,8 +42,8 @@ void processConnection() {
 
   if (receivingMessage) {
     if (millis() > startMessageReceive) {
-      static int lastStage = -1;
-      int stage = (millis() - startMessageReceive) / BITLEN;
+      static long lastStage = -1;
+      long stage = (millis() - startMessageReceive) / BITLEN;
       if (stage > lastStage) {
         Serial.println(stage);
         switch (stage) {
