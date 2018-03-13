@@ -21,6 +21,7 @@ void processConnection() {
           break;
         case 9: // Set sending to false on last bit
           sendingMessage = false;
+          lastStage = -1;
         case 3:
         case 4:
         case 5:
@@ -50,6 +51,7 @@ void processConnection() {
           case 7:
             receivingMessage = false;
             receivedMessage = true;
+            lastStage = -1;
           case 1:
           case 2:
           case 3:
