@@ -26,6 +26,9 @@
 #define VERIF_SAMPLES 20 // number of samples needed to verify landing
 #define ACCEL_TOLERANCE .3 // maximum acceptable acceleration magnitude margin (in gs)
 
+#define BITLEN 100
+#include <JankConnection.h> // Could it get jankier?
+
 // Altimeter
 MPL3115A2 altimeter;
 // accelerometer
@@ -325,6 +328,16 @@ int main() {
         Serial.println("Not in test mode.");
         resetCommand();
       }
+    }
+
+    processConnection();
+    if (receivedMessage) {
+      switch (messageReceiving) {
+        default:
+          Serial.println("Received code: " + messageReceiving);
+          break;
+      }
+      receivedMessage = false;
     }
   }
 }
