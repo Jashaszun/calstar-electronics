@@ -264,7 +264,7 @@ ifeq ($(OSNAME),OSX)
     AVRDUDE = avrdude
 endif
 ifeq ($(OSNAME),WINDOWS)
-    AVRDUDE = avrdude.exe
+    AVRDUDE = $(DIRAVRBIN)/avrdude
 endif
 
 
@@ -418,6 +418,7 @@ program-avrispv2: $(TARGET).hex
 # Link: create ELF output file from object files.
 .SECONDARY: $(TARGET).elf
 .PRECIOUS: $(OBJ)
+.PRECIOUS: %.o
 %.elf: $(OBJ) $(ARDOBJECTS)
 	@echo
 	@echo $(MSG_LINKING) $@
