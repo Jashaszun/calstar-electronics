@@ -31,6 +31,10 @@ void processConnection() {
         case 2:
           digitalWrite(TRANSMITTER_PIN, messageToSend & 1);
           break;
+        default:
+          Serial.println("Overshot janksend");
+          sendingMessage = false;
+          break;
       }
       lastStage = stage;
     }
@@ -41,6 +45,7 @@ void processConnection() {
       static int lastStage = -1;
       int stage = (millis() - startMessageReceive) / BITLEN;
       if (stage > lastStage) {
+        Serial.println(stage);
         switch (stage) {
           case 7:
             receivingMessage = false;
@@ -54,6 +59,10 @@ void processConnection() {
             messageReceiving <<= 1;
           case 0:
             messageReceiving |= digitalRead(RECEIVER_PIN);
+            break;
+          default:
+            Serial.println("Overshot jankrecv");
+            receivingMessage = false;
             break;
         }
         lastStage = stage;
