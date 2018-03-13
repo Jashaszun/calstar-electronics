@@ -285,6 +285,11 @@ int main() {
           else if (command.length() > 6 && command.substring(0, 6) == "servo ") {
             servo.write(atoi(command.substring(6).c_str()));
           }
+          else if (command.length() > 5 && command.substring(0, 5) == "jank ") {
+            uint8_t val = atoi(command.c_str() + 5);
+            log("Sending over jank: " + String(command.c_str() + 5));
+            sendMessage(val);
+          }
           else {
             log("Invalid command received: " + command);
           }
@@ -351,7 +356,11 @@ int main() {
     if (receivedMessage) {
       switch (messageReceiving) {
         default:
-          log("Received code: " + messageReceiving);
+        {
+          char to_print[10];
+          itoa(messageReceiving, to_print, 10);
+          log("Received code: " + String(to_print));
+        }
           break;
       }
       receivedMessage = false;

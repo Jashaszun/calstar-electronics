@@ -231,8 +231,12 @@ int main() {
               if (landed()) Serial.println("Landed.");
               else Serial.println("Not landed.");
             }
-          } else if (command = "MCUCR") {
+          } else if (command == "MCUCR") {
             Serial.println(MCUCR);
+          } else if (command.length() > 5 && command.substring(0, 5) == "jank ") {
+            uint8_t val = atoi(command.c_str() + 5);
+            Serial.println("Sending over jank: " + val);
+            sendMessage(val);
           } else {
             Serial.println("Invalid command.");
           }
@@ -334,7 +338,11 @@ int main() {
     if (receivedMessage) {
       switch (messageReceiving) {
         default:
-          Serial.println("Received code: " + messageReceiving);
+        {
+          char to_print[10];
+          itoa(messageReceiving, to_print, 10);
+          Serial.println("Received code: " + String(to_print));
+        }
           break;
       }
       receivedMessage = false;
