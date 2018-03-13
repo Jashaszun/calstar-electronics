@@ -235,7 +235,7 @@ int main() {
             Serial.println(MCUCR);
           } else if (command.length() > 5 && command.substring(0, 5) == "jank ") {
             uint8_t val = atoi(command.c_str() + 5);
-            Serial.println("Sending over jank: " + val);
+            Serial.println("Sending over jank: " + String(command.c_str() + 5));
             sendMessage(val);
           } else {
             Serial.println("Invalid command.");
