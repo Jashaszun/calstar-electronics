@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <Servo.h>
 
 #define ESC1_DIR 42
 #define ESC1_PWM 43
@@ -34,23 +33,23 @@ void defaultTest(){
 
     delay(1000);
 
-    Serial.print("Writing ESC1 to half(ish) speed")
+    Serial.print("Writing ESC1 to half(ish) speed");
     analogWrite(ESC1_PWM, 125);
 
-    delay(1000)
+    delay(1000);
 
-    Serial.print("Reversing ESC1 direction")
-    digitalWrite(ESC1_DIR, 0)
+    Serial.print("Reversing ESC1 direction");
+    digitalWrite(ESC1_DIR, 0);
 
     delay(1000);
 
-    Serial.print("Reversing ESC1 direction again")
-    digitalWrite(ESC1_DIR, 1)
+    Serial.print("Reversing ESC1 direction again");
+    digitalWrite(ESC1_DIR, 1);
 
     delay(1000);
 
-    Serial.print("Writing ESC1 to off speed")
+    Serial.print("Writing ESC1 to off speed");
     analogWrite(ESC1_PWM, 0);
 
-    delay(1000)
+    delay(1000);
 }
