@@ -74,6 +74,9 @@ short deployment_signal();
 void setLEDs(uint8_t red, uint8_t green, uint8_t blue);
 short launched();
 short landed();
+bool altitudeChecksDisabled = false;
+
+void sendState();
 
 short state = INIT;
 short launch_state = PAD;
@@ -265,13 +268,14 @@ int main() {
             break;
           case LANDED:
             setLEDs(0, 1, 0); // indicates landing condition met
-            if (wait_for_signal()) {
-              launch_state = SIGNAL_RECEIVED;
-            }
+            // if (wait_for_signal()) {
+            //   launch_state = SIGNAL_RECEIVED;
+            // }
             break;
           case SIGNAL_RECEIVED:
             setLEDs(0, 1, 1); // indicates receipt of signal
             // Wait for stable accelerometer values
+
             {
               static unsigned long lastmillis = 0;
               if (millis() > lastmillis + 100) {
@@ -282,10 +286,6 @@ int main() {
 
                 float norm_squared = xval * xval + yval * yval + zval * zval;
                 float stability = abs(norm_squared - 1);
-
-                // Serial.print(stability);
-                // Serial.print("   ");
-                // Serial.println(accel_stable);
 
                 accel_stable = accel_stable * 0.5 + stability * 0.5; // Running average
 
@@ -338,16 +338,125 @@ int main() {
     processConnection();
     if (receivedMessage) {
       switch (messageReceiving) {
+        case 0x0F: // Activate black powder
+          digitalWrite(BLACK_POWDER_PIN_ARDUINO, 1);
+          sendMessage(0x0F);
+          break;
+        case 0x17: // Activate black powder for 1s
+          digitalWrite(BLACK_POWDER_PIN_ARDUINO, 1);
+          delay(1000);
+          digitalWrite(BLACK_POWDER_PIN_ARDUINO, 0);
+          sendMessage(0x17);
+          break;
+        case 0x2B: // Deactivate black powder
+          digitalWrite(BLACK_POWDER_PIN_ARDUINO, 0);
+          sendMessage(0x2B);
+          break;
+        case 0x33: // Query continuity
+          if (digitalRead(CONTINUITY_PIN)) {
+            sendMessage(0x4D);
+          } else {
+            sendMessage(0x33);
+          }
+          break;
+        case 0x4d: // Query state
+          sendState();
+          break;
+        case 0x55: // Beep
+          start_beep(1000, 0);
+          sendMessage(0xCC);
+          break;
+        case 0x69: // Set state to INIT
+          state = INIT;
+          sendState();
+          break;
+        case 0x71: // Set state to LAUNCH:PAD
+          state = LAUNCH;
+          launch_state = PAD;
+          sendState();
+          break;
+        case 0x8E: // Set state to LAUNCH:FLIGHT
+          state = LAUNCH;
+          launch_state = FLIGHT;
+          sendState();
+          break;
+        case 0x96: // Set state to LAUNCH:LANDED
+          state = LAUNCH;
+          launch_state = LANDED;
+          sendState();
+          break;
+        case 0xAA: // Set state to LAUNCH:SIGNAL_RECEIVED
+          state = LAUNCH;
+          launch_state = SIGNAL_RECEIVED;
+          sendState();
+          break;
+        case 0xB2: // Set state to LAUNCH:TRIGGER
+          state = LAUNCH;
+          launch_state = TRIGGER;
+          sendState();
+          break;
+        case 0xCC: // Set state to LAUNCH:DEPLOYED
+          state = LAUNCH;
+          launch_state = DEPLOYED;
+          sendState();
+          break;
+        case 0xD4: // Turn off altitude checks
+          altitudeChecksDisabled = true;
+          sendMessage(0xD4);
+          break;
+        case 0xE8: // Turn on altitude checks
+          altitudeChecksDisabled = false;
+          sendMessage(0xE8);
+          break;
+        case 0xF0: // Trigger deployment
+          if (state == LAUNCH && launch_state == LANDED) {
+            launch_state = SIGNAL_RECEIVED;
+          }
+          sendMessage(0xF0);
+          break;
         default:
         {
           char to_print[10];
           itoa(messageReceiving, to_print, 10);
-          Serial.println("Received code: " + String(to_print));
+          Serial.println("Received invalid code: " + String(to_print));
         }
           break;
       }
       receivedMessage = false;
     }
+  }
+}
+
+void sendState() {
+  switch (state) {
+    case INIT:
+      sendMessage(0x69);
+      break;
+    case TEST_MODE:
+      /* Do nothing */
+      break;
+    case LAUNCH:
+      switch(launch_state) {
+        case PAD:
+          sendMessage(0x71);
+          break;
+        case FLIGHT:
+          sendMessage(0x8E);
+          break;
+        case LANDED:
+          sendMessage(0x96);
+          break;
+        case SIGNAL_RECEIVED:
+          sendMessage(0xAA);
+          break;
+        case TRIGGER:
+          sendMessage(0xB2);
+          break;
+        case DEPLOYED:
+          sendMessage(0xCC);
+          break;
+      }
+      break;
   }
 }
 
@@ -438,6 +547,8 @@ short deployment_signal() {
 }
 
 short launched() {
+  if (altitudeChecksDisabled) return 1;
+
   static unsigned short counter = 0;
   if (altimeter.readAltitudeFt() - base_alt < ALT_LAUNCHED) {
     counter = 0;
@@ -449,6 +560,8 @@ short launched() {
 }
 
 short landed() {
+  if (altitudeChecksDisabled) return 1;
+
   static unsigned short counter = 0;
   // "Landed" means altimeter says we've landed AND accelerometer says we're not moving
   float ax = accelerometer.get_x_g();
