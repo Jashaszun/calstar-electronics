@@ -355,6 +355,54 @@ int main() {
 
     if (receivedMessage) {
       switch (messageReceiving) {
+        case 0x0F:
+          log("Acked BP activate");
+          break;
+        case 0x17:
+          log("Acked BP activate 1s");
+          break;
+        case 0x2B:
+          log("Acked BP deactivate");
+          break;
+        case 0x33:
+          log("Received discontinuous");
+          break;
+        case 0x4d:
+          log("Received continuous");
+          break;
+        case 0x55:
+          log("Acked beep");
+          break;
+        case 0x69:
+          log("Deployment state: INIT");
+          break;
+        case 0x71:
+          log("Deployment state: PAD");
+          break;
+        case 0x8E:
+          log("Deployment state: FLIGHT");
+          break;
+        case 0x96:
+          log("Deployment state: LANDED");
+          break;
+        case 0xAA:
+          log("Deployment state: SIGNAL_RECEIVED");
+          break;
+        case 0xB2:
+          log("Deployment state: TRIGGER");
+          break;
+        case 0xCC:
+          log("Deployment state: DEPLOYED");
+          break;
+        case 0xD4:
+          log("Acked altitude checks off");
+          break;
+        case 0xE8:
+          log("Acked altitude checks on");
+          break;
+        case 0xF0:
+          log("Acked deployment triggered");
+          break;
         default:
         {
           char to_print[10];
