@@ -3,6 +3,9 @@
 .vs/
 obj/
 
+*.swp
+
+# Compiiled output
 *.d
 *.hex
 *.eep
