@@ -1,11 +1,13 @@
 # the name of your main file, with no extension
-TARGET = ultrasonic_test
+TARGET = rover_ESC_test
 # the C source files
 SRC =
 # the C++ source files
-PSRC = ultrasonic_test.cpp
+PSRC = rover_ESC_test.cpp
 # extra Arduino libraries
-ARDLIBS = NewPing Servo
-ARDCORELIBS = WInterrupts hooks wiring wiring_digital HardwareSerial HardwareSerial0 Print Stream WMath WString abi
+ARDLIBS =
+ARDCORELIBS = hooks wiring wiring_digital wiring_analog HardwareSerial HardwareSerial0 Print Stream WString abi
+MCU = atmega328p
+AVRDUDE_MCU = m328p
 
 include ../Makefile.base
