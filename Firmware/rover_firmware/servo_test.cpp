@@ -20,12 +20,14 @@ void initPins(void) {
 	solarServo.write(90);
 }
 
+//test random angles 10 times
 void testTenTimes(Servo servo) {
 	for (int i = 0; i < 10; i++) {
 		randomMove(servo);
 	}
 }
 
+//randomly sets an angle on servo and prints out on serial angle
 void randomMove(Servo servo) {
 	int randNum = rand() % (180 + 1 - 0) + 0
 	Serial.println(randNum);
