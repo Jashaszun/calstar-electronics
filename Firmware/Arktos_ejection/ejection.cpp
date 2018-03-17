@@ -183,10 +183,20 @@ int main() {
         }
         break;
       case DEPLOY:
+      {
+        static bool deployed = false;
         setLEDs(HIGH, LOW, HIGH);
         // TRANSMITTER_PORT &= ~(1 << TRANSMITTER_PIN); // send deployment signal
-        digitalWrite(TRANSMITTER_PIN, LOW);
-        state = LVDS_WAIT;
+        // digitalWrite(TRANSMITTER_PIN, LOW);
+        if (!deployed) {
+          sendMessage(0xF0);
+          deployed = true;
+        }
+
+        if (!sendingMessage) {
+          state = LVDS_WAIT;
+        }
+      }
         break;
       case LVDS_WAIT:
         setLEDs(HIGH, HIGH, LOW);

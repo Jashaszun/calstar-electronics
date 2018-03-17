@@ -9,7 +9,7 @@
 
 void defaultTest();
 
-//Servo ESC1;
+Servo ESC1;
 
 int main(void) {
 	init();
@@ -17,7 +17,7 @@ int main(void) {
 	pinMode(ESC1_DIR, OUTPUT);
 
     //Serial.begin(19200);
-	//ESC1.attach(ESC1_PWM);
+	ESC1.attach(ESC1_PWM);
 
 	while (true) {
         // if (Serial.available() > 0){
@@ -26,8 +26,8 @@ int main(void) {
         //         analogWrite(ESC1_PWM, value);
         //     }
         // }
-		digitalWrite(ESC1_PWM, 1);
-		//ESC1.write(180);
+		//digitalWrite(ESC1_PWM, 1);
+		ESC1.write(100);
         //defaultTest();
 	}
 
