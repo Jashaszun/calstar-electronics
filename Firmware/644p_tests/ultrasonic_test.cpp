@@ -1,37 +1,20 @@
-#include <avr/io.h>
-#include <util/delay.h>
-
-#define F_CPU 16000000
-
-#define DDR_US1Trig DDRC
-#define PORT_US1Trig PORTC
-#define MASK_US1Trig (1 << 4)
-#define DDR_US2Trig DDRC
-#define PORT_US2Trig PORTC
-#define MASK_US2Trig (1 << 3)
-#define DDR_US1Echo DDRC
-#define PIN_US1Echo PINC
-#define MASK_US1Echo (1 << 5)
-#define DDR_US2Echo DDRC
-#define PIN_US2Echo PINC
-#define MASK_US2Echo (1 << 2)
-
-#define CENTIMETER 1
-#define INCH 0
+#include "ultrasonic_test.h"
 
 void setup() {
   DDRC = MASK_US1Trig | MASK_US2Trig;
 }
 
 int main() {
+  setup();
   initUART();
   PORT_US1Trig &= ~(MASK_US1Trig); // set trig pin low
   PORT_US2Trig &= ~(MASK_US2Trig); // set trig pin low
   while(1) {
     _delay_ms(10);
-    string dist = itoa(test_us1(CENTIMETER)); // get data from US1 and convert to string
-    // string dist = itoa(test_us2(CENTIMETER)); // get data from US2 and convert to string
-    while(!txStr(dist1, -1)); // send on UART
+    char* dist = (char*) malloc(sizeof(char) * 16);
+    itoa(test_us1(CENTIMETER), dist, 10); // get data from US1 and convert to string
+    // itoa(test_us2(CENTIMETER), dist, 10); // get data from US2 and convert to string
+    while(!txStr(dist, -1)); // send on UART
   }
 }
 
