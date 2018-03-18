@@ -112,8 +112,12 @@ CFLAGS += -D F_CPU=$(F_CPU)
 
 ### These macros pertain to supporting Arduino libs
 LDFLAGS += -lm # -lm = math library
+ifndef ARBLIBDIR
 ARDLIBDIR 		= $(ARDDIR)/libraries
+endif
+ifndef ARBLIBDIR
 ARDCOREDIR 		= $(ARDDIR)/core
+endif
 # add Arduino sources and include directories to PSRC and EXTRAINCDIRS
 ARDCOREOBJECTS += $(foreach lib,$(ARDCORELIBS),$(ARDCOREDIR)/$(lib).o)
 ARDLIBCFILES += $(wildcard $(foreach lib,$(ARDLIBS),$(ARDLIBDIR)/$(lib)/src/*.c))
