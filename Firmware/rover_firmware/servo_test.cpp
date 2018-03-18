@@ -9,6 +9,8 @@ Servo leftSkidServo;
 Servo rightSkidServo;
 Servo solarServo;
 
+void randomMove(Servo servo);
+
 int pos = 0;
 
 void initPins(void) {
@@ -31,9 +33,9 @@ void testTenTimes(Servo servo) {
 
 //randomly sets an angle on servo and prints out on serial
 void randomMove(Servo servo) {
-	int randNum = rand() % (180 + 1 - 0) + 0
+	int randNum = rand() % (180 + 1 - 0) + 0;
 	Serial.println(randNum);
-	servo.write(angle);
+	servo.write(randNum);
 	delay(2000);
 }
 
