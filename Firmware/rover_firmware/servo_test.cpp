@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include <Servo.h>
 
-#define L_SKID_SERVO 5
-#define R_SKID_SERVO 6
-#define SOLAR_SERVO 3
+#define L_SKID_SERVO 14
+#define R_SKID_SERVO 13
+#define SOLAR_SERVO 15
 
 Servo leftSkidServo;
 Servo rightSkidServo;
