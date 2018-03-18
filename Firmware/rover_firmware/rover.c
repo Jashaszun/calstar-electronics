@@ -17,24 +17,26 @@ TO DO:
 // #include <util/delay.h>
 #include <stdint.h>
 
-//Arduino pin assignments
-#define LEFT_SONAR_PING 2
-#define SOLAR_SERVO 3
-#define RIGHT_SONAR_PING 4
-#define L_SKID_SERVO 5
-#define R_SKID_SERVO 6
-#define L_MOTOR_DIR 7
-#define R_MOTOR_DIR 8
-#define R_MOTOR_PWM 9
-#define L_MOTOR_PWM 10
-#define L_ENCODER_B 12
-#define L_ENCODER_A 13
-#define SOLAR_POT 14
-#define SOLAR_ADC 15
-#define R_ENCODER_B 16
-#define R_ENCODER_A 17
-#define ACCEL_GYRO_SDA 18
-#define ACCEL_GYRO_SCL 19
+//Arduino pin assignments   (L = 1, R = 2)
+#define LEFT_SONAR_TRIG 20
+#define LEFT_SONAR_ECHO 21
+#define RIGHT_SONAR_TRIG 19
+#define RIGHT_SONAR_ECHO 18
+#define L_SKID_SERVO 14
+#define R_SKID_SERVO 13
+#define SOLAR_SERVO 15
+#define L_MOTOR_DIR 2  //ESC1DIR 
+#define R_MOTOR_DIR 1  //ESC2DIR 
+#define R_MOTOR_PWM 4  //ESC2PWM
+#define L_MOTOR_PWM 3  //ESC1PWM
+#define L_ENCODER_B 27 
+#define L_ENCODER_A 26
+#define SOLAR_POT 25 
+// #define SOLAR_ADC 15    ?? idk i couldnt find it
+#define R_ENCODER_B 27
+#define R_ENCODER_A 26
+#define ACCEL_GYRO_SDA 17
+#define ACCEL_GYRO_SCL 16
 
 #define SERIAL_BAUD 19200
 
