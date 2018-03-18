@@ -354,9 +354,9 @@ int main() {
           break;
         case 0x33: // Query continuity
           if (digitalRead(CONTINUITY_PIN)) {
-            sendMessage(0x4D);
-          } else {
             sendMessage(0x33);
+          } else {
+            sendMessage(0x4D);
           }
           break;
         case 0x4d: // Query state
@@ -364,7 +364,7 @@ int main() {
           break;
         case 0x55: // Beep
           start_beep(1000, 0);
-          sendMessage(0xCC);
+          sendMessage(0x55);
           break;
         case 0x69: // Set state to INIT
           state = INIT;
