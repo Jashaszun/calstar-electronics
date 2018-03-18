@@ -115,7 +115,7 @@ LDFLAGS += -lm # -lm = math library
 ifndef ARDLIBDIR
 ARDLIBDIR = $(ARDDIR)/libraries
 endif
-ifndef ARDLIBDIR
+ifndef ARDCOREDIR
 ARDCOREDIR = $(ARDDIR)/core
 endif
 # add Arduino sources and include directories to PSRC and EXTRAINCDIRS
