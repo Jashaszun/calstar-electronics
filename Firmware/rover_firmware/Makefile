@@ -1,11 +1,11 @@
 # the name of your main file, with no extension
-TARGET = servo_test
+TARGET = rover_ESC_test
 # the C source files
 SRC =
 # the C++ source files
-PSRC = servo_test.cpp
+PSRC = rover_ESC_test.cpp
 # extra Arduino libraries
-ARDLIBS = Servo
+ARDLIBS =
 ARDCORELIBS = WInterrupts WMath hooks wiring wiring_digital wiring_analog HardwareSerial HardwareSerial0 Print Stream WString abi
 MCU = atmega644p
 AVRDUDE_MCU = m644p
