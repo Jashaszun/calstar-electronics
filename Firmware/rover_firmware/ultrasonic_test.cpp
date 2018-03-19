@@ -9,7 +9,7 @@
 int main(void) {
 	init();
 
-	NewPing leftSonar(LEFT_SONAR_TRIG, LEFT_SONAR_ECHO, 180);
+    NewPing leftSonar(LEFT_SONAR_TRIG, LEFT_SONAR_ECHO, 180);
     NewPing rightSonar(RIGHT_SONAR_TRIG, RIGHT_SONAR_ECHO, 180);
 
 	Serial.begin(19200);
