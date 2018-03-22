@@ -17,6 +17,10 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef ARDUINO_ARCH_AVR
+#define ARDUINO_ARCH_AVR
+#endif
+
 #if defined(ARDUINO_ARCH_AVR)
 
 #include <avr/interrupt.h>
@@ -316,4 +320,3 @@ bool Servo::attached()
 }
 
 #endif // ARDUINO_ARCH_AVR
-
