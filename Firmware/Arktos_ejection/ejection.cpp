@@ -51,7 +51,7 @@ enum State {
   DISABLED = 8
 };
 
-const char* state_names[] = {"INIT", "LAUNCH_PAD", "LAUNCHED", "RADIO_WAIT", "DEPLOY", "LVDS_WAIT", "SCISSOR_LIFT_ACTIVATE", "TEST_MODE", "DISABLED"};
+const char* state_names[] = {"IN", "PD", "LD", "RW", "DP", "LW", "SL", "TM", "DS"};
 
 // Create peripherals
 MPL3115A2 altimeter;
@@ -319,7 +319,7 @@ int main() {
 			float alt = altimeter.readAltitudeFt();
 
 			char outbuf[100];
-			sprintf(outbuf, "State: %s   Ac: x: %+07i y: %+07i z: %+07i   Al: %+07i\n", state_names[state],
+			sprintf(outbuf, "St: %s   Ac: x: %+07i y: %+07i z: %+07i   Al: %+07i\n", state_names[state],
 				(int)(1000*accelX), (int)(1000*accelY), (int)(1000*accelZ), (int)(alt-currentAltZero));
 
 			radio.send(TRANSMIT_TO, outbuf, strlen(outbuf));

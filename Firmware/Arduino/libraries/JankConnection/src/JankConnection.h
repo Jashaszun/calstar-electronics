@@ -8,16 +8,16 @@
 
 
  Ejection -> Deployment
-  0f: Activate black powder
-  17: Activate black powder for 1s
-  2B: Deactivate black powder
-  33: Query continuity
-  4d: Query state
-  55: Beep
-  69, 71, 8E, 96, AA, B2, CC: Set state to [INIT, LAUNCH:PAD, LAUNCH:FLIGHT, LAUNCH:LANDED, LAUNCH:SIGNAL_RECEIVED, LAUNCH:TRIGGER, LAUNCH:DEPLOYED]
-  D4: Turn off altitude checks
-  E8: Turn on altitude checks
-  F0: Trigger deployment
+15  0f: Activate black powder
+23  17: Activate black powder for 1s
+43  2B: Deactivate black powder
+51  33: Query continuity
+77  4d: Query state
+85  55: Beep
+  (105)69, (113)71, (142)8E, (150)96, (170)AA, (178)B2, (204)CC: Set state to [INIT, LAUNCH:PAD, LAUNCH:FLIGHT, LAUNCH:LANDED, LAUNCH:SIGNAL_RECEIVED, LAUNCH:TRIGGER, LAUNCH:DEPLOYED]
+212  D4: Turn off altitude checks
+232  E8: Turn on altitude checks
+240  F0: Trigger deployment
 
  Deployment -> Ejection
   0f: Ack BP activate

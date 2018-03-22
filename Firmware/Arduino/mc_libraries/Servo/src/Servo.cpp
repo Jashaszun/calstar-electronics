@@ -320,4 +320,3 @@ bool Servo::attached()
 }
 
 #endif // ARDUINO_ARCH_AVR
-
