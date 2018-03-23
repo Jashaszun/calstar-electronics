@@ -1,15 +1,10 @@
 #include <Arduino.h>
-// #include <Servo.h>
 
 #define ESC1_DIR 2
 #define ESC1_PWM 3
 
 #define ESC2_DIR 1
 #define ESC2_PWM 4
-
-// void defaultTest();
-
-// Servo ESC1;
 
 int main(void) {
 	init();
@@ -26,33 +21,27 @@ int main(void) {
 	digitalWrite(ESC2_PWM, 0);
 
 	while(1) {
-		digitalWrite(ESC1_PWM, 50);
-		digitalWrite(ESC2_PWM, 50);
+		
+		//run at 20% duty cycle
+		analogWrite(ESC1_PWM, 50);
+		analogWrite(ESC2_PWM, 50);
+		delay(200);
+		
+		//run at 40% duty cycle
+		analogWrite(ESC1_PWM, 100);
+		analogWrite(ESC2_PWM, 100);
+		delay(200);
+		
+		//run at 80% duty cycle
+		analogWrite(ESC1_PWM, 200);
+		analogWrite(ESC2_PWM, 200);
+		delay(200);
+		
+		//alternate both motor directions
 		digitalWrite(ESC1_DIR, !digitalRead(ESC1_DIR));
 		digitalWrite(ESC2_DIR, !digitalRead(ESC2_DIR));
-		delay(100);
+		delay(300);
 	}
-
-	// init();
-	// pinMode(ESC1_PWM, OUTPUT);
-	// pinMode(ESC1_DIR, OUTPUT);
-
- //    //Serial.begin(19200);
-	// ESC1.attach(ESC1_PWM);
-
-	// while (true) {
- //        // if (Serial.available() > 0){
- //        //     int value = Serial.read();
- //        //     if (value >= 0 || value < 256){
- //        //         analogWrite(ESC1_PWM, value);
- //        //     }
- //        // }
-	// 	//digitalWrite(ESC1_PWM, 1);
-	// 	ESC1.write(100);
- //        //defaultTest();
-	// }
-
- //  	return 0;
 }
 
 // void defaultTest(){
