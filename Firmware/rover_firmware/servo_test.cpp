@@ -63,17 +63,17 @@ int main(void) {
 
 	Serial.begin(19200);
 	while(1) {
-		// analogWrite(14, 0);
-		// analogWrite(13, 0);
-		// leftSkidServo.write(0);
-		// delay(1000);
-		// analogWrite(14, 10);
-		analogWrite(14, 8); // RETRACT SERVO
-		// leftSkidServo.write(60);
+		analogWrite(R_SKID_SERVO, 8); // RETRACT R_SERVO
+		delay(200);
+		analogWrite(L_SKID_SERVO, 8); // RETRACT L_SERVO
+		delay(200);
+		analogWrite(SOLAR_SERVO, 8); //RETRACT SOLAR_SERVO
 		delay(400);
-		// analogWrite(14, 22);
-		analogWrite(14, 28); // EXTEND SERVO
-		// leftSkidServo.write(120);
+		analogWrite(L_SKID_SERVO, 23); // EXTEND L_SERVO
+		delay(200);
+		analogWrite(R_SKID_SERVO, 22); // EXTEND R_SERVO
+		delay(200);
+		analogWrite(SOLAR_SERVO, 8); //RETRACT SOLAR_SERVO
 		delay(400);
 	}
 }
