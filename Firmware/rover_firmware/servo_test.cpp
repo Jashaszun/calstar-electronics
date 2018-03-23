@@ -68,11 +68,11 @@ int main(void) {
 		// leftSkidServo.write(0);
 		// delay(1000);
 		// analogWrite(14, 10);
-		analogWrite(14, 8);
+		analogWrite(14, 8); // RETRACT SERVO
 		// leftSkidServo.write(60);
 		delay(400);
 		// analogWrite(14, 22);
-		analogWrite(14, 28);
+		analogWrite(14, 28); // EXTEND SERVO
 		// leftSkidServo.write(120);
 		delay(400);
 	}
