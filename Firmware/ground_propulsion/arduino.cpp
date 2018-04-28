@@ -44,6 +44,7 @@ String c_alias = "";
 
 void resetCommand();
 void sendMessage(String message);
+bool validNumber(String s);
 void moveStepperMotor(char motor, int32_t targetAngle);
 int32_t angleToSteps(int32_t angle);
 void initStepperMotors();
@@ -65,7 +66,7 @@ int main(void) {
                     int firstSpace = command.indexOf(' ');
                     if (firstSpace == -1) {
                         if (command == DISABLE) {
-                            sendMessage("Moving from assign state to disabled state");
+                            sendMessage("Moving from enabled state to disabled state");
                             state = DISABLED;
                         } else {
                             sendMessage("Invalid Command: " + command);
@@ -73,10 +74,19 @@ int main(void) {
                         resetCommand();
                         break;
                     }
-                    String firstArg = command.substring(firstSpace);
+                    String firstArg = command.substring(0, firstSpace);
                     if (firstArg.length() == 1 && (firstArg[0] == A || firstArg[0] == B || firstArg[0] == C)) { // expects a single number next as absolute position to which to move motor to
-                        int n = atoi(command.substring(firstSpace + 1).c_str());
-                        moveStepperMotor(firstArg[0], n);
+                        String rest = command.substring(firstSpace + 1);
+                        if (validNumber(rest)) {
+                            int32_t n = atol(command.substring(firstSpace + 1).c_str());
+                            sendMessage("Moving motor " + firstArg + " to absolute position " + n);
+                            moveStepperMotor(firstArg[0], n);
+                        } else {
+                            sendMessage("Invalid position for motor: " + rest);
+                            sendMessage("Expects an integer.");
+                            resetCommand();
+                            break;
+                        }
                     } else if (firstArg == ALIAS) {
                         sendMessage("Aliasing not implemented");
                     } else {
@@ -105,38 +115,26 @@ int main(void) {
         if (!completingCommand) {
             readSerialCommand();
         }
-
-        // Commands should be in format "<motor char> <+ or -><2 digit number>"
-        // eg: "a -90" moves motor a to -90 position, absolute -90, not relative (absolute -90 is relative to middle position)
-        // if (completingCommand && command.length() >= 5) {
-        //     sendMessage("Command recieved: " + command);
-        //     char motor = command[0];
-        //     int n = atoi(command.substring(2).c_str());
-        //     if (n > 90) {
-        //         n = 90;
-        //     } else if (n < -90) {
-        //         n = -90;
-        //     }
-        //     // Motors are designated by a char from a to c
-        //     if (motor < 'a' || motor > 'c') {
-        //         sendMessage("Received invalid message: " + command);
-        //     } else {
-        //         moveStepperMotor(motor, n);
-        //     }
-        //     command = "";
-        //     completingCommand = false;
-        // } else if (completingCommand && command.length() < 5) {
-        //     if (command != "") {
-        //         sendMessage("Received invalid message: " + command);  
-        //     }    
-        //     command = "";
-        //     completingCommand = false; 
-        // }
     }
 }
 
 void sendMessage(String message) {
     Serial.println(message);
+}
+
+bool validNumber(String s) {
+    if (s.length() == 0) {
+        return false;
+    }
+    if (!(isdigit(s[0]) || s[0] == '-')) {
+        return false;
+    }
+    for (int i = 1; i < s.length(); ++i) {
+        if (!isdigit(s[i])) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void moveStepperMotor(char motor, int32_t targetAngle) {
