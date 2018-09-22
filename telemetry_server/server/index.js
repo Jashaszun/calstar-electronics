@@ -1,3 +1,14 @@
+/*
+ * Access control: CalSTAR MA
+ *
+ * The entry point of the server. Responds to requests and stuff.
+ *
+ * To add a new API endpoint, please put the code in a separate file, import
+ * it here, and mount it as appropriate.
+ * Jonathan doesn't really know how routing works, so if you want to do that
+ * to improve readability then feel free to do so.
+ */
+
 // dependencies
 const express = require('express')
 const app = express()
@@ -15,7 +26,9 @@ const postUpload = require('./upload')
 const PORT = 8000
 const BASE_DIR = path.join(__dirname, '..') // parent directory
 
-app.use(express.static(BASE_DIR)) // https://stackoverflow.com/questions/40574159/
+// fixes weird path resolution stuff on localhost
+// https://stackoverflow.com/questions/40574159/
+app.use(express.static(BASE_DIR))
 
 app.get('/', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'index.html'))
