@@ -64,6 +64,7 @@ The following documentation pages may be useful:
 - [express](https://expressjs.com/en/4x/api.html)
 - [mysql2](https://www.npmjs.com/package/mysql2)
 - [MariaDB](https://mariadb.com/kb/en/library/documentation/)
+
 If there's any other libraries not listed here, Google is your friend. If you find anything you think is worth putting here, add it.
 
 ## TODO
