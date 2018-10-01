@@ -16,8 +16,10 @@ namespace RadioSerial
     {
         List<Tuple<Double, Double>> altitudeData;
         List<Tuple<Double, Double, Double, Double>> accelData;
+        System.IO.FileStream accelFile;
+        System.IO.StreamWriter accelFileWriter;
 
-        SerialPort port;
+    SerialPort port;
         public TelemetryForm(SerialPort port)
         {
             InitializeComponent();
@@ -25,6 +27,8 @@ namespace RadioSerial
             startTime = DateTime.Now.ToFileTimeUtc();
             altitudeData = new List<Tuple<Double, Double>>();
             accelData = new List<Tuple<double, double, double, double>>();
+            accelFile = System.IO.File.OpenWrite("accel.csv");
+            accelFileWriter = new System.IO.StreamWriter(accelFile);
         }
 
         LineAnnotation maxLine;
@@ -90,6 +94,8 @@ namespace RadioSerial
                 lastTimeInAccelChart = time;
             }
             accelData.Add(new Tuple<double, double, double, double>(time, x, y, z));
+            accelFileWriter.WriteLine(string.Join(", ", new string[] { time.ToString(), x.ToString(), y.ToString(), z.ToString() }));
+            accelFileWriter.Flush();
         }
 
         string fullBuffer = "";
