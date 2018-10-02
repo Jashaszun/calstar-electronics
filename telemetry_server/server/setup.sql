@@ -55,4 +55,8 @@ VALUES ( 'GyroY', 'GyroY', 'deg/sec' );
 INSERT INTO DataType ( type, name, units ) 
 VALUES ( 'GyroZ', 'GyroZ', 'deg/sec' );
 
+/*
+ * This is how to create an empty run.
+ * TODO: Remove
+ */
 INSERT INTO Runs (runId) VALUES (DEFAULT);
