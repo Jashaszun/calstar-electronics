@@ -32,9 +32,10 @@ CREATE TABLE DataType (
 CREATE TABLE DataPoint (
 	dataIndex int,
 	runId BIGINT UNSIGNED NOT NULL,
+	dataTypeId BIGINT UNSIGNED NOT NULL,
 	value double,
-	PRIMARY KEY (dataIndex),
-	FOREIGN KEY (runId) REFERENCES Runs(runId)
+	FOREIGN KEY (runId) REFERENCES Runs(runId),
+	FOREIGN KEY (dataTypeId) REFERENCES DataType(dataTypeId)
 );
 
 INSERT INTO DataType ( type, name, units ) 
@@ -54,9 +55,3 @@ VALUES ( 'GyroY', 'GyroY', 'deg/sec' );
 
 INSERT INTO DataType ( type, name, units ) 
 VALUES ( 'GyroZ', 'GyroZ', 'deg/sec' );
-
-/*
- * This is how to create an empty run.
- * TODO: Remove
- */
-INSERT INTO Runs (runId) VALUES (DEFAULT);

@@ -17,6 +17,8 @@ const io = require('socket.io')(server)
 const logger = require('loggy')
 const path = require('path')
 const fileUpload = require('express-fileupload');
+const { sanitizeBody } = require('express-validator/filter');
+
 // API endpoints
 const getExport = require('./export')
 const getReadData = require('./read-data')
@@ -43,13 +45,21 @@ app.get('/upload', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'upload_form.html'))
 })
 
+app.get('/uploadfail', function (req, res) {
+  res.sendFile(path.join(BASE_DIR, 'html', 'upload_fail.html'))
+})
+
+app.get('/uploadsuccess', function (req, res) {
+  res.sendFile(path.join(BASE_DIR, 'html', 'upload_success.html'))
+})
+
 app.get('/export', getExport)
 
 app.get('/readData', getReadData)
 
 app.get('/runs', getRuns)
 
-app.post('/upload', postUpload)
+app.post('/upload', sanitizeBody('newrun').toBoolean(), postUpload)
 
 server.listen(PORT, function (err) {
   if (err) {
