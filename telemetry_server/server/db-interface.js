@@ -12,7 +12,14 @@
  */
 
 const sql = require('mysql2') 
-
+const dataTypeId = {
+  'Time': 1,
+  'Altitude': 2,
+  'Temperature': 3,
+  'GyroX': 4,
+  'GyroY': 5,
+  'GyroZ': 6
+};
 // TODO store settings in a json file, or in .env 
 const pool = sql.createPool({ 
   host: 'localhost', 
@@ -21,6 +28,8 @@ const pool = sql.createPool({
   waitForConnections: true, 
   connectionLimit: 10, 
   queueLimit: 0 
-}) 
+})
 
-module.exports = pool
+
+module.exports.pool = pool
+module.exports.dataTypeId = dataTypeId
