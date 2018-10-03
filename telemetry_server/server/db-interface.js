@@ -11,7 +11,7 @@
  * changes in the interface of the exported object from affecting other files.
  */
 
-const sql = require('mysql2') 
+const sql = require('mysql2')
 const dataTypeId = {
   'Time': 1,
   'Altitude': 2,
@@ -19,17 +19,16 @@ const dataTypeId = {
   'GyroX': 4,
   'GyroY': 5,
   'GyroZ': 6
-};
-// TODO store settings in a json file, or in .env 
-const pool = sql.createPool({ 
-  host: 'localhost', 
-  user: 'telemetry', 
-  database: 'telemetry', 
-  waitForConnections: true, 
-  connectionLimit: 10, 
-  queueLimit: 0 
+}
+// TODO store settings in a json file, or in .env
+const pool = sql.createPool({
+  host: 'localhost',
+  user: 'telemetry',
+  database: 'telemetry',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 })
-
 
 module.exports.pool = pool
 module.exports.dataTypeId = dataTypeId

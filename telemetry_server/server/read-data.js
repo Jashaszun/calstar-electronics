@@ -7,7 +7,7 @@
  *
  * For further details, refer to the design doc (linked in the README).
  */
- 
+
 const db = require('./db-interface')
 
 // YOUR CODE HERE

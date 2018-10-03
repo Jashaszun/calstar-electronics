@@ -8,6 +8,7 @@
     "build": "webpack --config webpack.config.js",
     "watch": "npm run build --watch",
     "lint": "standard",
+    "lintfix": "standard --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

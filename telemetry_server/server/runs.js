@@ -14,18 +14,18 @@ const path = require('path')
 const db = require('./db-interface')
 // YOUR CODE HERE
 var getRuns = function (req, res) {
-    db.pool.query(
-        'SELECT * FROM Runs',
-        function (err, results, fields) {
-            if (err) {
-                res.end();
-                console.log(err);
-            }
-            res.send(results);
-            console.log(results); // results contains rows returned by server
-            console.log(fields); // fields contains extra meta data about results, if available
-        }
-    )
+  db.pool.query(
+    'SELECT * FROM Runs',
+    function (err, results, fields) {
+      if (err) {
+        res.end()
+        console.log(err)
+      }
+      res.send(results)
+      console.log(results) // results contains rows returned by server
+      console.log(fields) // fields contains extra meta data about results, if available
+    }
+  )
 }
 
 module.exports = getRuns // rename however you want

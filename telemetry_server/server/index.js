@@ -16,8 +16,8 @@ const server = require('http').Server(app)
 const io = require('socket.io')(server)
 const logger = require('loggy')
 const path = require('path')
-const fileUpload = require('express-fileupload');
-const { sanitizeBody } = require('express-validator/filter');
+const fileUpload = require('express-fileupload')
+const { sanitizeBody } = require('express-validator/filter')
 
 // API endpoints
 const getExport = require('./export')
@@ -28,14 +28,11 @@ const postUpload = require('./upload')
 const PORT = 8000
 const BASE_DIR = path.join(__dirname, '..') // parent directory
 
-
-app.use(fileUpload());
+app.use(fileUpload())
 
 // fixes weird path resolution stuff on localhost
 // https://stackoverflow.com/questions/40574159/
 app.use(express.static(path.join(BASE_DIR, 'html')))
-
-
 
 app.get('/', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'index.html'))
