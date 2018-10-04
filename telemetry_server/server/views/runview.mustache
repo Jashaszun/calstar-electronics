@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title id="title">CalSTAR Telemetry</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+    crossorigin="anonymous">
+</head>
+
+<body>
+  <nav class="navbar navbar-light bg-light">
+    <a class="navbar-brand" href="/">CalSTAR Telemetry</a>
+  </nav>
+  <script type="text/javascript" src="/dist/client.js"></script>
+  <table class="table table-striped">
+    <tr>
+      <th>Run ID</th>
+      <th>Data Index</th>
+      <th>Data Type ID</th>
+      <th>Value</th>
+    </tr>
+    {{#data}}
+    <tr>
+      <td>{{runId}}</td>
+      <td>{{dataIndex}}</td>
+      <td>{{dataTypeId}}</td>
+      <td>{{value}}</td>
+    </tr>
+    {{/data}}
+  </table>
+</body>
+
+</html>

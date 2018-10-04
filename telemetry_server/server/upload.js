@@ -42,7 +42,7 @@ var postUpload = function (req, res, next) {
       'INSERT INTO Runs (runId) VALUES (DEFAULT)', [],
       function (err, results, fields) {
         if (err) {
-          console.log('ERROR INSERTING INTO Runs: (upload.js line 37)')
+          console.log('ERROR INSERTING INTO Runs: (upload.js)')
           console.log(err)
           res.redirect('/uploadfail')
         }

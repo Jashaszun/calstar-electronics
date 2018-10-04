@@ -21,7 +21,7 @@ var getRuns = function (req, res) {
         res.end()
         console.log(err)
       }
-      res.send(results)
+      res.render('runs', {runs: results})
       console.log(results) // results contains rows returned by server
       console.log(fields) // fields contains extra meta data about results, if available
     }
@@ -29,7 +29,7 @@ var getRuns = function (req, res) {
 }
 
 var getRun = function (req, res) {
-  id = 1
+  id = req.params["id"]
   db.pool.query(
     'SELECT * FROM DataPoint WHERE runId = ?',
     [id],
@@ -38,11 +38,10 @@ var getRun = function (req, res) {
         res.end()
         console.log(err)
       }
-
-      res.send(results)
+      res.render('runview', {data: results})
     }
   )
 }
 
-module.exports.getRuns = getRuns // rename however you want
+module.exports.getRuns = getRuns
 module.exports.getRun = getRun

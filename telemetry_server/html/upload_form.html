@@ -18,7 +18,8 @@
         <h4>Upload instructions</h4>
         <p>The CSV must have headers.</p>
         <p>Each data point should have an ID header that increases with increasing time.</p>
-        <p>Each column should be numeric and correspond to one of the database's accepted datatypes (eg. Time, Altitude, etc.)</p>
+        <p>Each column should be numeric and correspond to one of the database's accepted datatypes (eg. Time,
+            Altitude, etc.)</p>
         <p>Columns that you want the uploader to ignore should have a header of "Ignore"</p>
         <p>If the data is not from a new run, a run ID must be entered.</p>
         <div class="form-group">
@@ -27,6 +28,10 @@
         <div class="form-group form-check">
             <input name="newrun" type="checkbox" class="form-check-input" id="newrun">
             <label class="form-check-label" for="newrun">New Run?</label>
+        </div>
+        <div class="form-group">
+            <label for="runid">Run ID (positive integer)</label>
+            <input type="number" class="form-control" name="runid" id="runid" placeholder="Enter Run ID">
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
     </form>
