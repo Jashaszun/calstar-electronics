@@ -28,4 +28,21 @@ var getRuns = function (req, res) {
   )
 }
 
-module.exports = getRuns // rename however you want
+var getRun = function (req, res) {
+  id = 1
+  db.pool.query(
+    'SELECT * FROM DataPoint WHERE runId = ?',
+    [id],
+    function (err, results, fields) {
+      if (err) {
+        res.end()
+        console.log(err)
+      }
+
+      res.send(results)
+    }
+  )
+}
+
+module.exports.getRuns = getRuns // rename however you want
+module.exports.getRun = getRun

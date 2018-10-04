@@ -22,7 +22,7 @@ const { sanitizeBody } = require('express-validator/filter')
 // API endpoints
 const getExport = require('./export')
 const getReadData = require('./read-data')
-const getRuns = require('./runs')
+const { getRuns, getRun } = require('./runs')
 const postUpload = require('./upload')
 
 const PORT = 8000
@@ -55,6 +55,8 @@ app.get('/export', getExport)
 app.get('/readData', getReadData)
 
 app.get('/runs', getRuns)
+
+app.get('/runs/1', getRun)
 
 app.post('/upload', sanitizeBody('newrun').toBoolean(), postUpload)
 
