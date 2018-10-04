@@ -12,18 +12,19 @@
 const fs = require('fs')
 const path = require('path')
 const db = require('./db-interface')
-// YOUR CODE HERE
+const logger = require('loggy')
+
 var getRuns = function (req, res) {
   db.pool.query(
     'SELECT * FROM Runs',
     function (err, results, fields) {
       if (err) {
         res.end()
-        console.log(err)
+        logger.error(err)
       }
       res.render('runs', {runs: results})
-      console.log(results) // results contains rows returned by server
-      console.log(fields) // fields contains extra meta data about results, if available
+      logger.info(results) // results contains rows returned by server
+      logger.info(fields) // fields contains extra meta data about results, if available
     }
   )
 }
