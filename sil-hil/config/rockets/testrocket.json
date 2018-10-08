@@ -1,0 +1,34 @@
+{
+  "weight": 10,
+  "drag_area": 1,
+  "leds": {
+    "led1": 10,
+    "led2": 11
+  },
+  "motors": {
+    "mainmotor": {
+      "file": "config/motors/testmotor.json",
+      "pin": 3
+    },
+    "secondmotor": {
+      "file": "config/motors/testmotor.json",
+      "pin": 4
+    }
+  },
+  "separators": {
+    "stage1": {
+      "weight_change": -5,
+      "pin": 5
+    }
+  },
+  "chutes": {
+    "drogue": {
+      "drag_area": 10,
+      "pin": 6
+    },
+    "main": {
+      "drag_area": 30,
+      "pin": 7
+    }
+  }
+}
