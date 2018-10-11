@@ -1,19 +1,19 @@
 #include "common.h"
 
 class Motor {
-public:
   string interpolation;
-  int thrust_curve_len;
-  float thrust_curve_time[10];
-  float thrust_curve_force[10];
-  float getForce(int time);
+  vector<pair<float, float>> thrust_curve; // <time, force>
+
+public:
+  float getForce(float time);
   Motor(string motor_file);
 };
 
 class Rocket {
   vec rocket_pos;
-  vec rocket_speed; // velocity?
+  vec rocket_vel;
   vec rocket_dir;  // = rocket_speed / |rocket_speed|?
+                   // At the moment yes, but if the simulator gets more advanced then this will not always be the case. -Leo
   Motor motor;
 
 public:
