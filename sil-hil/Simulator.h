@@ -4,8 +4,8 @@ class Motor {
 public:
   string interpolation;
   int thrust_curve_len;
-  float thrust_curve_time[4];
-  float thrust_curve_force[4];
+  float thrust_curve_time[10];
+  float thrust_curve_force[10];
   float getForce(int time);
   Motor(string motor_file);
 };

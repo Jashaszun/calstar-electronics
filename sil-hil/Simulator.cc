@@ -1,4 +1,9 @@
 #include "Simulator.h"
+#include "nlohmann/json.hpp"
+#include <fstream>
+#include <iostream>
+
+using json = nlohmann::json;
 
 float Motor::getForce(int time) {
   // if before first entry of thrust curve, return first thrust value
@@ -31,10 +36,31 @@ float Motor::getForce(int time) {
 }
 
 Motor::Motor(string motor_file) {
-  // TODO: Initialize motor with file
+  // open file stream
+  std::ifstream file(motor_file);
+
+  // read json from filestream
+  json motor_json;
+  file >> motor_json;
+
+  // place values into motor
+  interpolation = motor_json["interpolation"];
+
+  // Load thrust curve. NOTE: Assumes thrust curve is provided in time-increasing order
+  int i = 0;
+
+  // NOTE: Assumes thrust_curve_time and thrust_curve_force have enough space for all values.
+  for (auto it = motor_json["thrust_curve"].begin(); it != motor_json["thrust_curve"].end(); ++it) {
+    float time = stof(it.key());
+    float force = it.value();
+    thrust_curve_time[i] = time;
+    thrust_curve_force[i] = force;
+    i++;
+  }
+  thrust_curve_len = i;
 }
 
-Rocket::Rocket(string rocket_file) : motor("test.json") {
+Rocket::Rocket(string rocket_file) : motor("config/motors/testmotor.json") {
   // TODO: Initialize rocket with file
 }
 
