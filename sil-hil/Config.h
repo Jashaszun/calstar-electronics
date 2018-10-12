@@ -1,0 +1,2 @@
+#define CLOCK_MULTIPLIER (100)
+#define TICK_MICROS (100)
