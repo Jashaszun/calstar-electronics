@@ -1,5 +1,6 @@
 #include "Simulator.h"
 #include "SIL.h"
+#include "common.h"
 #include "nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
@@ -130,7 +131,7 @@ Rocket::Rocket(string rocket_file) {
       motors.emplace_back(it.value()["file"], it.key());
       int pin = it.value()["pin"];
       assert(pin_map.count(pin) == 0);
-      pin_map[pin] = {CONNECTION_TYPE::MOTOR, false, motors.size() - 1};
+      pin_map[pin] = {CONNECTION_TYPE::MOTOR, false, motors.size() - 1, PIN_UNDEFINED};
     }
   }
   if (motors.size() == 0) {
@@ -142,7 +143,7 @@ Rocket::Rocket(string rocket_file) {
       chutes.emplace_back(it.value()["drag_area"], it.key());
       int pin = it.value()["pin"];
       assert(pin_map.count(pin) == 0);
-      pin_map[pin] = {CONNECTION_TYPE::CHUTE, false, chutes.size() - 1};
+      pin_map[pin] = {CONNECTION_TYPE::CHUTE, false, chutes.size() - 1, PIN_UNDEFINED};
     }
   }
   if (chutes.size() == 0) {
@@ -154,7 +155,7 @@ Rocket::Rocket(string rocket_file) {
       leds.emplace_back(it.key());
       int pin = it.value();
       assert(pin_map.count(pin) == 0);
-      pin_map[pin] = {CONNECTION_TYPE::LED, false, leds.size() - 1};
+      pin_map[pin] = {CONNECTION_TYPE::LED, false, leds.size() - 1, PIN_UNDEFINED};
     }
   }
 }
@@ -246,9 +247,25 @@ int64_t Environment::micros() {
 void Environment::setPin(int pin, bool high) {
   if (rocket.pin_map.count(pin) == 1) {
     auto& pmap = rocket.pin_map[pin];
+
+    if (pmap.mode == PIN_UNDEFINED) {
+      DEBUG_OUT << "Warning: Attempting to write to pin " << pin << " before setting pin mode." << endl;
+    } else if (pmap.mode == INPUT || pmap.mode == INPUT_PULLUP) {
+      DEBUG_OUT << "Warning: Attempting to write to input pin " << pin << endl;
+    }
+
     pmap.high = high;
     if (pmap.type == CONNECTION_TYPE::MOTOR && high == true) {
       rocket.motors.at(pmap.index).activate(); // TODO: Maybe set delay on this so super fast writes don't set off the motor
     }
+  }
+}
+
+void Environment::pinMode(int pin, uint8_t mode) {
+  assert(mode == INPUT || mode == OUTPUT || mode == INPUT_PULLUP);
+
+  if (rocket.pin_map.count(pin) == 1) {
+    auto& pmap = rocket.pin_map[pin];
+    pmap.mode = mode;
   }
 }

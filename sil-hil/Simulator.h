@@ -13,6 +13,7 @@ typedef struct {
   CONNECTION_TYPE type;
   bool high;
   unsigned long index;
+  uint8_t mode;
 } pinmapping;
 
 class Motor {
@@ -20,7 +21,7 @@ class Motor {
   string interpolation;
   bool activated;
   int64_t start_time;
-  vector<pair<float, float>> thrust_curve; // <time, force>
+  vector<pair<float, float> > thrust_curve; // <time, force>
 
 public:
   void activate();
@@ -79,6 +80,7 @@ public:
   void tick();
   int64_t micros();
   void setPin(int pin, bool high);
+  void pinMode(int pin, uint8_t mode);
 };
 
 #endif
