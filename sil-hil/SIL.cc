@@ -1,4 +1,5 @@
 #include "SIL.h"
+#include <iostream>
 
 chrono::steady_clock::time_point timer;
 void start_timer() {
@@ -11,9 +12,13 @@ int64_t elapsed() {
 
 Environment* global_env = NULL;
 
-int main() {
-  Rocket roc("config/rockets/testrocket.json");
-  Environment env(roc);
+int main(int argc, char** argv) {
+  if (argc != 2) {
+    cerr << "Invalid arguments: ./sil [sim_file.json]" << endl;
+    assert(false);
+  }
+
+  Environment env{string(argv[1])};
   global_env = &env;
 
   int64_t code_time = 0; // Time spent in rocket code in microseconds
@@ -30,6 +35,8 @@ int main() {
     } else {
       env.tick();
     }
+    env.updateOutputs();
   }
+  env.finishOutputs();
   global_env = NULL;
 }

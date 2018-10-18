@@ -6,7 +6,7 @@ CPPFLAGS= -g -std=c++11
 LDFLAGS= -g
 LDLIBS=
 
-SRCS=Simulator.cc SIL.cc Harness.cc test_code.cc common.cc
+SRCS=Simulator.cc SIL.cc Harness.cc test_code.cc common.cc Output.cc Sensors.cc
 OBJS=$(subst .cc,.o,$(SRCS))
 
 all: sil

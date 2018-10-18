@@ -112,6 +112,8 @@ void LED::set(bool val) {
   activated = val;
 }
 
+Rocket::Rocket() { } // DO NOT USE THIS
+
 Rocket::Rocket(string rocket_file) {
   // TODO: Initialize rocket with file
   ifstream file(rocket_file);
@@ -170,14 +172,36 @@ float Rocket::getDrag() {
   return ret;
 }
 
-Environment::Environment(Rocket r) : rocket(r) {
+Environment::Environment(string sim_file) {
+  ifstream file(sim_file);
+  if (!file.good()) {
+    cerr << "File does not exist: " << sim_file << endl;
+    assert(false);
+  }
+
+  json sim_json;
+  file >> sim_json;
+  file.close();
+
+  rocket = Rocket(sim_json["rocket"]);
+
   time = 0;
-  groundHeight = 10; // TODO: Make a customizable randomized input
+  groundHeight = sim_json["ground_height"]; // TODO: Make a customizable randomized input
   landed = false;
 
-  wind.x = 0; // TODO: Make a customizable randomized input
-  wind.y = 0;
-  wind.z = 0;
+  // TODO: Make a customizable randomized input
+  if (sim_json["wind"]["type"] == "fixed") {
+    wind.x = sim_json["wind"]["x"];
+    wind.y = sim_json["wind"]["y"];
+    wind.z = sim_json["wind"]["z"];
+  } else {
+    assert(false);
+  }
+
+  for (auto out : sim_json["output"]) {
+    cerr << out << endl;
+    outputs.emplace_back(out);
+  }
 
   rocket.rocket_pos.x = 0;
   rocket.rocket_pos.y = 0;
@@ -187,14 +211,17 @@ Environment::Environment(Rocket r) : rocket(r) {
   rocket.rocket_vel.y = 0;
   rocket.rocket_vel.z = 0;
 
+  rocket.rocket_acc.x = 0;
+  rocket.rocket_acc.y = 0;
+  rocket.rocket_acc.z = -9.81;
+
   rocket.rocket_dir.x = 0;
   rocket.rocket_dir.y = 0;
   rocket.rocket_dir.z = 1;
-
 }
 
 bool Environment::done() {
-  // TODO: Return whether simulation is done
+  // TODO: Use timeout
   return landed;
 }
 
@@ -236,6 +263,8 @@ void Environment::tick() {
     rocket.rocket_vel.z = 0;
   }
 
+  rocket.rocket_acc = acc;
+
   DEBUG_OUT << "Time: " << time << "  Rocket pos: " << rocket.rocket_pos << "  Acc: " << acc << endl;
 }
 
@@ -267,5 +296,17 @@ void Environment::pinMode(int pin, uint8_t mode) {
   if (rocket.pin_map.count(pin) == 1) {
     auto& pmap = rocket.pin_map[pin];
     pmap.mode = mode;
+  }
+}
+
+void Environment::updateOutputs() {
+  for (Output& out : outputs) {
+    out.update(this);
+  }
+}
+
+void Environment::finishOutputs() {
+  for (Output& out : outputs) {
+    out.finish();
   }
 }

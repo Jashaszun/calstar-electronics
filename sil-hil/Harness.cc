@@ -2,6 +2,7 @@
 #include "Simulator.h"
 #include "SIL.h"
 #include "common.h"
+#include "Sensors.h"
 
 int64_t micros() {
   assert(global_env != NULL);
@@ -24,4 +25,25 @@ void digitalWrite(int pin, bool high) {
   assert(global_env != NULL);
   // TODO: Interact with environment
   global_env->setPin(pin, high);
+}
+
+vec getAcc() {
+  static Accelerometer* acc = NULL;
+  if (acc == NULL) {
+    assert(global_env != NULL);
+    acc = new Accelerometer(global_env); // This only ever happens once so memory leak is fine
+  }
+  return acc->getData();
+}
+
+float getAccX() {
+  return getAcc().x;
+}
+
+float getAccY() {
+  return getAcc().y;
+}
+
+float getAccZ() {
+  return getAcc().z;
 }
