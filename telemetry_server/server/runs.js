@@ -44,5 +44,23 @@ var getRun = function (req, res) {
   )
 }
 
+var removeRun = function (req, res) {
+  /*db.pool.execute(
+    'DELETE FROM Runs WHERE runId = ?', [id],
+    function (err, results, fields) {
+        if (err) {
+          logger.error('Error removing from runs (from upload.js)')
+          logger.error(err)
+          res.redirect('/uploadfail')
+        } else {
+          runId = results.insertId
+          logger.log(`Removed run with runId = ${runId}`)
+        }
+      }
+  )*/
+  logger.info("The params: "+Object.keys(req))
+}
+
 module.exports.getRuns = getRuns
 module.exports.getRun = getRun
+module.exports.removeRun = removeRun

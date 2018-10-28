@@ -23,8 +23,9 @@ const mustacheExpress = require('mustache-express');
 // API endpoints
 const getExport = require('./export')
 const getReadData = require('./read-data')
-const { getRuns, getRun } = require('./runs')
+const { getRuns, getRun, removeRun } = require('./runs')
 const postUpload = require('./upload')
+
 
 const PORT = 8000
 const BASE_DIR = path.join(__dirname, '..') // parent directory
@@ -64,6 +65,8 @@ app.get('/readData', getReadData)
 app.get('/runs', getRuns)
 
 app.get('/runs/:id', getRun)
+
+app.post('/deleteRuns/:id', removeRun)
 
 app.post('/upload', sanitizeBody('newrun').toBoolean(), postUpload)
 
