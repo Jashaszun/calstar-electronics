@@ -45,6 +45,7 @@ var getRun = function (req, res) {
 }
 
 var removeRun = function (req, res) {
+  console.log("Ya got here!")
   /*db.pool.execute(
     'DELETE FROM Runs WHERE runId = ?', [id],
     function (err, results, fields) {
