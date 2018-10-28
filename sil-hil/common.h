@@ -8,7 +8,9 @@
 #define HIGH ((uint8_t)1)
 
 #include <string>
+#include <memory>
 #include <cmath>
+#include <algorithm>
 #include <chrono>
 #include <vector>
 #include <map>

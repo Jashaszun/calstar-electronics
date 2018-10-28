@@ -8,6 +8,7 @@ enum class CONNECTION_TYPE {
   MOTOR,
   CHUTE,
   LED,
+  POWER,
 };
 
 typedef struct {
@@ -22,23 +23,23 @@ class Motor {
   string interpolation;
   bool activated;
   int64_t start_time;
-  vector<pair<float, float> > thrust_curve; // <time, force>
+  vector<pair<double, double>> thrust_curve; // <time, force>
 
 public:
   void activate();
-  float getForce();
+  double getForce();
   Motor(string motor_file, string motor_name);
 };
 
 class Chute {
   string name;
   bool activated;
-  float drag;
+  double drag;
 
 public:
   void activate();
-  float getDrag();
-  Chute(float drag, string name);
+  double getDrag();
+  Chute(double drag, string name);
 };
 
 class LED {
@@ -51,10 +52,18 @@ public:
   LED(string name);
 };
 
+class Microcontroller {
+public:
+  string name;
+  int id;
+  map<int, pinmapping> pin_map;
+};
+
 class Rocket {
 public:
-  float rocket_weight;
-  float rocket_drag;
+  string section_name;
+  double rocket_weight;
+  double rocket_drag;
   vec rocket_pos;  // In meters
   vec rocket_vel;  // In meters / sec
   vec rocket_acc;  // In meters / sec^2. Recalculated every tick, used mainly for logging
@@ -63,30 +72,32 @@ public:
   vector<Motor> motors;
   vector<Chute> chutes;
   vector<LED> leds;
-  map<int, pinmapping> pin_map;
+  vector<Microcontroller> microcontrollers;
 
-  float getDrag();
-  Rocket();
-  Rocket(string rocket_file);
+  void mapPin(string mapping, bool high, unsigned long val, uint8_t mode, CONNECTION_TYPE ty);
+  double getDrag();
+  Rocket(json rocket_json);
 };
 
 class Environment {
   vec wind;       // In meters / sec
   int64_t time;   // In microseconds
-  float groundHeight; // In meters
+  double groundHeight; // In meters
   bool landed;
+  map<int, string> mcu_map;
 
   vector<Output> outputs;
 
 public:
-  Rocket rocket;
+  vector<vector<shared_ptr<Rocket>>> rocket_sections;
 
   Environment(string sim_file);
   bool done();
   void tick();
   int64_t micros();
-  void setPin(int pin, bool high);
-  void pinMode(int pin, uint8_t mode);
+  void setPin(int mcu_id, int pin, bool high);
+  int getPin(int mcu_id, int pin);
+  void pinMode(int mcu_id, int pin, uint8_t mode);
   void updateOutputs();
   void finishOutputs();
 };
