@@ -16,7 +16,7 @@
             <li>
 		<a href="/runs/{{runId}}">Run {{runId}}</a>
 		<form action="/deleteRuns/{{runId}}" method="post">
-			<a class="btn btn-danger">Delet Run</a>
+			<button name="deleteRun" type="submit" class="btn btn-danger">Delet Run</a>
 		</form>
 	    </li>
         {{/runs}}

@@ -18,14 +18,13 @@ const logger = require('loggy')
 const path = require('path')
 const fileUpload = require('express-fileupload')
 const { sanitizeBody } = require('express-validator/filter')
-const mustacheExpress = require('mustache-express');
+const mustacheExpress = require('mustache-express')
 
 // API endpoints
 const getExport = require('./export')
 const getReadData = require('./read-data')
 const { getRuns, getRun, removeRun } = require('./runs')
 const postUpload = require('./upload')
-
 
 const PORT = 8000
 const BASE_DIR = path.join(__dirname, '..') // parent directory
@@ -36,11 +35,10 @@ app.use(fileUpload())
 // https://stackoverflow.com/questions/40574159/
 app.use(express.static(path.join(BASE_DIR, 'html')))
 
+app.engine('mustache', mustacheExpress())
 
-app.engine('mustache', mustacheExpress());
-
-app.set('view engine', 'mustache');
-app.set('views', __dirname + '/views');
+app.set('view engine', 'mustache')
+app.set('views', path.join(__dirname, '/views'))
 
 app.get('/', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'index.html'))

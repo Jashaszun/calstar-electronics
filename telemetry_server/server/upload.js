@@ -34,17 +34,17 @@ var postUpload = function (req, res, next) {
   // TODO: Read from a form to see if new run should be created
   var newRun = req.body.newrun
   var runId = 1 // otherwise get from form
-  var dataTypeId = req.body.datatype
+  // var dataTypeId = req.body.datatype
   var count = 0
   var insertRun = function (data) {
-    //insert data points into database
-    //logger.log("Trying to insert "+ String(Object.keys(data)))
+    // insert data points into database
+    // logger.log("Trying to insert "+ String(Object.keys(data)))
     Object.keys(data).forEach(key => {
-      //logger.log("Trying to insert " + String(data))
+      // logger.log("Trying to insert " + String(data))
       if (key !== 'ID' && key !== 'Ignore') {
         count += 1
         insertData(data['ID'], runId, db.dataTypeId[key], data[key], function (err, results, fields) {
-         if (err) {
+          if (err) {
             logger.error(err)
             count = -1000
             res.redirect('/uploadfail')

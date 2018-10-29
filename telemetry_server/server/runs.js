@@ -30,7 +30,7 @@ var getRuns = function (req, res) {
 }
 
 var getRun = function (req, res) {
-  id = req.params["id"]
+  var id = req.params['id']
   db.pool.query(
     'SELECT * FROM DataPoint WHERE runId = ?',
     [id],
@@ -45,8 +45,8 @@ var getRun = function (req, res) {
 }
 
 var removeRun = function (req, res) {
-  console.log("Ya got here!")
-  /*db.pool.execute(
+  console.log('Ya got here!')
+  /* db.pool.execute(
     'DELETE FROM Runs WHERE runId = ?', [id],
     function (err, results, fields) {
         if (err) {
@@ -58,8 +58,8 @@ var removeRun = function (req, res) {
           logger.log(`Removed run with runId = ${runId}`)
         }
       }
-  )*/
-  logger.info("The params: "+Object.keys(req))
+  ) */
+  logger.info('The params: ' + Object.keys(req))
 }
 
 module.exports.getRuns = getRuns
