@@ -45,8 +45,24 @@ var getRun = function (req, res) {
 }
 
 var removeRun = function (req, res) {
-  console.log('Ya got here!')
-  /* db.pool.execute(
+  var id = req.params['id']
+  console.log('Deleting run...')
+  
+  db.pool.execute(
+    'Delete FROM DataPoint WHERE runId = ?', [id],
+    function (err, results) {
+      if (err) {
+        logger.error('Error deleting datapoints associated with deleted run (from upload.js)')
+        logger.error(err)
+        res.redirect('/uploadfail')
+      } else {
+        // TODO: ??
+      }
+    }
+  )
+
+  // TODO Think about sequencing
+  db.pool.execute(
     'DELETE FROM Runs WHERE runId = ?', [id],
     function (err, results, fields) {
         if (err) {
@@ -54,11 +70,15 @@ var removeRun = function (req, res) {
           logger.error(err)
           res.redirect('/uploadfail')
         } else {
+          // Not sure why we need this, we already have the id
           runId = results.insertId
           logger.log(`Removed run with runId = ${runId}`)
+          res.redirect('/runs') // TODO: add param to indicate deletion was successful
         }
       }
-  ) */
+  )
+
+  
   logger.info('The params: ' + Object.keys(req))
 }
 
