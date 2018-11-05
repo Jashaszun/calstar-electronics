@@ -14,9 +14,10 @@
     <ul>
         {{#runs}}
             <li>
-		<a href="/runs/{{runId}}">Run {{runId}}</a>
+		<a href="/runs/{{runId}}">Run</a>
 		<form action="/deleteRuns/{{runId}}" method="post">
-			<button name="deleteRun" type="submit" class="btn btn-danger">Delet Run</a>
+			<input name="runid" id="runid" value="{{runId}}" size="1" readonly>
+			<button name="deleteRun" type="submit" class="btn btn-danger">Delet Run {{runId}}</a>
 		</form>
 	    </li>
         {{/runs}}

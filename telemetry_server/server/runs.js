@@ -46,20 +46,23 @@ var getRun = function (req, res) {
 
 var removeRun = function (req, res) {
   console.log('Ya got here!')
-  /* db.pool.execute(
-    'DELETE FROM Runs WHERE runId = ?', [id],
+  var id = req.params.id
+  db.pool.execute(
+    'DELETE FROM DataPoint WHERE runId = ?', [id],
     function (err, results, fields) {
         if (err) {
           logger.error('Error removing from runs (from upload.js)')
           logger.error(err)
           res.redirect('/uploadfail')
         } else {
-          runId = results.insertId
-          logger.log(`Removed run with runId = ${runId}`)
+          //runId = results.insertId
+          logger.log('Removed run with runId = ' + id)
+          res.render('deleteRuns', {data: results})
         }
       }
-  ) */
-  logger.info('The params: ' + Object.keys(req))
+  )
+  logger.info('The params: ' + req.params.id)
+  //logger.info('The res ' + Object.keys(res))
 }
 
 module.exports.getRuns = getRuns
