@@ -56,7 +56,7 @@ app.get('/uploadsuccess', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'upload_success.html'))
 })
 
-app.get('/export', getExport)
+app.get('/export/:id', getExport)
 
 app.get('/readData', getReadData)
 

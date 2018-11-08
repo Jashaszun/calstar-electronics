@@ -22,9 +22,9 @@ var getRuns = function (req, res) {
         res.end()
         logger.error(err)
       }
-      res.render('runs', {runs: results})
-      logger.info(results) // results contains rows returned by server
-      logger.info(fields) // fields contains extra meta data about results, if available
+      res.render('runs', { runs: results })
+      //logger.info(results) // results contains rows returned by server
+      //logger.info(fields) // fields contains extra meta data about results, if available
     }
   )
 }
@@ -39,7 +39,7 @@ var getRun = function (req, res) {
         res.end()
         console.log(err)
       }
-      res.render('runview', {data: results})
+      res.render('runview', { data: results })
     }
   )
 }
@@ -47,7 +47,7 @@ var getRun = function (req, res) {
 var removeRun = function (req, res) {
   var id = req.params['id']
   console.log('Deleting run...')
-  
+
   db.pool.execute(
     'Delete FROM DataPoint WHERE runId = ?', [id],
     function (err, results) {
@@ -55,31 +55,32 @@ var removeRun = function (req, res) {
         logger.error('Error deleting datapoints associated with deleted run (from upload.js)')
         logger.error(err)
         res.redirect('/uploadfail')
+        // TODO safety - will need to think about what to do here
       } else {
-        // TODO: ??
+        // TODO Think about sequencing - this must be run in callback so that foreign keys are satisfied
+        db.pool.execute(
+          'DELETE FROM Runs WHERE runId = ?', [id],
+          function (err, results, fields) {
+            if (err) {
+              logger.error('Error removing from runs (from upload.js)')
+              logger.error(err)
+              res.redirect('/uploadfail')
+            } else {
+              // Not sure why we need this, we already have the id
+              runId = results.insertId
+              logger.log(`Removed run with runId = ${runId}`)
+              res.redirect('/runs') // TODO: add param to indicate deletion was successful
+            }
+          }
+        )
       }
     }
   )
 
-  // TODO Think about sequencing
-  db.pool.execute(
-    'DELETE FROM Runs WHERE runId = ?', [id],
-    function (err, results, fields) {
-        if (err) {
-          logger.error('Error removing from runs (from upload.js)')
-          logger.error(err)
-          res.redirect('/uploadfail')
-        } else {
-          // Not sure why we need this, we already have the id
-          runId = results.insertId
-          logger.log(`Removed run with runId = ${runId}`)
-          res.redirect('/runs') // TODO: add param to indicate deletion was successful
-        }
-      }
-  )
 
-  
-  logger.info('The params: ' + Object.keys(req))
+
+
+  //logger.info('The params: ' + Object.keys(req))
 }
 
 module.exports.getRuns = getRuns
