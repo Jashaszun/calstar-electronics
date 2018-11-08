@@ -23,8 +23,8 @@ var getRuns = function (req, res) {
         logger.error(err)
       }
       res.render('runs', { runs: results })
-      //logger.info(results) // results contains rows returned by server
-      //logger.info(fields) // fields contains extra meta data about results, if available
+      // logger.info(results) // results contains rows returned by server
+      // logger.info(fields) // fields contains extra meta data about results, if available
     }
   )
 }
@@ -77,10 +77,7 @@ var removeRun = function (req, res) {
     }
   )
 
-
-
-
-  //logger.info('The params: ' + Object.keys(req))
+  // logger.info('The params: ' + Object.keys(req))
 }
 
 module.exports.getRuns = getRuns

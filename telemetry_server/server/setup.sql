@@ -3,6 +3,8 @@
  *
  * Contains statements to set up database configuration and schema. Should always be run
  * before starting the server for the first time.
+ *
+ * Warning: Will clear the entire database!
  */
 
 CREATE USER IF NOT EXISTS 'telemetry'@'localhost'; -- add password later when in prod
@@ -36,6 +38,14 @@ CREATE TABLE DataPoint (
 	value double,
 	FOREIGN KEY (runId) REFERENCES Runs(runId),
 	FOREIGN KEY (dataTypeId) REFERENCES DataType(dataTypeId)
+);
+
+CREATE TABLE Users (
+	userId SERIAL,
+	email VARCHAR(255) NOT NULL,
+	password VARCHAR(255) NOT NULL,
+	authorized BIT DEFAULT(0),
+	UNIQUE(email)
 );
 
 INSERT INTO DataType ( type, name, units ) 

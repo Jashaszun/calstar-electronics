@@ -18,18 +18,27 @@ const logger = require('loggy')
 const path = require('path')
 const fileUpload = require('express-fileupload')
 const { sanitizeBody } = require('express-validator/filter')
+const { check } = require('express-validator/check')
 const mustacheExpress = require('mustache-express')
+const session = require('express-session')
 
 // API endpoints
 const getExport = require('./export')
 const getReadData = require('./read-data')
 const { getRuns, getRun, removeRun } = require('./runs')
+const { postLogin, createUser } = require('./users')
 const postUpload = require('./upload')
 
 const PORT = 8000
 const BASE_DIR = path.join(__dirname, '..') // parent directory
 
 app.use(fileUpload())
+
+app.use(session({
+  secret: '7O72<8Z&<0M:l.rc%3m3+T+*/.F2s.Z',
+  resave: true,
+  saveUninitialized: false
+}))
 
 // fixes weird path resolution stuff on localhost
 // https://stackoverflow.com/questions/40574159/
@@ -55,6 +64,18 @@ app.get('/uploadfail', function (req, res) {
 app.get('/uploadsuccess', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'upload_success.html'))
 })
+
+app.get('/newuser', function (req, res) {
+  res.sendFile(path.join(BASE_DIR, 'html', 'newuser.html'))
+})
+
+app.get('/login', function (req, res) {
+  res.sendFile(path.join(BASE_DIR, 'html', 'login.html'))
+})
+
+app.post('/createuser', [sanitizeBody('email').normalizeEmail(), sanitizeBody('password')], createUser)
+
+app.post('/login', [sanitizeBody('email').normalizeEmail(), sanitizeBody('password')], postLogin)
 
 app.get('/export/:id', getExport)
 
