@@ -32,6 +32,14 @@ const postUpload = require('./upload')
 const PORT = 8000
 const BASE_DIR = path.join(__dirname, '..') // parent directory
 
+const requireAuthentication = function (req, res, next) {
+  if (req.session && req.session.userId && req.session.authorized == 1) {
+    return next()
+  } else {
+    return res.redirect('/login')
+  }
+}
+
 app.use(fileUpload())
 
 app.use(session({
@@ -53,7 +61,7 @@ app.get('/', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'index.html'))
 })
 
-app.get('/upload', function (req, res) {
+app.get('/upload', requireAuthentication, function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'upload_form.html'))
 })
 
@@ -77,17 +85,36 @@ app.post('/createuser', [sanitizeBody('email').normalizeEmail(), sanitizeBody('p
 
 app.post('/login', [sanitizeBody('email').normalizeEmail(), sanitizeBody('password')], postLogin)
 
-app.get('/export/:id', getExport)
+app.get('/export/:id', requireAuthentication, getExport)
 
-app.get('/readData', getReadData)
+// Oops.. export is doing this
+// app.get('/readData', getReadData)
 
-app.get('/runs', getRuns)
+app.get('/runs', requireAuthentication, getRuns)
 
-app.get('/runs/:id', getRun)
+app.get('/runs/:id', requireAuthentication, getRun)
 
-app.post('/deleteRuns/:id', removeRun)
+app.post('/deleteRuns/:id', requireAuthentication, removeRun)
 
-app.post('/upload', sanitizeBody('newrun').toBoolean(), postUpload)
+app.post('/upload', requireAuthentication, sanitizeBody('newrun').toBoolean(), postUpload)
+
+app.get('/logout', function (req, res, next) {
+  if (req.session && req.session.userId) {
+    // delete session object
+    logger.info('Attempting to log user out with email ' + req.session.email)
+    req.session.destroy(function (err) {
+      if (err) {
+        logger.error(err)
+        return next(err)
+      } else {
+        logger.info('Successfully logged user out.')
+        return res.redirect('/')
+      }
+    })
+  } else {
+    return res.redirect('/')
+  }
+})
 
 server.listen(PORT, function (err) {
   if (err) {

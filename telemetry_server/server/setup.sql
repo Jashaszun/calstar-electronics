@@ -44,7 +44,7 @@ CREATE TABLE Users (
 	userId SERIAL,
 	email VARCHAR(255) NOT NULL,
 	password VARCHAR(255) NOT NULL,
-	authorized BIT DEFAULT(0),
+	authorized BOOLEAN DEFAULT(0),
 	UNIQUE(email)
 );
 

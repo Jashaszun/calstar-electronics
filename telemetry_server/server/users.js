@@ -54,6 +54,9 @@ var postLogin = function (req, res) {
           return
         }
         if (bcrypt.compareSync(req.body.password, results[0].password)) {
+          req.session.userId = results[0].userId
+          req.session.email = results[0].email
+          req.session.authorized = results[0].authorized
           logger.info('Successfully logged in user with email ' + req.body.email)
           res.redirect('/runs')
         } else {
