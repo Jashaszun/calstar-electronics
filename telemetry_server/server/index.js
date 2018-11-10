@@ -45,7 +45,10 @@ app.use(fileUpload())
 app.use(session({
   secret: '7O72<8Z&<0M:l.rc%3m3+T+*/.F2s.Z',
   resave: true,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 600000 // 600000 milliseconds = 10 minutes
+  }
 }))
 
 // fixes weird path resolution stuff on localhost
