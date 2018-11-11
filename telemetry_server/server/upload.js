@@ -21,6 +21,15 @@ const path = require('path')
 
 const csvSaveDir = path.join(__dirname, '..', 'data')
 
+var handleErr = function (err) {
+  if (err) {
+    logger.error(err)
+    return false
+  } else {
+    return true
+  }
+}
+
 var insertData = function (dataIndex, runId, dataTypeId, value, callback) {
   db.pool.execute(
     'INSERT INTO DataPoint ( dataIndex, runId, dataTypeId, value ) VALUES ( ?, ?, ?, ?)',
@@ -29,71 +38,110 @@ var insertData = function (dataIndex, runId, dataTypeId, value, callback) {
   )
 }
 
-var saveCSV = function(runId, runFile) {
+var saveCSV = function (runId, runFile) {
   fs.writeFile(path.join(csvSaveDir, 'run-' + runId + '.csv'), runFile.data, function (err) {
     if (err) {
-      logger.error("Error writing CSV for run-" + runId)
+      logger.error('Error writing CSV for run-' + runId)
       logger.error(err)
     } else {
-      logger.log("Wrote CSV for run-" + runId)
+      logger.log('Wrote CSV for run-' + runId)
     }
   })
 }
 
 var postUpload = function (req, res, next) {
-  const runData = parse(req.files.runfile.data, {
+  var runfileText = req.files.runfile.data.toString()
+  // WARNING: Do not mix \r\n and \n
+  const runData = parse(runfileText, {
     columns: true,
+    trim: true,
     skip_empty_lines: true
   })
-  // TODO: Read from a form to see if new run should be created
-  var newRun = req.body.newrun
-  var runId = 1 // otherwise get from form
-  // var dataTypeId = req.body.datatype
+
+  var runId = 1 // will find correct run after databse insertion
   var count = 0
-  var insertRun = function (data) {
-    // insert data points into database
-    // logger.log("Trying to insert "+ String(Object.keys(data)))
-    Object.keys(data).forEach(key => {
-      // logger.log("Trying to insert " + String(data))
-      if (key !== 'ID' && key !== 'Ignore') {
-        count += 1
-        insertData(data['ID'], runId, db.dataTypeId[key], data[key], function (err, results, fields) {
-          if (err) {
-            logger.error(err)
-            count = -1000
-            res.redirect('/uploadfail')
-          } else {
-            count -= 1
-            if (count === 0) {
-              // we're done
-              logger.info('Redirecting to upload success page.')
-              res.redirect('/uploadsuccess')
-              next()
+
+  // Create a new run
+  db.pool.execute(
+    'INSERT INTO runs (runName) VALUES (?)', [req.files.runfile.name],
+    function (err, results, fields) {
+      if (err) {
+        logger.error('Error inserting into runs (from upload.js)')
+        logger.error(err)
+        res.redirect('/uploadfail')
+      } else {
+        runId = results.insertId
+        logger.log(`Inserted run with runId = ${runId}`)
+
+        var count = runData.length * Object.keys(runData[0]).length
+
+        db.pool.query(
+          'SELECT * FROM DataType', [],
+          function (err, datatypes, fields) {
+            if (handleErr(err)) {
+              dataTypeId = {}
+              datatypes.forEach(function (element) {
+                dataTypeId[element.name] = element.dataTypeId
+              })
+
+              Object.keys(runData[0]).forEach(key => {
+                if (!(key in dataTypeId)) {
+                  dataTypeId[key] = -1
+                  db.pool.execute(
+                    'INSERT INTO DataType (type, name, units) VALUES (\'Unkown\', ?, \'Unkown\')',
+                    [key],
+                    function (err, results, fields) {
+                      if (handleErr(err)) {
+                        dataTypeId[key] = results.insertId
+                        // insert all data with this key
+                        runData.forEach(function (row, index) {
+                          db.pool.execute(
+                            'INSERT INTO DataPoint (dataIndex, runId, dataTypeId, value) VALUES (?, ?, ?, ?)',
+                            [index, runId, dataTypeId[key], row[key]],
+                            function (err) {
+                              if (err) {
+                                logger.error('Error inserting into runs (from upload.js)')
+                                logger.error(err)
+                                return res.redirect('/uploadfail')
+                              } else {
+                                count -= 1
+                                if (count === 0) {
+                                  return res.redirect('/uploadsuccess')
+                                }
+                              }
+                            }
+                          )
+                        })
+                      }
+                    }
+                  )
+                } else {
+                  runData.forEach(function (row, index) {
+                    db.pool.execute(
+                      'INSERT INTO DataPoint (dataIndex, runId, dataTypeId, value) VALUES (?, ?, ?, ?)',
+                      [index, runId, dataTypeId[key], row[key]],
+                      function (err) {
+                        if (err) {
+                          logger.error('Error inserting into runs (from upload.js)')
+                          logger.error(err)
+                          return res.redirect('/uploadfail')
+                        } else {
+                          count -= 1
+                          if (count === 0) {
+                            return res.redirect('/uploadsuccess')
+                          }
+                        }
+                      }
+                    )
+                  })
+                }
+              })
             }
           }
-        })
+        )
       }
-    })
-  }
-  if (newRun) {
-    // Create a new run
-    db.pool.execute(
-      'INSERT INTO runs (runName) VALUES (?)', [req.files.runfile.name],
-      function (err, results, fields) {
-        if (err) {
-          logger.error('Error inserting into runs (from upload.js)')
-          logger.error(err)
-          res.redirect('/uploadfail')
-        } else {
-          runId = results.insertId
-          logger.log(`Inserted run with runId = ${runId}`)
-          runData.forEach(insertRun)
-        }
-      }
-    )
-  } else {
-    runData.forEach(insertRun)
-  }
+    }
+  )
   saveCSV(runId, req.files.runfile)
 }
 

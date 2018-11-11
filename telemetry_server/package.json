@@ -9,7 +9,8 @@
     "watch": "npm run build --watch",
     "lint": "standard",
     "lintfix": "standard --fix",
-    "test": "mocha"
+    "test": "mocha",
+    "dbinit": "mysql -uroot < server/sql/setup.sql && mysql -uroot < server/sql/authorize.sql && npm start"
   },
   "author": "",
   "license": "ISC",

@@ -55,6 +55,7 @@ CREATE TABLE Authorized (
 	UNIQUE(email)
 );
 
+/*
 INSERT INTO DataType ( type, name, units ) 
 VALUES ( 'Time', 'Time', 'seconds' );
 
@@ -71,4 +72,4 @@ INSERT INTO DataType ( type, name, units )
 VALUES ( 'GyroY', 'GyroY', 'deg/sec' );
 
 INSERT INTO DataType ( type, name, units ) 
-VALUES ( 'GyroZ', 'GyroZ', 'deg/sec' );
+VALUES ( 'GyroZ', 'GyroZ', 'deg/sec' );*/

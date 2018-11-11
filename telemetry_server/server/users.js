@@ -65,18 +65,17 @@ var postLogin = function (req, res) {
                 logger.error(err)
               } else {
                 if (dbresults.length < 1) {
-                  req.session.authorized = 0;
+                  req.session.authorized = 0
                   logger.warn('Successfully logged in unauthorized user with email ' + req.body.email)
                   res.redirect('/login')
                 } else {
-                  req.session.authorized = 1;
+                  req.session.authorized = 1
                   logger.info('Successfully logged in authorized user with email ' + req.body.email)
                   res.redirect('/runs')
                 }
               }
             }
           )
-          
         } else {
           logger.warn('Unsuccessful login attempt for user with email ' + req.body.email)
           res.redirect('/login')
