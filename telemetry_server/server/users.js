@@ -15,7 +15,7 @@ const db = require('./db-interface')
 const logger = require('loggy')
 const { OAuth2Client } = require('google-auth-library');
 
-const CLIENT_ID = "319896366608-t41p578v6ocoolm3ledr0ikcp0dh11hq.apps.googleusercontent.com"
+const CLIENT_ID = '319896366608-tpab77s86cva0u1jooc0a1l4ba4m6sfq.apps.googleusercontent.com'
 const client = new OAuth2Client(CLIENT_ID);
 
 var verifyOAuth = async function (token, expectedEmail) {
@@ -25,16 +25,15 @@ var verifyOAuth = async function (token, expectedEmail) {
       audience: CLIENT_ID
   })
   const payload = ticket.getPayload()
-  const userid = payload['sub']
-  logger.log(payload)
-  return 'email' === expectedEmail
+  // const userid = payload['sub'] TODO store this as primary key instead
+  return payload['email_verified'] && payload['email'] === expectedEmail
 }
 
 var postLogin = function (req, res) {
   db.pool.query(
     'SELECT * FROM Users WHERE email = ?', // all users in this table are considered authorized
     [req.body.email],
-    function (err, results, fields) {
+    async function (err, results, fields) {
       if (err) {
         res.end()
         logger.error(err)
@@ -48,7 +47,7 @@ var postLogin = function (req, res) {
           res.redirect('/login')
           return
         }
-        var verified = verifyOAuth(req.idtoken, req.body.email)
+        var verified = await verifyOAuth(req.body.idtoken, req.body.email)
         if (verified) {
           req.session.userId = results[0].userId
           req.session.email = results[0].email
@@ -65,4 +64,23 @@ var postLogin = function (req, res) {
   )
 }
 
+var postLogout = function (req, res, next) {
+  if (req.session && req.session.userId) {
+    // delete session object
+    logger.info('Attempting to log user out with email ' + req.session.email)
+    req.session.destroy(function (err) {
+      if (err) {
+        logger.error(err)
+        return next(err)
+      } else {
+        logger.info('Successfully logged user out.')
+        return res.redirect('/')
+      }
+    })
+  } else {
+    return res.redirect('/')
+  }
+}
+
 module.exports.postLogin = postLogin
+module.exports.postLogout = postLogout

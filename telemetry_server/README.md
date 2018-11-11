@@ -15,7 +15,7 @@ The instructions below for installing assume you have some familiarity with node
 1. <b>Start the SQL server</b> run `mysql.server start`, or whatever the docs tell you to do.
 2. <b>Start the webserver</b> To start the webserver locally, run `npm start`. If you make any changes to server files, you'll need to ctrl-C and restart the server for the changes to take place. Make sure the SQL server is running.
 3. To have client-side files update as you make changes, run `npm run watch`. Output files will go in the `dist` folder.
-4. Visit `localhost:<port number>` in your web browser. The port number is 8000 for now.
+4. Visit `lvh.me:<port number>` in your web browser (`lvh.me` is an alias for localhost, and is needed to allow oauth to work). The port number is 8000 for now.
 
 ## File Structure
 ```

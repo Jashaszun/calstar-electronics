@@ -18,14 +18,22 @@
     <div class="g-signin2" data-onsuccess="onSignIn"></div>
     <script>
       function onSignIn(googleUser) {
-          var id_token = googleUser.getAuthResponse().id_token
+          var idToken = googleUser.getAuthResponse().id_token
           var profile = googleUser.getBasicProfile()
           var xhr = new XMLHttpRequest()
           // TODO change link, or move this file somewhere else
           xhr.open('POST', 'http://lvh.me:8000/login')
           xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
-          xhr.send('idtoken=' + id_token)
-          xhr.send('email=' + profile.getEmail())
+          xhr.send('idtoken=' + idToken + '&email=' + profile.getEmail())
+      }
+    </script>
+    <a href="#" onclick="signOut();">Sign out</a>
+    <script>
+      function signOut() {
+        var auth2 = gapi.auth2.getAuthInstance();
+        auth2.signOut().then(function () {
+          console.log('User signed out.');
+        });
       }
     </script>
     <div>

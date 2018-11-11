@@ -17,6 +17,7 @@ const io = require('socket.io')(server)
 const logger = require('loggy')
 const path = require('path')
 const fileUpload = require('express-fileupload')
+const bodyParser = require('body-parser');
 const { sanitizeBody } = require('express-validator/filter')
 const { check } = require('express-validator/check')
 const mustacheExpress = require('mustache-express')
@@ -26,7 +27,7 @@ const session = require('express-session')
 const getExport = require('./export')
 const getReadData = require('./read-data')
 const { getRuns, getRun, removeRun } = require('./runs')
-const { postLogin } = require('./users')
+const { postLogin, postLogout } = require('./users')
 const postUpload = require('./upload')
 
 const PORT = 8000
@@ -50,6 +51,8 @@ app.use(session({
     maxAge: 600000 // 600000 milliseconds = 10 minutes
   }
 }))
+
+app.use(bodyParser.urlencoded({ extended: true }))
 
 // fixes weird path resolution stuff on localhost
 // https://stackoverflow.com/questions/40574159/
@@ -95,23 +98,7 @@ app.post('/deleteRuns/:id', requireAuthentication, removeRun)
 
 app.post('/upload', requireAuthentication, postUpload)
 
-app.get('/logout', function (req, res, next) {
-  if (req.session && req.session.userId) {
-    // delete session object
-    logger.info('Attempting to log user out with email ' + req.session.email)
-    req.session.destroy(function (err) {
-      if (err) {
-        logger.error(err)
-        return next(err)
-      } else {
-        logger.info('Successfully logged user out.')
-        return res.redirect('/')
-      }
-    })
-  } else {
-    return res.redirect('/')
-  }
-})
+app.get('/logout', postLogout)
 
 server.listen(PORT, function (err) {
   if (err) {

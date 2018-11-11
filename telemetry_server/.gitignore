@@ -6,3 +6,6 @@ node_modules/
 
 # for webpack output
 dist/
+
+# for uploaded data
+data/*
