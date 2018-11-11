@@ -99,7 +99,7 @@ app.get('/runs/:id', requireAuthentication, getRun)
 
 app.post('/deleteRuns/:id', requireAuthentication, removeRun)
 
-app.post('/upload', requireAuthentication, sanitizeBody('newrun').toBoolean(), postUpload)
+app.post('/upload', requireAuthentication, postUpload)
 
 app.get('/logout', function (req, res, next) {
   if (req.session && req.session.userId) {

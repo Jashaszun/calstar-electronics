@@ -63,7 +63,7 @@ var postUpload = function (req, res, next) {
 
   // Create a new run
   db.pool.execute(
-    'INSERT INTO runs (runName) VALUES (?)', [req.files.runfile.name],
+    'INSERT INTO runs (runName) VALUES (?)', ['req.files.runfile.name'],
     function (err, results, fields) {
       if (err) {
         logger.error('Error inserting into runs (from upload.js)')
@@ -73,6 +73,7 @@ var postUpload = function (req, res, next) {
         runId = results.insertId
         logger.log(`Inserted run with runId = ${runId}`)
 
+        saveCSV(runId, req.files.runfile)
         var count = runData.length * Object.keys(runData[0]).length
 
         db.pool.query(
@@ -142,7 +143,6 @@ var postUpload = function (req, res, next) {
       }
     }
   )
-  saveCSV(runId, req.files.runfile)
 }
 
 module.exports = postUpload // rename if you want
