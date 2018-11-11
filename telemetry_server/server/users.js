@@ -56,9 +56,27 @@ var postLogin = function (req, res) {
         if (bcrypt.compareSync(req.body.password, results[0].password)) {
           req.session.userId = results[0].userId
           req.session.email = results[0].email
-          req.session.authorized = results[0].authorized
-          logger.info('Successfully logged in user with email ' + req.body.email)
-          res.redirect('/runs')
+          db.pool.query(
+            'SELECT * FROM Authorized WHERE email = ?',
+            [results[0].email],
+            function (err, dbresults, fields) {
+              logger.info('Finished')
+              if (err) {
+                logger.error(err)
+              } else {
+                if (dbresults.length < 1) {
+                  req.session.authorized = 0;
+                  logger.warn('Successfully logged in unauthorized user with email ' + req.body.email)
+                  res.redirect('/login')
+                } else {
+                  req.session.authorized = 1;
+                  logger.info('Successfully logged in authorized user with email ' + req.body.email)
+                  res.redirect('/runs')
+                }
+              }
+            }
+          )
+          
         } else {
           logger.warn('Unsuccessful login attempt for user with email ' + req.body.email)
           res.redirect('/login')
