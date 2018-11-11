@@ -49,34 +49,16 @@ var removeRun = function (req, res) {
   console.log('Deleting run...')
 
   db.pool.execute(
-    'Delete FROM DataPoint WHERE runId = ?', [id],
+    'UPDATE runs SET deleted = TRUE WHERE runId = ?', [id],
     function (err, results) {
       if (err) {
-        logger.error('Error deleting datapoints associated with deleted run (from upload.js)')
+        logger.error('Error deleting run (from runs.js)')
         logger.error(err)
         res.redirect('/uploadfail')
         // TODO safety - will need to think about what to do here
-      } else {
-        // TODO Think about sequencing - this must be run in callback so that foreign keys are satisfied
-        db.pool.execute(
-          'DELETE FROM Runs WHERE runId = ?', [id],
-          function (err, results, fields) {
-            if (err) {
-              logger.error('Error removing from runs (from upload.js)')
-              logger.error(err)
-              res.redirect('/uploadfail')
-            } else {
-              // Not sure why we need this, we already have the id
-              runId = results.insertId
-              logger.log(`Removed run with runId = ${runId}`)
-              res.redirect('/runs') // TODO: add param to indicate deletion was successful
-            }
-          }
-        )
       }
     }
   )
-
   // logger.info('The params: ' + Object.keys(req))
 }
 

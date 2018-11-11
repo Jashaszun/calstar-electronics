@@ -9,7 +9,7 @@ The instructions below for installing assume you have some familiarity with node
 1. Install nodejs and npm (look this up if you don't know how)
 2. Run `npm install`
 3. Install [MariaDB](https://mariadb.org/download/) (this is the SQL server the OCF uses, and is compatible with MySQL libraries)
-4. Run `mysql -uroot < server/setup.sql`; this initializes the database with a user and stuff.
+4. Run `mysql -uroot < server/sql/setup.sql`; this initializes the database with a user and stuff.
 
 ## Running
 1. <b>Start the SQL server</b> run `mysql.server start`, or whatever the docs tell you to do.

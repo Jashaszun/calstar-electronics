@@ -16,6 +16,10 @@
 const db = require('./db-interface')
 const parse = require('csv-parse/lib/sync')
 const logger = require('loggy')
+const fs = require('fs')
+const path = require('path')
+
+const csvSaveDir = path.join('..', 'data')
 
 var insertData = function (dataIndex, runId, dataTypeId, value, callback) {
   db.pool.execute(
@@ -25,7 +29,17 @@ var insertData = function (dataIndex, runId, dataTypeId, value, callback) {
   )
 }
 
-// YOUR CODE HERE
+var saveCSV = function(runId, runFile) {
+  fs.writeFile(path.join(csvSaveDir, 'run-' + runId), runFile.data, function (err) {
+    if (err) {
+      logger.error("Error writing CSV for run-" + runId)
+      logger.error(err)
+    } else {
+      logger.log("Wrote CSV for run-" + runId)
+    }
+  })
+}
+
 var postUpload = function (req, res, next) {
   const runData = parse(req.files.runfile.data, {
     columns: true,
@@ -34,6 +48,7 @@ var postUpload = function (req, res, next) {
   // TODO: Read from a form to see if new run should be created
   var newRun = req.body.newrun
   var runId = 1 // otherwise get from form
+  saveCSV(runId, req.files.runfile)
   // var dataTypeId = req.body.datatype
   var count = 0
   var insertRun = function (data) {
@@ -64,7 +79,7 @@ var postUpload = function (req, res, next) {
   if (newRun) {
     // Create a new run
     db.pool.execute(
-      'INSERT INTO Runs (runId) VALUES (DEFAULT)', [],
+      'INSERT INTO runs (runId, deleted, runName) VALUES (DEFAULT, DEFAULT, ?)', [req.files.runfile.name],
       function (err, results, fields) {
         if (err) {
           logger.error('Error inserting into runs (from upload.js)')

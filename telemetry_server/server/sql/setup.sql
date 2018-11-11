@@ -17,11 +17,9 @@ USE telemetry;
 
 GRANT ALL PRIVILEGES ON telemetry.* TO 'telemetry'@'localhost'; -- reduce privileges once schema is set
 
--- initialize tables
+-- TODO initialize tables
 CREATE TABLE Runs (
 	runId SERIAL,
-	deleted BOOLEAN DEFAULT(0),
-	runName VARCHAR(255) NOT NULL,
 	PRIMARY KEY (runId)
 );
 

@@ -33,7 +33,7 @@ const PORT = 8000
 const BASE_DIR = path.join(__dirname, '..') // parent directory
 
 const requireAuthentication = function (req, res, next) {
-  if (req.session && req.session.userId && req.session.authorized == 1) {
+  if (req.session && req.session.userId && req.session.authorized === 1) {
     return next()
   } else {
     return res.redirect('/login')
