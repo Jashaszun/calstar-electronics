@@ -26,7 +26,7 @@ const session = require('express-session')
 const getExport = require('./export')
 const getReadData = require('./read-data')
 const { getRuns, getRun, removeRun } = require('./runs')
-const { postLogin, createUser } = require('./users')
+const { postLogin } = require('./users')
 const postUpload = require('./upload')
 
 const PORT = 8000
@@ -76,17 +76,11 @@ app.get('/uploadsuccess', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'upload_success.html'))
 })
 
-app.get('/newuser', function (req, res) {
-  res.sendFile(path.join(BASE_DIR, 'html', 'newuser.html'))
-})
-
 app.get('/login', function (req, res) {
   res.sendFile(path.join(BASE_DIR, 'html', 'login.html'))
 })
 
-app.post('/createuser', [sanitizeBody('email').normalizeEmail(), sanitizeBody('password')], createUser)
-
-app.post('/login', [sanitizeBody('email').normalizeEmail(), sanitizeBody('password')], postLogin)
+app.post('/login', sanitizeBody('email').normalizeEmail(), postLogin)
 
 app.get('/export/:id', requireAuthentication, getExport)
 

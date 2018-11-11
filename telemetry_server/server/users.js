@@ -13,31 +13,26 @@ const fs = require('fs')
 const path = require('path')
 const db = require('./db-interface')
 const logger = require('loggy')
-const bcrypt = require('bcrypt')
-const saltRounds = 10
+const { OAuth2Client } = require('google-auth-library');
 
-var createUser = function (req, res) {
-  if (req.body.email && req.body.password) {
-    var passHash = bcrypt.hashSync(req.body.password, saltRounds)
-    db.pool.execute(
-      'INSERT INTO Users ( email, password ) VALUES ( ?, ? )',
-      [req.body.email, passHash],
-      function (err, results, fields) {
-        if (err) {
-          logger.error(err)
-          res.redirect('/login')
-        } else {
-          logger.log('Created user with email ' + req.body.email + ' and a hashed password. The user will require authorization before access is granted.')
-          res.redirect('/runs')
-        }
-      }
-    )
-  }
+const CLIENT_ID = "319896366608-t41p578v6ocoolm3ledr0ikcp0dh11hq.apps.googleusercontent.com"
+const client = new OAuth2Client(CLIENT_ID);
+
+var verifyOAuth = async function (token, expectedEmail) {
+  // https://developers.google.com/identity/sign-in/web/backend-auth
+  const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: CLIENT_ID
+  })
+  const payload = ticket.getPayload()
+  const userid = payload['sub']
+  logger.log(payload)
+  return 'email' === expectedEmail
 }
 
 var postLogin = function (req, res) {
   db.pool.query(
-    'SELECT * FROM Users WHERE email = ?',
+    'SELECT * FROM Users WHERE email = ?', // all users in this table are considered authorized
     [req.body.email],
     function (err, results, fields) {
       if (err) {
@@ -45,7 +40,7 @@ var postLogin = function (req, res) {
         logger.error(err)
       } else {
         if (results.length < 1) {
-          // no user exists for that email address
+          // no authorized user exists for that email address
           res.redirect('/login')
           return
         } else if (results.length > 1) {
@@ -53,31 +48,16 @@ var postLogin = function (req, res) {
           res.redirect('/login')
           return
         }
-        if (bcrypt.compareSync(req.body.password, results[0].password)) {
+        var verified = verifyOAuth(req.idtoken, req.body.email)
+        if (verified) {
           req.session.userId = results[0].userId
           req.session.email = results[0].email
-          db.pool.query(
-            'SELECT * FROM Authorized WHERE email = ?',
-            [results[0].email],
-            function (err, dbresults, fields) {
-              logger.info('Finished')
-              if (err) {
-                logger.error(err)
-              } else {
-                if (dbresults.length < 1) {
-                  req.session.authorized = 0
-                  logger.warn('Successfully logged in unauthorized user with email ' + req.body.email)
-                  res.redirect('/login')
-                } else {
-                  req.session.authorized = 1
-                  logger.info('Successfully logged in authorized user with email ' + req.body.email)
-                  res.redirect('/runs')
-                }
-              }
-            }
-          )
+          req.session.authorized = 1
+          logger.info('Successfully logged in authorized user with email ' + req.body.email)
+          res.redirect('/runs')
         } else {
-          logger.warn('Unsuccessful login attempt for user with email ' + req.body.email)
+          req.session.authorized = 0
+          logger.info('Failed to log in user with email ' + req.body.email)
           res.redirect('/login')
         }
       }
@@ -86,4 +66,3 @@ var postLogin = function (req, res) {
 }
 
 module.exports.postLogin = postLogin
-module.exports.createUser = createUser

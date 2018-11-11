@@ -46,13 +46,7 @@ CREATE TABLE DataPoint (
 CREATE TABLE Users (
 	userId SERIAL,
 	email VARCHAR(255) NOT NULL,
-	password VARCHAR(255) NOT NULL,
-	UNIQUE(email)
-);
-
-CREATE TABLE Authorized (
-	email VARCHAR(255) NOT NULL,
-	UNIQUE(email)
+]	UNIQUE(email)
 );
 
 /*
