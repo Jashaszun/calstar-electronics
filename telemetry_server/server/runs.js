@@ -16,7 +16,7 @@ const logger = require('loggy')
 
 var getRuns = function (req, res) {
   db.pool.query(
-    'SELECT * FROM Runs',
+    'SELECT * FROM Runs WHERE NOT deleted',
     function (err, results, fields) {
       if (err) {
         res.end()
@@ -37,7 +37,7 @@ var getRun = function (req, res) {
     function (err, results, fields) {
       if (err) {
         res.end()
-        console.log(err)
+        logger.error(err)
       }
       res.render('runview', { data: results })
     }
@@ -46,19 +46,19 @@ var getRun = function (req, res) {
 
 var removeRun = function (req, res) {
   var id = req.params['id']
-  console.log('Deleting run...')
+  logger.log('Deleting run...')
 
   db.pool.execute(
-    'UPDATE runs SET deleted = TRUE WHERE runId = ?', [id],
+    'UPDATE Runs SET deleted = TRUE WHERE runId = ?', [id],
     function (err, results) {
       if (err) {
         logger.error('Error deleting run (from runs.js)')
         logger.error(err)
         res.redirect('/uploadfail')
-        // TODO safety - will need to think about what to do here
       }
     }
   )
+  logger.log('Executed soft deletion on run ' + id)
   // logger.info('The params: ' + Object.keys(req))
 }
 
