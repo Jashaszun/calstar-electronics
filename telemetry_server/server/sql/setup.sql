@@ -46,7 +46,7 @@ CREATE TABLE DataPoint (
 CREATE TABLE Users (
 	userId SERIAL,
 	email VARCHAR(255) NOT NULL,
-]	UNIQUE(email)
+	UNIQUE(email)
 );
 
 /*
