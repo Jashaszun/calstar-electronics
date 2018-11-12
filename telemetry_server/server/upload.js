@@ -21,23 +21,6 @@ const path = require('path')
 
 const csvSaveDir = path.join(__dirname, '..', 'data')
 
-var handleErr = function (err) {
-  if (err) {
-    logger.error(err)
-    return false
-  } else {
-    return true
-  }
-}
-
-var insertData = function (dataIndex, runId, dataTypeId, value, callback) {
-  db.pool.execute(
-    'INSERT INTO DataPoint ( dataIndex, runId, dataTypeId, value ) VALUES ( ?, ?, ?, ?)',
-    [dataIndex, runId, dataTypeId, value],
-    callback
-  )
-}
-
 var saveCSV = function (runId, runFile) {
   fs.writeFile(path.join(csvSaveDir, 'run-' + runId + '.csv'), runFile.data, function (err) {
     if (err) {
@@ -49,9 +32,8 @@ var saveCSV = function (runId, runFile) {
   })
 }
 
-var postUpload = function (req, res, next) {
+var postUpload = async function (req, res, next) {
   var runfileText = req.files.runfile.data.toString()
-  logger.info(JSON.stringify(runfileText))
   // WARNING: Do not mix \r\n and \n
   const runData = parse(runfileText, {
     columns: true,
@@ -59,90 +41,65 @@ var postUpload = function (req, res, next) {
     skip_empty_lines: true
   })
 
-  var count = 0
+  var count = runData.length * Object.keys(runData[0]).length
+  var insertDataPoints = async function (runId, dataTypeId, key) {
+    try {
+      logger.info(runData)
+      for (let [index, row] of Object.entries(runData)) {
+        await db.pool.execute(
+          'INSERT INTO DataPoint (dataIndex, runId, dataTypeId, value) VALUES (?, ?, ?, ?)',
+          [index, runId, dataTypeId[key], row[key]]
+        )
+        count -= 1 // race condition
+        if (count === 0) {
+          return res.redirect('/uploadsuccess')
+        }
+      }
+    } catch (err) {
+      logger.error('Error inserting into runs (from upload.js)')
+      logger.error(err)
+      res.redirect('/uploadfail')
+    }
+    return false
+  }
 
   // Create a new run
-  db.pool.execute(
-    'INSERT INTO Runs (runName) VALUES (?)', [req.files.runfile.name],
-    function (err, results, fields) {
-      if (err) {
-        logger.error('Error inserting into runs (from upload.js)')
-        logger.error(err)
-        res.redirect('/uploadfail')
-      } else {
-        var runId = results.insertId
-        logger.log(`Inserted run with runId = ${runId}`)
+  db.pool.execute('INSERT INTO Runs (runName) VALUES (?)', [req.files.runfile.name])
+    .then(function ([results, _]) {
+      var runId = results.insertId
+      logger.log(`Inserted run with runId = ${runId}`)
 
-        saveCSV(runId, req.files.runfile)
-        var count = runData.length * Object.keys(runData[0]).length
-
-        db.pool.query(
-          'SELECT * FROM DataType', [],
-          function (err, datatypes, fields) {
-            if (handleErr(err)) {
-              dataTypeId = {}
-              datatypes.forEach(function (element) {
-                dataTypeId[element.name] = element.dataTypeId
-              })
-
-              Object.keys(runData[0]).forEach(key => {
-                if (!(key in dataTypeId)) {
-                  dataTypeId[key] = -1
-                  db.pool.execute(
-                    'INSERT INTO DataType (type, name, units) VALUES (\'Unknown\', ?, \'Unknown\')',
-                    [key],
-                    function (err, results, fields) {
-                      if (handleErr(err)) {
-                        dataTypeId[key] = results.insertId
-                        // insert all data with this key
-                        runData.forEach(function (row, index) {
-                          db.pool.execute(
-                            'INSERT INTO DataPoint (dataIndex, runId, dataTypeId, value) VALUES (?, ?, ?, ?)',
-                            [index, runId, dataTypeId[key], row[key]],
-                            function (err) {
-                              if (err) {
-                                logger.error('Error inserting into runs (from upload.js)')
-                                logger.error(err)
-                                return res.redirect('/uploadfail')
-                              } else {
-                                count -= 1
-                                if (count === 0) {
-                                  return res.redirect('/uploadsuccess')
-                                }
-                              }
-                            }
-                          )
-                        })
-                      }
-                    }
-                  )
-                } else {
-                  runData.forEach(function (row, index) {
-                    db.pool.execute(
-                      'INSERT INTO DataPoint (dataIndex, runId, dataTypeId, value) VALUES (?, ?, ?, ?)',
-                      [index, runId, dataTypeId[key], row[key]],
-                      function (err) {
-                        if (err) {
-                          logger.error('Error inserting into runs (from upload.js)')
-                          logger.error(err)
-                          return res.redirect('/uploadfail')
-                        } else {
-                          count -= 1
-                          if (count === 0) {
-                            return res.redirect('/uploadsuccess')
-                          }
-                        }
-                      }
-                    )
-                  })
-                }
-              })
+      saveCSV(runId, req.files.runfile)
+      db.pool.query('SELECT * FROM DataType', [])
+        .then(async function ([datatypes, _]) {
+          var dataTypeId = {}
+          datatypes.forEach(function (element) {
+            dataTypeId[element.name] = element.dataTypeId
+          })
+          for (let key of Object.keys(runData[0])) {
+            if (!(key in dataTypeId)) {
+              dataTypeId[key] = -1
+              var results = (await db.pool.execute( // second param is unused
+                'INSERT INTO DataType (type, name, units) VALUES (\'Unknown\', ?, \'Unknown\')',
+                [key]
+              ))[0]
+              dataTypeId[key] = results.insertId
+            }
+            // insert all data with this key
+            // MUST be await bc this function is stateful
+            var errored = await insertDataPoints(runId, dataTypeId, key)
+            if (errored) {
+              return
             }
           }
-        )
-      }
-    }
-  )
+        })
+        .catch(err => logger.error(err))
+    })
+    .catch(err => {
+      logger.error('Error inserting into runs (from upload.js)')
+      logger.error(err)
+      res.redirect('/uploadfail')
+    })
 }
 
 module.exports = postUpload

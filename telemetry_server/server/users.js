@@ -13,16 +13,16 @@ const fs = require('fs')
 const path = require('path')
 const db = require('./db-interface')
 const logger = require('loggy')
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library')
 
 const CLIENT_ID = '319896366608-tpab77s86cva0u1jooc0a1l4ba4m6sfq.apps.googleusercontent.com'
-const client = new OAuth2Client(CLIENT_ID);
+const client = new OAuth2Client(CLIENT_ID)
 
 var verifyOAuth = async function (token, expectedEmail) {
   // https://developers.google.com/identity/sign-in/web/backend-auth
   const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: CLIENT_ID
+    idToken: token,
+    audience: CLIENT_ID
   })
   const payload = ticket.getPayload()
   // const userid = payload['sub'] TODO store this as primary key instead
@@ -32,36 +32,35 @@ var verifyOAuth = async function (token, expectedEmail) {
 var postLogin = function (req, res) {
   db.pool.query(
     'SELECT * FROM Users WHERE email = ?', // all users in this table are considered authorized
-    [req.body.email],
-    async function (err, results, fields) {
-      if (err) {
-        res.end()
-        logger.error(err)
-      } else {
-        if (results.length < 1) {
-          // no authorized user exists for that email address
-          res.redirect('/login')
-          return
-        } else if (results.length > 1) {
-          logger.warn('Multiple users found for email address ' + req.body.email + '. Aborting login request...')
-          res.redirect('/login')
-          return
-        }
-        var verified = await verifyOAuth(req.body.idtoken, req.body.email)
-        if (verified) {
-          req.session.userId = results[0].userId
-          req.session.email = results[0].email
-          req.session.authorized = 1
-          logger.info('Successfully logged in authorized user with email ' + req.body.email)
-          res.redirect('/runs')
-        } else {
-          req.session.authorized = 0
-          logger.info('Failed to log in user with email ' + req.body.email)
-          res.redirect('/login')
-        }
-      }
-    }
+    [req.body.email]
   )
+    .then(async function ([results, fields]) {
+      if (results.length < 1) {
+        // no authorized user exists for that email address
+        res.redirect('/login')
+        return
+      } else if (results.length > 1) {
+        logger.warn('Multiple users found for email address ' + req.body.email + '. Aborting login request...')
+        res.redirect('/login')
+        return
+      }
+      var verified = await verifyOAuth(req.body.idtoken, req.body.email)
+      if (verified) {
+        req.session.userId = results[0].userId
+        req.session.email = results[0].email
+        req.session.authorized = 1
+        logger.info('Successfully logged in authorized user with email ' + req.body.email)
+        res.redirect('/runs')
+      } else {
+        req.session.authorized = 0
+        logger.info('Failed to log in user with email ' + req.body.email)
+        res.redirect('/login')
+      }
+    })
+    .catch(err => {
+      res.end()
+      logger.error(err)
+    })
 }
 
 var postLogout = function (req, res, next) {

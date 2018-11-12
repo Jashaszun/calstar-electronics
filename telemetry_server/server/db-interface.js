@@ -11,15 +11,8 @@
  * changes in the interface of the exported object from affecting other files.
  */
 
-const sql = require('mysql2')
-const dataTypeId = {
-  'Time': 1,
-  'Altitude': 2,
-  'Temperature': 3,
-  'GyroX': 4,
-  'GyroY': 5,
-  'GyroZ': 6
-}
+const sql = require('mysql2/promise')
+
 // TODO store settings in a json file, or in .env
 const pool = sql.createPool({
   host: 'localhost',
@@ -31,4 +24,3 @@ const pool = sql.createPool({
 })
 
 module.exports.pool = pool
-module.exports.dataTypeId = dataTypeId
