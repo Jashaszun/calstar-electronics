@@ -44,7 +44,6 @@ var postUpload = async function (req, res, next) {
   var count = runData.length * Object.keys(runData[0]).length
   var insertDataPoints = async function (runId, dataTypeId, key) {
     try {
-      logger.info(runData)
       for (let [index, row] of Object.entries(runData)) {
         await db.pool.execute(
           'INSERT INTO DataPoint (dataIndex, runId, dataTypeId, value) VALUES (?, ?, ?, ?)',
