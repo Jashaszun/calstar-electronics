@@ -51,6 +51,7 @@ var saveCSV = function (runId, runFile) {
 
 var postUpload = function (req, res, next) {
   var runfileText = req.files.runfile.data.toString()
+  logger.info(JSON.stringify(runfileText))
   // WARNING: Do not mix \r\n and \n
   const runData = parse(runfileText, {
     columns: true,
@@ -58,19 +59,18 @@ var postUpload = function (req, res, next) {
     skip_empty_lines: true
   })
 
-  var runId = 1 // will find correct run after databse insertion
   var count = 0
 
   // Create a new run
   db.pool.execute(
-    'INSERT INTO runs (runName) VALUES (?)', ['req.files.runfile.name'],
+    'INSERT INTO Runs (runName) VALUES (?)', [req.files.runfile.name],
     function (err, results, fields) {
       if (err) {
         logger.error('Error inserting into runs (from upload.js)')
         logger.error(err)
         res.redirect('/uploadfail')
       } else {
-        runId = results.insertId
+        var runId = results.insertId
         logger.log(`Inserted run with runId = ${runId}`)
 
         saveCSV(runId, req.files.runfile)
@@ -89,7 +89,7 @@ var postUpload = function (req, res, next) {
                 if (!(key in dataTypeId)) {
                   dataTypeId[key] = -1
                   db.pool.execute(
-                    'INSERT INTO DataType (type, name, units) VALUES (\'Unkown\', ?, \'Unkown\')',
+                    'INSERT INTO DataType (type, name, units) VALUES (\'Unknown\', ?, \'Unknown\')',
                     [key],
                     function (err, results, fields) {
                       if (handleErr(err)) {
@@ -145,4 +145,4 @@ var postUpload = function (req, res, next) {
   )
 }
 
-module.exports = postUpload // rename if you want
+module.exports = postUpload
