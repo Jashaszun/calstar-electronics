@@ -1,0 +1,16 @@
+%TF.GenerationSoftware,Novarm,DipTrace,3.3.0.1*%
+%TF.CreationDate,2018-11-14T10:23:05-08:00*%
+%FSLAX26Y26*%
+%MOIN*%
+%TF.FileFunction,Soldermask,Bot*%
+%TF.Part,Single*%
+%ADD22C,0.125*%
+G75*
+G01*
+%LPD*%
+D22*
+X506200Y1506200D3*
+X1031200D3*
+X506200Y506200D3*
+X1031200D3*
+M02*
