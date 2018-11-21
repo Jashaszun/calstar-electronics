@@ -19,7 +19,7 @@ const path = require('path')
 const fileUpload = require('express-fileupload')
 const bodyParser = require('body-parser')
 const { sanitizeBody } = require('express-validator/filter')
-const { check } = require('express-validator/check')
+// const { check } = require('express-validator/check')
 const mustacheExpress = require('mustache-express')
 const session = require('express-session')
 
