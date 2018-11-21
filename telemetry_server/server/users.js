@@ -13,16 +13,16 @@ const fs = require('fs')
 const path = require('path')
 const db = require('./db-interface')
 const logger = require('loggy')
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library')
 
 const CLIENT_ID = '319896366608-tpab77s86cva0u1jooc0a1l4ba4m6sfq.apps.googleusercontent.com'
-const client = new OAuth2Client(CLIENT_ID);
+const client = new OAuth2Client(CLIENT_ID)
 
 var verifyOAuth = async function (token, expectedEmail) {
   // https://developers.google.com/identity/sign-in/web/backend-auth
   const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: CLIENT_ID
+    idToken: token,
+    audience: CLIENT_ID
   })
   const payload = ticket.getPayload()
   // const userid = payload['sub'] TODO store this as primary key instead

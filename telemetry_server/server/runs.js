@@ -39,7 +39,7 @@ var getRun = function (req, res) {
         res.end()
         logger.error(err)
       }
-      res.render('runview', { data: results })
+      res.render('runview', { runId:id, data: results })
     }
   )
 }
@@ -55,6 +55,8 @@ var removeRun = function (req, res) {
         logger.error('Error deleting run (from runs.js)')
         logger.error(err)
         res.redirect('/uploadfail')
+      } else {
+        res.redirect('/runs')
       }
     }
   )

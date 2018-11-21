@@ -17,7 +17,7 @@ const io = require('socket.io')(server)
 const logger = require('loggy')
 const path = require('path')
 const fileUpload = require('express-fileupload')
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser')
 const { sanitizeBody } = require('express-validator/filter')
 const { check } = require('express-validator/check')
 const mustacheExpress = require('mustache-express')
@@ -108,3 +108,6 @@ server.listen(PORT, function (err) {
     logger.log(`Started web server; listening on *:${PORT}`)
   }
 })
+
+// Needed for tests
+module.exports = app
