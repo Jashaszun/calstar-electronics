@@ -92,7 +92,7 @@ int main() {
                     retry = false;
                     pc_usb.write((const uint8_t *)line.c_str(), line.length(), NULL); 
                 } else {
-                   if (retry) {
+                    if (retry) {
                         pc_usb.printf("![SENDING W/ RETRY ' %s ']!", line.c_str());
                         line += '\n';
                         radio.sendWithRetry(TRANSMIT_TO, line.c_str(), line.length());
