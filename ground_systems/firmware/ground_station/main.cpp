@@ -21,6 +21,7 @@
 
 #include "mbed.h"
 #include "RFM69/RFM69.h"
+#include <string>
 
 #define GATEWAY_ID  (1)
 #define NODE_ID     (11)
@@ -31,10 +32,14 @@
 #define SPI1_SCLK   (PA_5)
 #define SPI1_SSEL   (PA_4)
 #define FREQUENCY   (RF69_433MHZ)
+#define TRANSMIT_TO (12)
 
 #define IS_RFM69HCW
 
 #define ENCRYPT_KEY ("CALSTARENCRYPTKE") // random 16 bytes that must be the same across all nodes
+
+#define COMMAND_YES_RETRY ("![YES_RETRY]!")
+#define COMMAND_NO_RETRY  ("![NO_RETRY]!")
 
 #define BAUDRATE    (115200)
 
@@ -71,9 +76,37 @@ int main() {
     radio.setHighPower();
 #endif
 
+    std::string line = "";
+    bool retry = false;
     while (true) {
         rx_led = 0;
         tx_led = 0;
+
+        if (pc_usb.readable()) {
+            char in = pc_usb.getc();
+            if (in == '\n') {
+                if (line == COMMAND_YES_RETRY) {
+                    retry = true;
+                    pc_usb.write((const uint8_t *)line.c_str(), line.length(), NULL); 
+                } else if (line == COMMAND_NO_RETRY) {
+                    retry = false;
+                    pc_usb.write((const uint8_t *)line.c_str(), line.length(), NULL); 
+                } else {
+                   if (retry) {
+                        pc_usb.printf("![SENDING W/ RETRY ' %s ']!", line.c_str());
+                        line += '\n';
+                        radio.sendWithRetry(TRANSMIT_TO, line.c_str(), line.length());
+                    } else {
+                        pc_usb.printf("![SENDING ONCE ' %s ']!", line.c_str());
+                        line += '\n';
+                        radio.send(TRANSMIT_TO, line.c_str(), line.length());
+                    } 
+                }
+                line = "";
+            } else {
+                line += in;
+            } 
+        }
 
         if (radio.receiveDone()) {
             rx_led = 1;
@@ -83,7 +116,6 @@ int main() {
                 radio.sendACK();
             }
         }   
-        
     }
     return 0;
 }
