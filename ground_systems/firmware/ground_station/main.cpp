@@ -60,13 +60,13 @@ int main() {
     DigitalIn  port4(PORT4);
 
     DigitalOut rx_led(LED_RX);
-    rx_led = 0;
+    rx_led = 1;
     DigitalOut tx_led(LED_TX);
     tx_led = 0;
 
-    Serial pc_usb(USBTX, USBRX);
-    pc_usb.baud(BAUDRATE);
-    pc_usb.set_blocking(false);
+    Serial pc(UART6_TX, UART6_RX);
+    pc.baud(BAUDRATE);
+    pc.set_blocking(false);
 
     RFM69 radio(SPI1_MOSI, SPI1_MISO, SPI1_SCLK, SPI1_SSEL, RADIO_INT); 
     radio.initialize(FREQUENCY, NODE_ID, NETWORK_ID);
@@ -79,25 +79,29 @@ int main() {
     std::string line = "";
     bool retry = false;
     while (true) {
-        rx_led = 0;
-        tx_led = 0;
+        //rx_led = 0;
+        //tx_led = 0;
+        //pc.write((const uint8_t *) "beginning loop\r\n", sizeof("beginning loop\r\n"), NULL);
 
-        if (pc_usb.readable()) {
-            char in = pc_usb.getc();
+        if (pc.readable()) {
+            pc.write((const uint8_t *) "pc readable\r\n", sizeof("pc readable\r\n"), NULL);
+            char in = pc.getc();
             if (in == '\n') {
+                pc.write((const uint8_t *) "end line\r\n", sizeof("end line\r\n"), NULL);
                 if (line == COMMAND_YES_RETRY) {
                     retry = true;
-                    pc_usb.write((const uint8_t *)line.c_str(), line.length(), NULL); 
+                    pc.write((const uint8_t *)line.c_str(), line.length(), NULL); 
                 } else if (line == COMMAND_NO_RETRY) {
                     retry = false;
-                    pc_usb.write((const uint8_t *)line.c_str(), line.length(), NULL); 
+                    pc.write((const uint8_t *)line.c_str(), line.length(), NULL); 
                 } else {
+                    pc.write((const uint8_t *) "send message\r\n", sizeof("send message\r\n"), NULL);
                     if (retry) {
-                        pc_usb.printf("![SENDING W/ RETRY ' %s ']!", line.c_str());
+                        pc.printf("![SENDING W/ RETRY ' %s ']!", line.c_str());
                         line += '\n';
                         radio.sendWithRetry(TRANSMIT_TO, line.c_str(), line.length());
                     } else {
-                        pc_usb.printf("![SENDING ONCE ' %s ']!", line.c_str());
+                        pc.printf("![SENDING ONCE ' %s ']!", line.c_str());
                         line += '\n';
                         radio.send(TRANSMIT_TO, line.c_str(), line.length());
                     } 
@@ -109,10 +113,10 @@ int main() {
         }
 
         if (radio.receiveDone()) {
-            rx_led = 1;
-            pc_usb.write((const uint8_t *)radio.DATA, radio.DATALEN, NULL); // last arg (NULL) is the tx complete callback
+            //rx_led = 1;
+            pc.write((const uint8_t *)radio.DATA, radio.DATALEN, NULL); // last arg (NULL) is the tx complete callback
             if (radio.ACKRequested()) {
-                tx_led = 1;
+                //tx_led = 1;
                 radio.sendACK();
             }
         }   
