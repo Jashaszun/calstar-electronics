@@ -1,8 +1,10 @@
 #include <mbed.h>
+#include "lib/MPU9250AHRS/MPU9250.h"
+#include "lib/MPL3115A2/MPL3115A2.h"
 
 // Pin definitions
-#define I2C_SDA PB_7
-#define I2C_SCL PB_6
+#define I2C_SENSOR_SDA PB_7
+#define I2C_SENSOR_SCL PB_6
 #define TPC_RX PA_10
 #define TPC_TX PA_9
 #define EC_RX PC_7
@@ -15,7 +17,7 @@
 
 // TODO define bp stuff
 
-I2C i2c(I2C_SDA, I2C_SCL);
+I2C i2c_sensors(I2C_SENSOR_SDA, I2C_SENSOR_SCL);
 const int ALTIMETER_I2C_ADDR = 0xC0;
 const int IMU_I2C_ADDR = 0xD0;
 
