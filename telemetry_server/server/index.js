@@ -30,7 +30,7 @@ const { getRuns, getRun, removeRun } = require('./runs')
 const { postLogin, postLogout } = require('./users')
 const postUpload = require('./upload')
 
-const PORT = 8000
+const { PORT } = require('./config.json')
 const BASE_DIR = path.join(__dirname, '..') // parent directory
 
 const requireAuthentication = function (req, res, next) {
