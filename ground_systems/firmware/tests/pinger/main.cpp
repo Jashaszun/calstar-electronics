@@ -58,13 +58,15 @@ int main() {
     pc.printf("radio init'd\r\n");
     radio.encrypt(ENCRYPT_KEY);
     pc.printf("radio encrypted\r\n");
+    radio.setPowerLevel(20);
+    radio.promiscuous(false);
 #ifdef IS_RFM69HCW
     //radio.setHighPower();
 #endif
     pc.printf("radio high powered\r\n");
 
     while (true) {
-//        radio.send(TRANSMIT_TO, "wiuwlehfliaw", strlen("wiuwlehfliaw"));
+        radio.send(TRANSMIT_TO, "wiuwlehfliaw", strlen("wiuwlehfliaw"));
 //        LOG(pc, "sending\n");
         pc.putc('h');
         wait(0.5);
