@@ -53,7 +53,9 @@ DigitalOut led_red(STATE_LED_RED);
 DigitalOut led_green(STATE_LED_GREEN);
 DigitalOut led_blue(STATE_LED_BLUE);
 
-int main() {
+MPL3115A2 altimeter(&i2c_sensors);
+
+int bp_test() {
 
     DigitalOut bp7_ig(BP7_IGNITE);
     bp7_ig = 0;
@@ -66,4 +68,28 @@ int main() {
     }
 
     return 0;
+}
+
+int rainbow_test() {
+    while (true) {
+        for (int r = 0; r < 2; r++) {
+            for (int g = 0; g < 2; g++) {
+                for (int b = 0; b < 2; b++) {
+                    led_red.write(r);
+                    led_green.write(g);
+                    led_blue.write(b);
+                    wait(1);
+                }
+            }
+        }
+    }
+}
+
+int altimeter_test() {
+    altimeter.init();
+
+}
+
+int main() {
+    rainbow_test();
 }
