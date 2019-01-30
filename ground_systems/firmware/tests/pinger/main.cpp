@@ -24,8 +24,6 @@
 #define PORT3 (PB_8)
 #define PORT4 (PB_7)
 
-#define LOG(uart, str) uart.write((const uint8_t *)str, strlen(str), NULL);
-
 int main() {
     DigitalOut port1(PORT1);
     port1 = 0;
@@ -41,7 +39,6 @@ int main() {
 
     Serial pc(UART6_TX, UART6_RX);
     pc.baud(BAUDRATE);
- //   pc.set_blocking(true);
 
     pc.printf("Hello program begin\r\n");
 
@@ -58,16 +55,14 @@ int main() {
     pc.printf("radio init'd\r\n");
     radio.encrypt(ENCRYPT_KEY);
     pc.printf("radio encrypted\r\n");
-    radio.setPowerLevel(20);
-    radio.promiscuous(false);
+   radio.promiscuous(false);
 #ifdef IS_RFM69HCW
-    //radio.setHighPower();
+   radio.setHighPower();
 #endif
     pc.printf("radio high powered\r\n");
 
     while (true) {
-        radio.send(TRANSMIT_TO, "wiuwlehfliaw", strlen("wiuwlehfliaw"));
-//        LOG(pc, "sending\n");
+       radio.send(TRANSMIT_TO, "wiuwlehfliaw", strlen("wiuwlehfliaw"));
         pc.putc('h');
         wait(0.5);
     }
