@@ -70,7 +70,8 @@ Altitude* MPL3115A2::readAltitude(Altitude* a)
     // takes care of converting the compressed data from the sensor, and
     // provides functions to get the data in various units. And it also
     // has a print function to output the data as a string.
-    _i2c->read(MPL3115A2_ADDRESS, (*a), Altitude::size);
+    int result = _i2c->read(MPL3115A2_ADDRESS, (*a), Altitude::size);
+    _debug->printf("Result: %d\n", result);
     a->setAltitude();
 
     return a;
