@@ -68,6 +68,7 @@ int main() {
 
     Serial pc(UART6_TX, UART6_RX);
     pc.baud(BAUDRATE);
+    pc.blocking(false);
 
     RFM69 radio(SPI1_MOSI, SPI1_MISO, SPI1_SCLK, SPI1_SSEL, RADIO_INT); 
 
