@@ -1,8 +1,0 @@
-.DS_Store
-*.swp
-
-# for obvious reasons
-node_modules/
-
-# for webpack output
-dist/
