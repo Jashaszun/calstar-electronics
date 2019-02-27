@@ -32,14 +32,38 @@ var getRuns = function (req, res) {
 var getRun = function (req, res) {
   var id = req.params['id']
   db.pool.query(
-    'SELECT * FROM DataPoint WHERE runId = ?',
+    'SELECT DataPoint.dataIndex, DataPoint.dataTypeId, DataPoint.value, DataType.name FROM DataPoint'+
+    ' JOIN DataType ON DataPoint.dataTypeId=DataType.dataTypeId'+
+    ' WHERE runId = ?',
     [id],
     function (err, results, fields) {
       if (err) {
         res.end()
         logger.error(err)
       }
-      res.render('runview', { runId:id, data: results })
+      results.sort((ptA, ptB) => { return (ptA.dataIndex - ptB.dataIndex) + (ptA.dataTypeId - ptB.dataTypeId) * 40 })
+      var dataDict = []
+      var pointSet = (new Set(results.map(point => point.name)))
+      var pointAmt = results.length/pointSet.size
+      for (var i = 0; i < results.length; i++) {
+        //console.log(results[i].value+' '+results[i].name)
+        var point = results[i]
+        if (dataDict.length < i % pointAmt + 1) {
+            dataDict.push({})
+        }
+        dataDict[i % pointAmt][point.name] = point.value
+        
+      }
+      
+      //console.log(Object.keys(dataDict[0]))
+      var realData = dataDict.map((pts) => {
+        var newPtsList = Object.keys(pts).map((type) => { return { point: pts[type] }})
+        return { row: newPtsList }
+      })
+      var types = Array.from(pointSet).map((type) => { return { measurement: type } })
+      //console.log(realData[0].row)
+      
+      res.render('runview', { runId: id, data: realData, type: types })//realData, types
     }
   )
 }
@@ -67,3 +91,4 @@ var removeRun = function (req, res) {
 module.exports.getRuns = getRuns
 module.exports.getRun = getRun
 module.exports.removeRun = removeRun
+

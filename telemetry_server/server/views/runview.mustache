@@ -18,22 +18,27 @@
   <a class="btn btn-danger" href="/">Home</a>
   <a class="btn btn-success" href="/export/{{runId}}">Download</a>
   <form action="/deleteRuns/{{runId}}" method="post">
-		<button name="deleteRun" type="submit" class="btn btn-danger">Delete</button>
-	</form>
+    <button name="deleteRun" type="submit" class="btn btn-danger">Delete</button>
+  </form>
   <div id="plot"></div>
   <table class="table table-striped">
     <tr>
-      <th>Run ID</th>
-      <th>Data Index</th>
-      <th>Data Type ID</th>
-      <th>Value</th>
+      {{#type}}
+      <th>{{measurement}}</th>
+      {{/type}}
     </tr>
     {{#data}}
     <tr>
-      <td>{{runId}}</td>
-      <td>{{dataIndex}}</td>
-      <td>{{dataTypeId}}</td>
-      <td>{{value}}</td>
+      <!--{{#type}}
+      <td>{{measurement}}</td>
+      {{/type}}-->
+      <!--<td>{{Time}}</td>
+      <td>{{Altitude}}</td> 
+      <td>{{Temperature}}</td>
+      <td>{{Acceleration}}</td>-->
+      {{#row}}
+      <td>{{point}}</td>
+      {{/row}}
     </tr>
     {{/data}}
   </table>
