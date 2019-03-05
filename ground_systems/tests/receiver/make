@@ -1,0 +1,10 @@
+#/bin/sh
+echo "Compiling flatbuffer schema.."
+../../../general/flatbuffers/flatc --cpp ../../../general/common.fbs
+echo "done."
+if [ ! -d flatbuffers ] ; then
+    echo "Copying flatbuffer includes.."
+    cp -r ../../../general/flatbuffers/include/flatbuffers .
+    echo "done."
+fi
+time mbed compile --target NUCLEO_F401RE --toolchain GCC_ARM
