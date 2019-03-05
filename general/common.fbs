@@ -23,3 +23,5 @@ table TPCData {
     GPSString : string;
     BatteryVoltage : float;
 }
+
+root_type TPCData;

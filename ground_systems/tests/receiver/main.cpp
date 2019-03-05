@@ -8,6 +8,7 @@
  */
 
 #include "RFM69/RFM69.hpp"
+#include "common_generated.h"
 #include "mbed.h"
 
 #define NODE_ID (11)
@@ -27,11 +28,14 @@
 #define ENCRYPT_KEY "sampleEncryptKey"
 
 #define BAUDRATE (115200)
+
 #define UART6_RX (PC_7)
 #define UART6_TX (PC_6)
 
-int main() {
+using namespace flatbuffers;
+using namespace Calstar;
 
+int main() {
   Serial pc(UART6_TX, UART6_RX);
   pc.baud(BAUDRATE);
   pc.set_blocking(false);
@@ -57,8 +61,9 @@ int main() {
     if (bytes_rxd > 1) {
       rx[bytes_rxd] = '\0';
       char *data = &rx[1];
-      pc.printf("[rssi: %d, bytes received: %d] %s \r\n", radio.getRSSI(),
-                bytes_rxd, data);
+      const TPCData *tpc_data = GetTPCData(data);
+      pc.printf("[rssi: %d, bytes received: %d] bat v: %f, gps string: %s, state: %d \r\n", radio.getRSSI(),
+                bytes_rxd, tpc_data->BatteryVoltage(), tpc_data->GPSString(), tpc_data->State());
     }
   }
   return 0;
