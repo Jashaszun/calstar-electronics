@@ -68,9 +68,11 @@ The following documentation pages may be useful:
 If there's any other libraries not listed here, Google is your friend. If you find anything you think is worth putting here, add it.
 
 ## TODO
-Tasks are listed as issues in the Github repo. If you wish to work on a task, please assign the issue to yourself.
-
-You're welcome to work on multiple issues at a time, just make sure you're in communication with whoever has it assigned to them.
-
-If Jonathan forgot/messed up something major (e.g. missing API endpoint), make an issue for it if it's not a quick fix and attach it to the project.
+- Integrate with SIL/HIL
+  - Figure out their data schema
+  - Figure out good way to display their data schema
+- Tests
+  - Test for basic funcionality, making sure the API works properly
+  - Tests for typical workflow, i.e. adding/deleting files should add/delete the appropriate files
+  - Tests on permissions, making sure that only authenticated users can interact with appropriate parts of the website
 
