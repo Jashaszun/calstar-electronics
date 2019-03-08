@@ -24,16 +24,11 @@
 #include "mbed.h"
 #include <string>
 
-#define NODE_ID (11)
-#define NETWORK_ID (100)
-#define RADIO_INT (PC_0)
 #define SPI1_MOSI (PA_7)
 #define SPI1_MISO (PA_6)
 #define SPI1_SCLK (PA_5)
 #define SPI1_SSEL (PA_4)
 #define RADIO_RST (PC_1)
-#define FREQUENCY (RF69_433MHZ)
-#define TRANSMIT_TO (255)
 
 // random 16 bytes that must be the same across all nodes
 #define ENCRYPT_KEY ("CALSTARENCRYPTKE")
@@ -43,9 +38,12 @@
 
 #define BAUDRATE (115200)
 
+ #define UART6_RX (PA_3)
+ #define UART6_TX (PA_2)
+
 // These are for if USB fails
-#define UART6_RX (PC_7)
-#define UART6_TX (PC_6)
+//#define UART6_RX (PC_7)
+//#define UART6_TX (PC_6)
 
 #define IO1 (PB_5)
 #define IO2 (PB_6)
@@ -56,10 +54,12 @@
 #define LED_TX (PB_13)
 
 int main() {
-  DigitalIn io1(IO1);
-  DigitalIn io2(IO2);
-  DigitalIn io3(IO3);
-  DigitalIn io4(IO4);
+  /*
+    DigitalIn io1(IO1);
+    DigitalIn io2(IO2);
+    DigitalIn io3(IO3);
+    DigitalIn io4(IO4);
+  */
 
   DigitalOut rx_led(LED_RX);
   rx_led = 0;
@@ -74,7 +74,7 @@ int main() {
 
   RFM69 radio(SPI1_MOSI, SPI1_MISO, SPI1_SCLK, SPI1_SSEL, RADIO_RST, true);
   radio.reset();
-  pc.printf("![Radio reset complete.]!\n");
+  pc.printf("![Radio reset complete.]!\r\n");
 
   radio.init();
   radio.setAESEncryption(ENCRYPT_KEY, strlen(ENCRYPT_KEY));
@@ -100,11 +100,13 @@ int main() {
           pc.write((const uint8_t *)line.c_str(), line.length(), NULL);
         } else {
           if (retry) {
-            pc.printf("![SENDING ONCE (RETRY TODO) '%s']!\n", line.c_str());
+            pc.printf("![SENDING ONCE (RETRY TODO) '%s', bytes: %d]!\r\n",
+                      line.c_str(), line.length());
             line += '\n';
             radio.send(line.c_str(), line.length());
           } else {
-            pc.printf("![SENDING ONCE ' %s ']!\n", line.c_str());
+            pc.printf("![SENDING ONCE ' %s ', bytes: %d]!\r\n", line.c_str(),
+                      line.length());
             line += '\n';
             radio.send(line.c_str(), line.length());
           }
@@ -118,15 +120,12 @@ int main() {
     }
 
     int num_bytes_rxd = radio.receive(rx_buf, sizeof(rx_buf));
-    if (num_bytes_rxd > 0) {
+    if (num_bytes_rxd > 1) {
       rx_buf[num_bytes_rxd] = '\0';
-      char *data = &rx_buf[1];
       rx_led = 1;
-      pc.printf("![RSSI=%d]!", radio.getRSSI());
-
+      pc.printf("![RSSI=%d, bytes: %d]! %s\r\n", radio.getRSSI(),
+                num_bytes_rxd - 1, rx_buf + 1);
       // last arg (NULL) is the tx complete callback
-      pc.write((const uint8_t *)data, num_bytes_rxd - 1, NULL);
-      pc.printf("\n");
     }
   }
   return 0;

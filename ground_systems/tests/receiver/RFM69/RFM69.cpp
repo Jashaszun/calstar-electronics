@@ -2,7 +2,7 @@
  * @{
  */
 
-#include "rfm69.hpp"
+#include "RFM69.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
