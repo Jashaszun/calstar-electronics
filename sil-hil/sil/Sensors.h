@@ -5,11 +5,11 @@
 #include "Simulator.h"
 
 class Accelerometer {
-  Environment* env;
+  Rocket* roc;
   vec currentError;
-  
+
 public:
-  Accelerometer(Environment* env);
+  Accelerometer(Rocket* roc);
   vec getData();
 };
 

@@ -5,17 +5,17 @@
 
 extern int current_mcu;
 
-void code0();
-void code1();
-void code2();
-void code3();
-void code4();
+namespace code0 { void loop(); }
+namespace code1 { void loop(); }
+namespace code2 { void loop(); }
+namespace code3 { void loop(); }
+namespace code4 { void loop(); }
 
 int64_t micros();
 
-void pinMode(int pin, uint8_t mode);
-int digitalRead(int pin);
-void digitalWrite(int pin, bool high);
+// void pinMode(int pin, uint8_t mode);
+// int digitalRead(int pin);
+// void digitalWrite(int pin, bool high);
 
 float getAccX();
 float getAccY();

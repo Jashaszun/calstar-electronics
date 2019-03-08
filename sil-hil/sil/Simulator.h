@@ -74,6 +74,8 @@ public:
   vector<LED> leds;
   vector<Microcontroller> microcontrollers;
 
+  Accelerometer* acc;
+
   void mapPin(string mapping, bool high, unsigned long val, uint8_t mode, CONNECTION_TYPE ty);
   double getDrag();
   Rocket(json rocket_json);
