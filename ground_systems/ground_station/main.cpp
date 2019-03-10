@@ -38,12 +38,13 @@
 
 #define BAUDRATE (115200)
 
- #define UART6_RX (PA_3)
- #define UART6_TX (PA_2)
+//tpc defines
+  // #define UART6_RX (PA_3)
+  // #define UART6_TX (PA_2)
 
 // These are for if USB fails
-//#define UART6_RX (PC_7)
-//#define UART6_TX (PC_6)
+#define UART6_RX (PC_7)
+#define UART6_TX (PC_6)
 
 #define IO1 (PB_5)
 #define IO2 (PB_6)
@@ -52,6 +53,7 @@
 
 #define LED_RX (PB_12)
 #define LED_TX (PB_13)
+#define LED_ON_TIME_MS (50)
 
 int main() {
   /*
@@ -70,6 +72,8 @@ int main() {
   pc.baud(BAUDRATE);
   pc.set_blocking(false);
 
+  Timer t;
+
   char rx_buf[128];
 
   RFM69 radio(SPI1_MOSI, SPI1_MISO, SPI1_SCLK, SPI1_SSEL, RADIO_RST, true);
@@ -78,16 +82,23 @@ int main() {
 
   radio.init();
   radio.setAESEncryption(ENCRYPT_KEY, strlen(ENCRYPT_KEY));
-  // radio.sleep(); // lowest power settings
 
   radio.setHighPowerSettings(true);
   radio.setPowerDBm(20);
 
   std::string line = "";
   bool retry = false;
+
+  t.start();
+  int t_tx_led_on = t.read_ms();
+  int t_rx_led_on = t.read_ms();
   while (true) {
-    rx_led = 0;
-    tx_led = 0;
+    if (tx_led.read() == 1 && t.read_ms() - t_tx_led_on > LED_ON_TIME_MS) {
+      tx_led = 0;
+    }
+    if (rx_led.read() == 1 && t.read_ms() - t_rx_led_on > LED_ON_TIME_MS) {
+      rx_led = 0;
+    }
 
     if (pc.readable()) {
       char in = pc.getc();
@@ -103,19 +114,21 @@ int main() {
             pc.printf("![SENDING ONCE (RETRY TODO) '%s', bytes: %d]!\r\n",
                       line.c_str(), line.length());
             line += '\n';
+            tx_led = 1;
             radio.send(line.c_str(), line.length());
+            t_tx_led_on = t.read_ms();
           } else {
             pc.printf("![SENDING ONCE ' %s ', bytes: %d]!\r\n", line.c_str(),
                       line.length());
             line += '\n';
+            tx_led = 1;
             radio.send(line.c_str(), line.length());
+            t_tx_led_on = t.read_ms();
           }
         }
         line = "";
       } else {
         line += in;
-        rx_led = 1;
-        tx_led = 1;
       }
     }
 
@@ -125,7 +138,7 @@ int main() {
       rx_led = 1;
       pc.printf("![RSSI=%d, bytes: %d]! %s\r\n", radio.getRSSI(),
                 num_bytes_rxd - 1, rx_buf + 1);
-      // last arg (NULL) is the tx complete callback
+      t_rx_led_on = t.read_ms();
     }
   }
   return 0;
