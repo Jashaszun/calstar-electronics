@@ -63,6 +63,7 @@ namespace RadioSerial
                     AutoFlush = true
                 } : null;
                 port = new SerialPort(comPort, baud);
+                port.DtrEnable = true;
                 buffer = "";
                 port.DataReceived += (s, e) => receiveSerialData(DateTime.Now.ToFileTimeUtc());
                 port.Open();
