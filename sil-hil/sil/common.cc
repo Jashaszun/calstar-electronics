@@ -1,4 +1,5 @@
 #include "common.h"
+#include <iostream>
 
 vec operator+(const vec& a, const vec& b) {
   return vec{a.x + b.x, a.y + b.y, a.z + b.z};
@@ -34,6 +35,11 @@ ostream& operator<<(ostream& os, const vec& v) {
 }
 
 _Noreturn void ERROR() {
+  ERROR("Unknown error");
+}
+
+_Noreturn void ERROR(string msg) {
+  cerr << "SIL Failed: " << msg << endl;
   exit(1);
   __builtin_unreachable();
 }

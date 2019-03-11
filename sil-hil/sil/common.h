@@ -19,11 +19,6 @@
 
 #include "Config.h"
 
-#define DEBUG_OUT cout
-
-#define MCU_LIMIT 5
-#define CODE_OVERHEAD_PENALTY 100
-
 using namespace std;
 
 typedef struct {
@@ -41,6 +36,7 @@ double mag(vec v);
 ostream& operator<<(ostream& os, const vec& v);
 
 _Noreturn void ERROR();
+_Noreturn void ERROR(string msg);
 
 class Motor;
 class Chute;
@@ -49,8 +45,5 @@ class Microcontroller;
 class Rocket;
 class Environment;
 class Accelerometer;
-
-#define AIR_DRAG_COEF 0.024
-#define AIR_DENSITY 0.45
 
 #endif

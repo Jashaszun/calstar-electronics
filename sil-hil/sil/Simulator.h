@@ -57,6 +57,8 @@ public:
   string name;
   int id;
   map<int, pinmapping> pin_map;
+
+  Microcontroller(string name, int id);
 };
 
 class Rocket {
@@ -72,7 +74,7 @@ public:
   vector<Motor> motors;
   vector<Chute> chutes;
   vector<LED> leds;
-  vector<Microcontroller> microcontrollers;
+  vector<shared_ptr<Microcontroller>> microcontrollers;
 
   Accelerometer* acc;
 
@@ -90,6 +92,10 @@ class Environment {
 
   vector<Output> outputs;
 
+  double max_altitude;
+  double max_acceleration;
+  double max_speed;
+
 public:
   vector<vector<shared_ptr<Rocket>>> rocket_sections;
 
@@ -102,6 +108,7 @@ public:
   void pinMode(int mcu_id, int pin, uint8_t mode);
   void updateOutputs();
   void finishOutputs();
+  void summary();
 };
 
 #endif

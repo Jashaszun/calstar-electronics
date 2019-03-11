@@ -23,7 +23,7 @@
     {
       "type": "altitude",
       "file": "altitude_data.csv",
-      "frequency": 1000
+      "frequency": 100000
     }
   ]
 }

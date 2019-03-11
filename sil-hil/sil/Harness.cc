@@ -21,19 +21,6 @@ void pinMode(int pin, uint8_t mode) {
   global_env->pinMode(current_mcu, pin, mode);
 }
 
-shared_ptr<Rocket> curr_roc() {
-  for (auto& sect : global_env->rocket_sections) {
-    for (auto rp : sect) {
-      for (auto& mcu : rp->microcontrollers) {
-        if (mcu.id == current_mcu) {
-          return rp;
-        }
-      }
-    }
-  }
-  return NULL;
-}
-
 vec getAcc() {
   auto r = curr_roc();
   assert(r->acc != NULL);

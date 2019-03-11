@@ -2,6 +2,7 @@
 #include "Output.h"
 #include "Sensors.h"
 #include "Harness.h"
+#include "SIL.h"
 #include <fstream>
 
 Output::Output(json config) {
@@ -24,17 +25,17 @@ Output::Output(json config) {
   }
 }
 
-void Output::update(Environment* env) {
-  if (env->micros() >= lastPoll + frequency) {
-    lastPoll = env->micros();
+void Output::update() {
+  if (global_env->micros() >= lastPoll + frequency) {
+    lastPoll = global_env->micros();
 
-    csv << env->micros();
+    csv << global_env->micros();
     csv << ", ";
 
     switch (type) {
     case OUTPUTTYPE::ACCELERATION:
       {
-        for (auto& sect : env->rocket_sections) {
+        for (auto& sect : global_env->rocket_sections) {
           for (auto& rp : sect) {
             vec acc = rp->rocket_acc;
             csv << rp->section_name;
@@ -44,34 +45,36 @@ void Output::update(Environment* env) {
             csv << acc.y;
             csv << ", ";
             csv << acc.z;
+            csv << ", ";
           }
         }
       }
       break;
     case OUTPUTTYPE::ACCELEROMETER:
       {
-        for (auto& sect : env->rocket_sections) {
+        for (auto& sect : global_env->rocket_sections) {
           for (auto& rp : sect) {
-            vec acc = rp->rocket_acc;
+            vec acc = rp->acc->getData();
             csv << rp->section_name;
             csv << ", ";
-            csv << rp->rocket_pos.z;
+            csv << acc.x;
+            csv << ", ";
+            csv << acc.y;
+            csv << ", ";
+            csv << acc.z;
+            csv << ", ";
           }
         }
-        csv << getAccX();
-        csv << ", ";
-        csv << getAccY();
-        csv << ", ";
-        csv << getAccZ();
       }
       break;
     case OUTPUTTYPE::ALTITUDE:
       {
-        for (auto& sect : env->rocket_sections) {
+        for (auto& sect : global_env->rocket_sections) {
           for (auto& rp : sect) {
             csv << rp->section_name;
             csv << ", ";
             csv << rp->rocket_pos.z;
+            csv << ", ";
           }
         }
       }

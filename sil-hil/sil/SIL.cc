@@ -10,6 +10,19 @@ int64_t elapsed() {
   return chrono::duration_cast<chrono::microseconds>(diff).count();
 }
 
+shared_ptr<Rocket> curr_roc() {
+  for (auto& sect : global_env->rocket_sections) {
+    for (auto rp : sect) {
+      for (auto mcu : rp->microcontrollers) {
+        if (mcu->id == current_mcu) {
+          return rp;
+        }
+      }
+    }
+  }
+  ERROR();
+}
+
 Environment* global_env = NULL;
 int current_mcu = 0;
 
@@ -41,11 +54,12 @@ int main(int argc, char** argv) {
   DEBUG_OUT << "Starting Simulation" << endl;
   while (!env.done()) {
     bool ran_code = false;
-    for (auto& sect : global_env->rocket_sections) {
+    for (const auto sect : env.rocket_sections) {
       for (auto rp : sect) {
-        for (auto& mcu : rp->microcontrollers) {
+        for (auto mcu : rp->microcontrollers) {
+          current_mcu = mcu->id;
           if (code_time[current_mcu] / CLOCK_MULTIPLIER < env.micros()) {
-            current_mcu = mcu.id;
+            VERBOSE_OUT << "Running code " << current_mcu << endl;
             start_timer();
             loops[current_mcu]();
             code_time[current_mcu] += elapsed() + CODE_OVERHEAD_PENALTY;
@@ -54,14 +68,16 @@ int main(int argc, char** argv) {
         }
       }
     }
-    if (!ran_code) {
+    // if (!ran_code) {
       env.tick();
-    } else {
-      // TODO: Maybe put a warning here for loops that run twice without environment ticking
-    }
-    DEBUG_OUT << env.micros() << endl;
+    // } else {
+    //   // TODO: Maybe put a warning here for loops that run twice without environment ticking
+    // }
+    VERBOSE_OUT << env.micros() << endl;
     env.updateOutputs();
   }
   env.finishOutputs();
+  DEBUG_OUT << "Finished Simulation" << endl;
+  env.summary();
   global_env = NULL;
 }

@@ -25,7 +25,7 @@ class Output {
 
 public:
   Output(json config);
-  void update(Environment* env);
+  void update();
   void finish();
 };
 

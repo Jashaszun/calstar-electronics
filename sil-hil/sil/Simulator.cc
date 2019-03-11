@@ -1,6 +1,8 @@
+#include "common.h"
 #include "Simulator.h"
 #include "SIL.h"
-#include "common.h"
+#include "Sensors.h"
+
 #include "nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
@@ -51,7 +53,7 @@ double Motor::getForce() {
     return force_0 + slope * (time - t_0);
   }
 
-  ERROR();  // Error if we reach here
+  ERROR("Motor has unknown interpolation");
 }
 
 Motor::Motor(string motor_file, string motor_name) : name(motor_name) {
@@ -80,6 +82,7 @@ void Motor::activate() {
   assert(global_env != NULL);
 
   if (!activated) {
+    DEBUG_OUT << "Motor \"" << name << "\" activated" << endl;
     activated = true;
     start_time = global_env->micros();
   }
@@ -112,18 +115,22 @@ void LED::set(bool val) {
   activated = val;
 }
 
+Microcontroller::Microcontroller(string name, int id) : name(name), id(id) { }
+
 void Rocket::mapPin(string mapping, bool high, unsigned long val, uint8_t mode, CONNECTION_TYPE ty) {
-  for (auto& mcu : microcontrollers) {
-    if (mapping.substr(0, mapping.find_first_of(":")) == mcu.name) {
+  for (auto mcu : microcontrollers) {
+    if (mapping.substr(0, mapping.find_first_of(":")) == mcu->name) {
       int pin = stoi(mapping.substr(mapping.find_first_of(":") + 1));
-      assert(mcu.pin_map.count(pin) == 0);
-      mcu.pin_map[pin] = {ty, high, val, mode};
+      assert(mcu->pin_map.count(pin) == 0);
+      mcu->pin_map[pin] = {ty, high, val, mode};
+      return;
     }
   }
+  ERROR("Mapping unknown pin: " + mapping);
 }
 
 Rocket::Rocket(json rocket_json) {
-  DEBUG_OUT << 1 << endl;
+  // Get properties of rocket section
   assert(rocket_json.count("weight") == 1);
   rocket_weight = rocket_json["weight"].get<double>();
 
@@ -132,8 +139,15 @@ Rocket::Rocket(json rocket_json) {
 
   assert(rocket_json.count("name") == 1);
   section_name = rocket_json["name"].get<string>();
-  DEBUG_OUT << 2 << endl;
 
+  // Add microcontrollers
+  if (rocket_json.count("microcontrollers") != 0) {
+    for (auto it = rocket_json["microcontrollers"].begin(); it != rocket_json["microcontrollers"].end(); ++it) {
+      microcontrollers.push_back(make_shared<Microcontroller>(it.key(), it.value()["id"].get<int>()));
+    }
+  }
+
+  // Add all motors
   if (rocket_json.count("motors") != 0) {
     for (auto it = rocket_json["motors"].begin(); it != rocket_json["motors"].end(); ++it) {
       motors.emplace_back(it.value()["file"], it.key());
@@ -144,7 +158,7 @@ Rocket::Rocket(json rocket_json) {
     DEBUG_OUT << "WARNING: No motors in section: " << section_name << endl;
   }
 
-  DEBUG_OUT << 3 << endl;
+  // Add all chutes
   if (rocket_json.count("chutes") != 0) {
     for (auto it = rocket_json["chutes"].begin(); it != rocket_json["chutes"].end(); ++it) {
       chutes.emplace_back(it.value()["drag_area"], it.key());
@@ -155,15 +169,16 @@ Rocket::Rocket(json rocket_json) {
     DEBUG_OUT << "WARNING: No chutes in section: " << section_name << endl;
   }
 
-  DEBUG_OUT << 4 << endl;
+  // Add all LEDs
   if (rocket_json.count("leds") != 0) {
     for (auto it = rocket_json["leds"].begin(); it != rocket_json["leds"].end(); ++it) {
       leds.emplace_back(it.key());
-      mapPin(it.value()["pin"].get<string>(), false, leds.size() - 1, PIN_UNDEFINED, CONNECTION_TYPE::LED);
+      mapPin(it.value(), false, leds.size() - 1, PIN_UNDEFINED, CONNECTION_TYPE::LED);
     }
   }
 
-  DEBUG_OUT << 5 << endl;
+  // Add sensors
+  acc = new Accelerometer(this); // Allocated once per section so memory leak is negligible
 }
 
 double Rocket::getDrag() {
@@ -202,7 +217,6 @@ Environment::Environment(string sim_file) {
 
   DEBUG_OUT << "Loading outputs" << endl;
   for (auto out : sim_json["output"]) {
-    cerr << out << endl;
     outputs.emplace_back(out);
   }
 
@@ -236,8 +250,11 @@ Environment::Environment(string sim_file) {
     main_section.push_back(r);
   }
   rocket_sections.push_back(main_section);
-
   DEBUG_OUT << "Rocket loaded" << endl;
+
+  max_altitude = 0;
+  max_speed = 0;
+  max_acceleration = 0;
 }
 
 bool Environment::done() {
@@ -253,14 +270,14 @@ void Environment::tick() {
   for (auto section : rocket_sections) {
     if (section.size() == 0) continue;
 
-    vec acc{0, 0, -9.81};
-    vec force{0, 0, 0};
+    vec acc{0, 0, -9.81}; // m/s
+    vec force{0, 0, 0}; // N
 
     vec old_vel = section[0]->rocket_vel;
     vec old_pos = section[0]->rocket_pos;
     vec old_dir = section[0]->rocket_dir;
 
-    double weight = 0;
+    double weight = 0; // kg
     double drag = 0;
     for (auto roc : section) {
       weight += roc->rocket_weight;
@@ -282,7 +299,7 @@ void Environment::tick() {
 
     acc = acc + force / weight;
 
-    vec new_vel = old_vel + acc * delta;
+    vec new_vel = old_vel + acc * delta; // m/s
     vec new_pos = old_pos + new_vel * delta;
 
     if (new_pos.z < groundHeight) {
@@ -305,7 +322,11 @@ void Environment::tick() {
       roc->rocket_pos = new_pos;
     }
 
-    DEBUG_OUT << "Time: " << time << "  Rocket pos: " << new_pos << "  Acc: " << acc << endl;
+    max_acceleration = max(mag(acc), max_acceleration);
+    max_speed = max(mag(new_vel), max_speed);
+    max_altitude = max(new_pos.z, max_altitude);
+
+    VERBOSE_OUT << "Time: " << time << "  Rocket pos: " << new_pos << "  Acc: " << acc << endl;
   }
 
 }
@@ -318,10 +339,10 @@ void Environment::setPin(int mcu_id, int pin, bool high) {
   for (auto section : rocket_sections) {
     for (auto roc : section) {
       for (auto mcu : roc->microcontrollers) {
-        if (mcu.id == mcu_id) {
+        if (mcu->id == mcu_id) {
 
-          if (mcu.pin_map.count(pin) == 1) {
-            auto& pmap = mcu.pin_map[pin];
+          if (mcu->pin_map.count(pin) == 1) {
+            auto& pmap = mcu->pin_map[pin];
 
             if (pmap.mode == PIN_UNDEFINED) {
               DEBUG_OUT << "Warning: Attempting to write to pin " << pin << " before setting pin mode." << endl;
@@ -334,7 +355,7 @@ void Environment::setPin(int mcu_id, int pin, bool high) {
               roc->motors.at(pmap.index).activate(); // TODO: Maybe set delay on this so super fast writes don't set off the motor
             }
           } else {
-            assert(false && "Pin not set up");
+            ERROR("setPin() called with when pin not set up");
           }
 
           return;
@@ -342,15 +363,17 @@ void Environment::setPin(int mcu_id, int pin, bool high) {
       }
     }
   }
+
+  ERROR("setPin() called with invalid mcu_id");
 }
 
 int Environment::getPin(int mcu_id, int pin) {
   for (auto section : rocket_sections) {
     for (auto roc : section) {
       for (auto mcu : roc->microcontrollers) {
-        if (mcu.id == mcu_id) {
-          if (mcu.pin_map.count(pin) == 1) {
-            auto& pmap = mcu.pin_map[pin];
+        if (mcu->id == mcu_id) {
+          if (mcu->pin_map.count(pin) == 1) {
+            auto& pmap = mcu->pin_map[pin];
 
             if (pmap.mode == INPUT) {
               return pmap.high;
@@ -364,8 +387,7 @@ int Environment::getPin(int mcu_id, int pin) {
       }
     }
   }
-  assert(false && "Pin not found");
-  ERROR();
+  ERROR("getPin() called and pin not found");
 }
 
 void Environment::pinMode(int mcu_id, int pin, uint8_t mode) {
@@ -374,20 +396,23 @@ void Environment::pinMode(int mcu_id, int pin, uint8_t mode) {
   for (auto section : rocket_sections) {
     for (auto roc : section) {
       for (auto mcu : roc->microcontrollers) {
-        if (mcu.id == mcu_id) {
-          if (mcu.pin_map.count(pin) == 1) {
-            auto& pmap = mcu.pin_map[pin];
+        if (mcu->id == mcu_id) {
+          if (mcu->pin_map.count(pin) == 1) {
+            auto& pmap = mcu->pin_map[pin];
+            if (pmap.mode != mode) DEBUG_OUT << "Setting pin " << pin << " of mcu " << mcu_id << " to mode " << mode << endl;
             pmap.mode = mode;
+            return;
           }
         }
       }
     }
   }
+  ERROR("pinMode called on nonexistent pin " + to_string(pin) + " on mcu " + to_string(mcu_id));
 }
 
 void Environment::updateOutputs() {
   for (Output& out : outputs) {
-    out.update(this);
+    out.update();
   }
 }
 
@@ -395,4 +420,10 @@ void Environment::finishOutputs() {
   for (Output& out : outputs) {
     out.finish();
   }
+}
+
+void Environment::summary() {
+  DEBUG_OUT << "Max Altitude: " << max_altitude << " meters" << endl;
+  DEBUG_OUT << "Max Speed: " << max_speed << " meters/s" << endl;
+  DEBUG_OUT << "Max Acceleration: " << max_acceleration << " meters/s^2" << endl;
 }
