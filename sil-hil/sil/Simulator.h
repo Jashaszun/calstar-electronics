@@ -77,6 +77,7 @@ public:
   vector<shared_ptr<Microcontroller>> microcontrollers;
 
   Accelerometer* acc;
+  Altimeter* alt;
 
   void mapPin(string mapping, bool high, unsigned long val, uint8_t mode, CONNECTION_TYPE ty);
   double getDrag();

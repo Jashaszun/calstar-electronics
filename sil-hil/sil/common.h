@@ -45,5 +45,6 @@ class Microcontroller;
 class Rocket;
 class Environment;
 class Accelerometer;
+class Altimeter;
 
 #endif

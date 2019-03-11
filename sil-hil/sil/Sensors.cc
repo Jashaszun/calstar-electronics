@@ -8,3 +8,13 @@ Accelerometer::Accelerometer(Rocket* roc) : roc(roc) {
 vec Accelerometer::getData() {
   return roc->rocket_acc;
 }
+
+
+Altimeter::Altimeter(Rocket* roc) : roc(roc) {
+  currentError = 0;
+}
+
+// TODO: Add noise/error/direction
+float Altimeter::getData() {
+  return roc->rocket_pos.z;
+}

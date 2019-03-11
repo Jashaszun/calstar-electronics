@@ -13,4 +13,13 @@ public:
   vec getData();
 };
 
+class Altimeter {
+  Rocket* roc;
+  float currentError;
+
+public:
+  Altimeter(Rocket* roc);
+  float getData();
+};
+
 #endif

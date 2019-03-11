@@ -179,6 +179,7 @@ Rocket::Rocket(json rocket_json) {
 
   // Add sensors
   acc = new Accelerometer(this); // Allocated once per section so memory leak is negligible
+  alt = new Altimeter(this); // Allocated once per section so memory leak is negligible
 }
 
 double Rocket::getDrag() {
@@ -351,8 +352,25 @@ void Environment::setPin(int mcu_id, int pin, bool high) {
             }
 
             pmap.high = high;
-            if (pmap.type == CONNECTION_TYPE::MOTOR && high == true) {
-              roc->motors.at(pmap.index).activate(); // TODO: Maybe set delay on this so super fast writes don't set off the motor
+            switch (pmap.type) {
+              case CONNECTION_TYPE::MOTOR:
+              if (high == true) {
+                roc->motors.at(pmap.index).activate(); // TODO: Maybe set delay on this so super fast writes don't set off the motor
+              }
+              break;
+
+              case CONNECTION_TYPE::CHUTE:
+              if (high == true) {
+                roc->chutes.at(pmap.index).activate(); // TODO: Maybe set delay on this so super fast writes don't set off the black powder
+              }
+              break;
+
+              case CONNECTION_TYPE::LED:
+              roc->leds.at(pmap.index).set(high); // TODO: Maybe set delay on this so super fast writes don't set off the black powder
+              break;
+
+              default:
+              ERROR("Unknown pin type set");
             }
           } else {
             ERROR("setPin() called with when pin not set up");

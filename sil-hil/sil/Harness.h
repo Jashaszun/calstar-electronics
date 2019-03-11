@@ -20,6 +20,7 @@ int64_t micros();
 float getAccX();
 float getAccY();
 float getAccZ();
+float getAltitude();
 
 class DigitalOut {
   int pin;

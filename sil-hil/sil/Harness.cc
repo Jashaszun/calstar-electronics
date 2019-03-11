@@ -39,6 +39,12 @@ float getAccZ() {
   return getAcc().z;
 }
 
+float getAltitude() {
+  auto r = curr_roc();
+  assert(r->alt != NULL);
+  return r->alt->getData();
+}
+
 DigitalOut::DigitalOut(int pin) : pin(pin) { }
 
 void DigitalOut::write(int value) {
