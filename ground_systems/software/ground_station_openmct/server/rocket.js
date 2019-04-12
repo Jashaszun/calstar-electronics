@@ -26,7 +26,7 @@ function Rocket(comPort) {
     //     this.generateTelemetry();
     // }, 500);
 
-    const port = new SerialPort('/dev/ttyS13', { baudRate: 115200 });
+    const port = new SerialPort(comPort, { baudRate: 115200 });
     const parser = port.pipe(new Readline());
 
     parser.on('data', (line) => {
