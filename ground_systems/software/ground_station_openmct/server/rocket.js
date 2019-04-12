@@ -1,7 +1,8 @@
 const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline');
+const rl = require('readline');
 
-function Rocket() {
+function Rocket(comPort) {
     this.state = {
         "fc.state": 0,
         "accel.x": 0,
@@ -18,11 +19,11 @@ function Rocket() {
         this.history[k] = [];
     }, this);
 
-    setInterval( () => {
+    setInterval(() => {
         this.generateTelemetry();
     }, 500);
 
-    const port = new SerialPort('/dev/ttyS7', {baudRate: 115200});
+    const port = new SerialPort(comPort, {baudRate: 115200});
     const parser = port.pipe(new Readline());
 
     parser.on('data', (line) => {
@@ -31,6 +32,8 @@ function Rocket() {
             this.state[words[0]] = String(words[1]);
             this.generateTelemetry();
         }
+
+        this.updateConsole(line);
     });
 
     process.stdin.on('data', (line) => {
@@ -38,6 +41,9 @@ function Rocket() {
         this.state[words[0]] = Number(words[1]); 
         this.generateTelemetry();
     });
+
+    // Clear console
+    process.stdout.write('\033c');
 };
 
 /**
@@ -54,7 +60,15 @@ Rocket.prototype.generateTelemetry = function () {
         this.state["transmission"] += ", " + id + ": " + String(this.state[id]);
     }, this);
     this.state["transmission"] = "";
+
 };
+
+Rocket.prototype.updateConsole = function(line) {
+    // TODO: Make this look nice and separate data cleanly
+    rl.cursorTo(process.stdout, 0, 20);
+    rl.clearLine(process.stdout);
+    process.stdout.write(line);
+}
 
 Rocket.prototype.notify = function (point) {
     this.listeners.forEach(function (l) {
@@ -71,6 +85,6 @@ Rocket.prototype.listen = function (listener) {
     };
 };
 
-module.exports = function () {
-    return new Rocket()
+module.exports = function(comPort) {
+    return new Rocket(comPort)
 };

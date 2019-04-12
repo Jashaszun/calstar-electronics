@@ -2,6 +2,14 @@
  * Basic implementation of a history and realtime server.
  */
 
+var comPort;
+if (process.argv.length != 3) {
+    console.log("Must provide the COM port on which to listen to the ground station.");
+    process.exit(1);
+} else {
+    comPort = process.argv[2];
+}
+
 var Rocket = require('./rocket');
 var RealtimeServer = require('./realtime-server');
 var HistoryServer = require('./history-server');
@@ -11,7 +19,7 @@ var expressWs = require('express-ws');
 var app = require('express')();
 expressWs(app);
 
-var rocket = new Rocket();
+var rocket = new Rocket(comPort);
 var realtimeServer = new RealtimeServer(rocket);
 var historyServer = new HistoryServer(rocket);
 var staticServer = new StaticServer();
