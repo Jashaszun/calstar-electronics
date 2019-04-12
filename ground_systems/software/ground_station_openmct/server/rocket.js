@@ -13,34 +13,49 @@ function Rocket(comPort) {
         "comms.sent": 0,
         "gs.rssi": 0,
         "tpc.bat_v": "",
-        "tpc.state": ""
+        "tpc.state": "",
+        "test.telemetry": ""
     };
     this.total_comms_recd = 0;
     this.history = {};
     this.listeners = [];
+    this.t0 = Date.now();
+    this.set_t0 = false;
+    this.timestamp0 = 0;
     Object.keys(this.state).forEach(function (k) {
         this.history[k] = [];
     }, this);
 
     // setInterval(() => {
-    //     this.generateTelemetry();
+    //     // this.generateTelemetry();
+    //     obj = {
+    //         "timestamp": this.t0 + this.tlast,
+    //         "id": "test.telemetry",
+    //         "value": Math.sin(this.tlast * 0.05)
+    //     };
+    //     this.tlast = this.tlast + 500;
+    //     this.notify(obj);
+    //     this.history[obj["id"]].push(obj);
     // }, 500);
 
     const port = new SerialPort(comPort, { baudRate: 115200 });
     const parser = port.pipe(new Readline());
 
     parser.on('data', (line) => {
-        // console.log(line);
         try {
-            // console.log(JSON.parse("{\"timestamp\": 1, \"id\": \"gs.rssi\", \"value\": -30}"));
             obj = JSON.parse(line);
-            obj["timestamp"] = Date.now();
-            // obj["timestamp"] = Math.round(obj["timestamp"] / 1000000);
+
+            if (this.set_t0 === false) {
+                this.t0 = Date.now();
+                this.timestamp0 = obj["timestamp"];
+            }
+            obj["timestamp"] = this.t0 + Math.round((obj["timestamp"] - this.timestamp0) / 1000);
+
             if (obj["id"] === "comms.recd") {
                 this.total_comms_recd += obj["value"];
                 obj["value"] = this.total_comms_recd;
             }
-            console.log(obj);
+            // console.log(obj);
             this.notify(obj);
             this.history[obj["id"]].push(obj);
         } catch (e) {

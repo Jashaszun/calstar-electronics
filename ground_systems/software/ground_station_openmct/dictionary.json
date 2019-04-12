@@ -312,6 +312,29 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Test Telemetry",
+            "key": "test.telemetry",
+            "values": [
+                {
+                    "key": "value",
+                    "name": "Test Telemetry",
+                    "format": "float",
+                    "hints": {
+                        "range": 1
+                    }
+                },
+                {
+                    "key": "utc",
+                    "source": "timestamp",
+                    "name": "Timestamp",
+                    "format": "utc",
+                    "hints": {
+                        "domain": 1
+                    }
+                }
+            ]
         }
     ]
 }
