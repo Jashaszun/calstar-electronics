@@ -26,6 +26,32 @@
             ]
         },
         {
+            "name": "Ground Station RSSI",
+            "key": "gs.rssi",
+            "values": [
+                {
+                    "key": "value",
+                    "name": "Value",
+                    "units": "dBm",
+                    "format": "integer",
+                    "min": -120,
+                    "max": 1,
+                    "hints": {
+                        "range": 1
+                    }
+                },
+                {
+                    "key": "utc",
+                    "source": "timestamp",
+                    "name": "Timestamp",
+                    "format": "utc",
+                    "hints": {
+                        "domain": 1
+                    }
+                }
+            ]
+        },
+        {
             "name": "FC State",
             "key": "fc.state",
             "values": [
@@ -136,7 +162,7 @@
                 }
             ]
         },
-       {
+        {
             "name": "Received",
             "key": "comms.recd",
             "values": [
@@ -186,12 +212,91 @@
         },
         {
             "name": "Altitude",
-            "key": "alt",
+            "key": "fc.alt",
             "values": [
                 {
                     "key": "value",
                     "name": "Value",
                     "units": "feet",
+                    "format": "float",
+                    "hints": {
+                        "range": 1
+                    }
+                },
+                {
+                    "key": "utc",
+                    "source": "timestamp",
+                    "name": "Timestamp",
+                    "format": "utc",
+                    "hints": {
+                        "domain": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "FC Power",
+            "key": "fc.pwr",
+            "values": [
+                {
+                    "key": "value",
+                    "name": "FC Power",
+                    "format": "enum",
+                    "enumerations": [
+                        {
+                            "string": "OFF",
+                            "value": 0
+                        },
+                        {
+                            "string": "ON",
+                            "value": 1
+                        }
+                    ],
+                    "hints": {
+                        "range": 1
+                    }
+                },
+                {
+                    "key": "utc",
+                    "source": "timestamp",
+                    "name": "Timestamp",
+                    "format": "utc",
+                    "hints": {
+                        "domain": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "GPS",
+            "key": "tpc.gps",
+            "values": [
+                {
+                    "key": "value",
+                    "name": "GPS String",
+                    "format": "string",
+                    "hints": {
+                        "range": 1
+                    }
+                },
+                {
+                    "key": "utc",
+                    "source": "timestamp",
+                    "name": "Timestamp",
+                    "format": "utc",
+                    "hints": {
+                        "domain": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Battery Voltage",
+            "key": "tpc.bat_v",
+            "values": [
+                {
+                    "key": "value",
+                    "name": "Battery Voltage",
                     "format": "float",
                     "hints": {
                         "range": 1
