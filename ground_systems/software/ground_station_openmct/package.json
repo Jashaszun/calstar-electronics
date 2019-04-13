@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@drivetech/node-nmea": "^2.0.1",
+    "chalk": "^2.4.2",
     "express": "^4.14.1",
     "express-ws": "^3.0.0",
     "openmct": "nasa/openmct",
