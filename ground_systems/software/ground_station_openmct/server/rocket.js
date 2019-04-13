@@ -2,6 +2,7 @@ const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline');
 const rl = require('readline');
 const chalk = require('chalk');
+const nmea = require('@drivetech/node-nmea')
 
 function Rocket(comPort) {
     this.state = {
@@ -58,6 +59,11 @@ function Rocket(comPort) {
             if (obj["id"] === "comms.recd") {
                 this.total_comms_recd += obj["value"];
                 obj["value"] = this.total_comms_recd;
+            } else if (obj["id"] === "tpc.gps") {
+                // const gps_data = nmea.parse(obj["value"]);
+                // if (data.valid) {
+                // obj["value"] = data.loc.coordinates;
+                // }
             }
             // console.log(obj);
             this.notify(obj);
