@@ -138,11 +138,18 @@ var tableRows = {};
 var baseLine = 5;
 var updateTimeouts = {};
 var ageDataTimeout = 3000; // in milliseconds
+var tableWidth;
+var tableValueCol;
+var tableValueMaxLen;
+var fcStateDrawInfo;
 Rocket.prototype.drawTable = function() {
     // Clear console
     process.stdout.write('\033c');
 
     rl.cursorTo(process.stdout, 0, baseLine);
+    tableWidth =         "-----------------------------------------------------------".length; // same length as below lines
+    tableValueCol =      "---------------".length; // length up to start of "Value" table
+    tableValueMaxLen =                  "-------------------------------------------".length;
     process.stdout.write("╔═══════════╤═════════════════════════════════════════════╗\r\n");
     process.stdout.write("║           │                                             ║\r\n");
     process.stdout.write("║  ID (*)   │  Value                                      ║\r\n");
@@ -166,8 +173,26 @@ Rocket.prototype.drawTable = function() {
     process.stdout.write("║           │                                             ║\r\n");
     process.stdout.write("║fc.alt     │                                             ║\r\n"); tableRows["fc.alt"] = 21;
     process.stdout.write("╚═══════════╧═════════════════════════════════════════════╝\r\n");
-    process.stdout.write("\r\nTurn on FC: n\tTurn off FC: o\r\nQuit: q\r\n");
+    process.stdout.write("\r\nTurn on FC: n\tTurn off FC: o");
+    process.stdout.write("                                 ");
+    process.stdout.write(chalk.green("Green: Complete") + "   " + chalk.blueBright("Blue: Current") + "\r\n");
+    process.stdout.write("Quit: q\r\n");
     tableRows["$END"] = 26;
+
+    fcStateDrawInfo = [
+        { state: "setup",           line: 1 },
+        { state: "pad",             line: 3 },
+        { state: "flight",          line: 5 },
+        { state: "drogue_deployed", line: 9 },
+        { state: "drogue_coast",    line: 11 },
+        { state: "main_deployed",   line: 15 },
+        { state: "main_coast",      line: 17 },
+        { state: "landed",          line: 21 }
+    ];
+
+    this.drawFCState(undefined);
+
+    // Move back to top left for the "xxx hosted at yyy" messages
     rl.cursorTo(process.stdout, 0, 0);
 };
 Rocket.prototype.updateConsole = function(obj) {
@@ -218,17 +243,51 @@ Rocket.prototype.updateConsole = function(obj) {
         this.updateRow("tpc.bat_v*", value, false);
         // Age data
         updateTimeouts["tpc.bat_v*"] = setTimeout(this.updateRow, ageDataTimeout, "tpc.bat_v*", value, true);
+    } else if (obj.id === "fc.state") {
+        // TODO: convert state into a string and then call this.drawFCState(stateStr)
     }
 };
 Rocket.prototype.updateRow = function(id, valueStr, aged) {
-    valueStr = valueStr.padEnd("Value                                      ".length);
+    valueStr = valueStr.padEnd(tableValueMaxLen);
     if (aged) {
         valueStr = chalk.red.strikethrough(valueStr);
     }
 
-    rl.cursorTo(process.stdout, "║  ID (*)   │  ".length, baseLine + tableRows[id]);
+    rl.cursorTo(process.stdout, tableValueCol, baseLine + tableRows[id]);
     process.stdout.write(valueStr);
     rl.cursorTo(process.stdout, 0, baseLine + tableRows["$END"]);
+};
+Rocket.prototype.drawFCState = function(currentState) {
+    var currentStateIndex = -1;
+    for (var i = 0; i < fcStateDrawInfo.length; i++) {
+        if (currentState === fcStateDrawInfo[i].state) {
+            currentStateIndex = i;
+            break;
+        }
+    }
+
+    var completedLineText = chalk.green("|");
+    var incompleteLineText = "|";
+    for (var i = 0; i < fcStateDrawInfo.length; i++) {
+        var stateText = "(X) - " + fcStateDrawInfo[i].state;
+        if (i < currentStateIndex) {
+            stateText = chalk.green(stateText);
+        } else if (i == currentStateIndex) {
+            stateText = chalk.blueBright(stateText);
+        }
+
+        rl.cursorTo(process.stdout, tableWidth + 5, baseLine + fcStateDrawInfo[i].line);
+        process.stdout.write(stateText);
+
+        if (i < fcStateDrawInfo.length - 1) {
+            // Draw the line in between
+            for (var line = fcStateDrawInfo[i].line + 1; line <= fcStateDrawInfo[i+1].line - 1; line++) {
+                rl.cursorTo(process.stdout, tableWidth + 6, baseLine + line);
+                // Drawing line between i and i+1
+                process.stdout.write(i < currentStateIndex ? completedLineText : incompleteLineText);
+            }
+        }
+    }
 };
 
 Rocket.prototype.notify = function (point) {
