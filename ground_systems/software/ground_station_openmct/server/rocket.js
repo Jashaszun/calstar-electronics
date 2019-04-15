@@ -114,6 +114,7 @@ function Rocket(comPort) {
     // });
 
     this.drawTable();
+    console.log("Transceiving on port " + comPort);
 };
 
 /**
@@ -135,7 +136,7 @@ Rocket.prototype.generateTelemetry = function () {
 };
 
 var tableRows = {};
-var baseLine = 5;
+var baseLine = 10;
 var updateTimeouts = {};
 var ageDataTimeout = 3000; // in milliseconds
 var tableWidth;
