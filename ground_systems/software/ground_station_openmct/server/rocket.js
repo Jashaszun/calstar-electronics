@@ -3,6 +3,7 @@ const Readline = require('@serialport/parser-readline');
 const rl = require('readline');
 const chalk = require('chalk');
 const nmea = require('@drivetech/node-nmea')
+const fs = require('fs')
 
 function Rocket(comPort) {
     this.state = {
@@ -27,6 +28,10 @@ function Rocket(comPort) {
     Object.keys(this.state).forEach(function (k) {
         this.history[k] = [];
     }, this);
+
+    
+    const logFile = fs.createWriteStream('log.csv')
+    logFile.write("Timestamp,Id,Value\r\n");
 
     // setInterval(() => {
     //     // this.generateTelemetry();
@@ -53,6 +58,7 @@ function Rocket(comPort) {
             if (this.set_t0 === false) {
                 this.t0 = Date.now();
                 this.timestamp0 = obj["timestamp"];
+                this.set_t0 = true;
             }
             obj["timestamp"] = this.t0 + Math.round((obj["timestamp"] - this.timestamp0) / 1000);
 
@@ -69,6 +75,8 @@ function Rocket(comPort) {
             this.notify(obj);
             this.history[obj["id"]].push(obj);
             this.updateConsole(obj);
+
+            logFile.write(obj.timestamp.toString() + "," + obj.id.toString() + "," + obj.value.toString() + "\r\n");
         } catch (e) {
             rl.cursorTo(process.stdout, 0, 35);
             if (e instanceof SyntaxError) {
@@ -89,6 +97,7 @@ function Rocket(comPort) {
         if (key && ((key.ctrl && key.name == 'c') || key.name == 'q')) {
             // Raw mode so we have to do our own Ctrl-C
             // console.log("Exiting...");
+            logFile.end();
             process.exit();
         } else if (key && key.name == 'o') {
             port.write("o\n", function (err) {
@@ -254,7 +263,7 @@ Rocket.prototype.updateConsole = function(obj) {
         // Age data
         updateTimeouts["tpc.bat_v*"] = setTimeout(this.updateRow, ageDataTimeout, "tpc.bat_v*", value, true);
     } else if (obj.id === "fc.state") {
-        // TODO: convert state into a string and then call this.drawFCState(stateStr)
+        this.drawFCState(fcStateDrawInfo[obj.value].state);
     }
 };
 Rocket.prototype.updateRow = function(id, valueStr, aged) {
