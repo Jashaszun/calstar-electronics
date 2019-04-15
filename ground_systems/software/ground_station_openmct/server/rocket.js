@@ -46,6 +46,13 @@ function Rocket(comPort) {
     // }, 500);
 
     const port = new SerialPort(comPort, { baudRate: 115200 });
+    // port.open((error) => {
+    //     if (error) {
+    //         console.log('failed to open: ' + error);
+    //         process.exit(1);
+    //     }
+    // });
+
     const parser = port.pipe(new Readline());
     // port.on('open', (data) => {
     //     console.log("Port opened");
@@ -148,6 +155,7 @@ var tableRows = {};
 var baseLine = 10;
 var updateTimeouts = {};
 var ageDataTimeout = 3000; // in milliseconds
+<<<<<<< HEAD
 var tableWidth;
 var tableValueCol;
 var tableValueMaxLen;
@@ -214,7 +222,7 @@ Rocket.prototype.drawTable = function() {
     // Move back to top left for the "xxx hosted at yyy" messages
     rl.cursorTo(process.stdout, 0, 0);
 };
-Rocket.prototype.updateConsole = function(obj) {
+Rocket.prototype.updateConsole = function (obj) {
     if (obj.id === "tpc.gps" && obj.value === "") {
         // We sometimes don't get sent GPS strings. Just ignore it in that case.
         return;

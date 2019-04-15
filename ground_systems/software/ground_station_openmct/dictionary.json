@@ -8,7 +8,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "Raw Transmission",
                     "format": "string",
                     "hints": {
                         "range": 1
@@ -31,7 +31,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "RSSI",
                     "units": "dBm",
                     "format": "integer",
                     "min": -120,
@@ -57,7 +57,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "FC State",
                     "format": "enum",
                     "enumerations": [
                         {
@@ -90,7 +90,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "AccelX",
                     "units": "g's",
                     "format": "float",
                     "min": -100,
@@ -116,7 +116,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "AccelY",
                     "units": "g's",
                     "format": "float",
                     "min": -100,
@@ -142,7 +142,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "AccelZ",
                     "units": "g's",
                     "format": "float",
                     "min": -100,
@@ -168,7 +168,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "Number of bytes received",
                     "units": "bytes",
                     "format": "integer",
                     "hints": {
@@ -192,7 +192,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "Number of bytes sent",
                     "units": "bytes",
                     "format": "integer",
                     "hints": {
@@ -216,7 +216,7 @@
             "values": [
                 {
                     "key": "value",
-                    "name": "Value",
+                    "name": "Altitude",
                     "units": "feet",
                     "format": "float",
                     "hints": {
