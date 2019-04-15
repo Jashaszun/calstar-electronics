@@ -180,6 +180,15 @@ Rocket.prototype.drawTable = function() {
     process.stdout.write("Quit: q\r\n");
     tableRows["$END"] = 26;
 
+    // Important: These states should match the states in //firmware-launch/general/msg_fc_update.fbs
+    // They must also be in the same order
+    // E.g. if msg_fc_update.fbs contains "enum FCState : byte { pad = 0, flight = 1 }"
+    // then this should be:
+    // fcStateDrawInfo = [
+    //     { state: "pad",    line: x },
+    //     { state: "flight", line: y }
+    // ];
+    // where "pad" comes directly before "flight" and x < y
     fcStateDrawInfo = [
         { state: "setup",           line: 1 },
         { state: "pad",             line: 3 },
