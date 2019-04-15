@@ -36,8 +36,7 @@ if (process.argv.length < 3) {
             var possiblePorts = [];
             for (var i = 0; i < ports.length; i++) {
                 var port = ports[i];
-                console.log(port);
-                if (port.manufacturer === 'Microsoft' && port.serialNumber === '0123456789') {
+                if (port.serialNumber === '0123456789' && port.vendorId === '1F00') {
                     possiblePorts.push(port);
                 }
             }
