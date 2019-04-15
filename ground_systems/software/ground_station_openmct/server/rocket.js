@@ -16,6 +16,7 @@ function Rocket(comPort) {
         "comms.sent": 0,
         "gs.rssi": 0,
         "tpc.bat_v": "",
+        "tpc.bat_v_avgd": "",
         "tpc.state": "",
         "test.telemetry": ""
     };
@@ -29,34 +30,13 @@ function Rocket(comPort) {
         this.history[k] = [];
     }, this);
 
-    
+
     const logFile = fs.createWriteStream('log.csv')
     logFile.write("Timestamp,Id,Value\r\n");
 
-    // setInterval(() => {
-    //     // this.generateTelemetry();
-    //     obj = {
-    //         "timestamp": this.t0 + this.tlast,
-    //         "id": "test.telemetry",
-    //         "value": Math.sin(this.tlast * 0.05)
-    //     };
-    //     this.tlast = this.tlast + 500;
-    //     this.notify(obj);
-    //     this.history[obj["id"]].push(obj);
-    // }, 500);
-
     const port = new SerialPort(comPort, { baudRate: 115200 });
-    // port.open((error) => {
-    //     if (error) {
-    //         console.log('failed to open: ' + error);
-    //         process.exit(1);
-    //     }
-    // });
 
     const parser = port.pipe(new Readline());
-    // port.on('open', (data) => {
-    //     console.log("Port opened");
-    // });
 
     parser.on('data', (line) => {
         try {
@@ -78,12 +58,32 @@ function Rocket(comPort) {
                 // obj["value"] = data.loc.coordinates;
                 // }
             }
-            // console.log(obj);
+
             this.notify(obj);
             this.history[obj["id"]].push(obj);
             this.updateConsole(obj);
 
             logFile.write(obj.timestamp.toString() + "," + obj.id.toString() + "," + obj.value.toString() + "\r\n");
+            // Moving average on battery volage
+            if (obj.id === "tpc.bat_v") {
+                let last30 = this.history["tpc.bat_v"].length - 30;
+                if ( last30 < 0 ) {
+                    last30 = 0;
+                }
+                let last30_len = this.history["tpc.bat_v"].length - last30;
+                value = (this.history["tpc.bat_v"].slice(last30).reduce((acc, obj) => acc + obj.value, 0) / last30_len);
+
+                let bat_v_avgd = {
+                    "timestamp": obj["timestamp"],
+                    "id": "tpc.bat_v_avgd",
+                    "value": value
+                };
+
+                this.notify(bat_v_avgd)
+                this.history["tpc.bat_v_avgd"].push(value);
+                this.updateConsole(bat_v_avgd);
+                logFile.write(bat_v_avgd.timestamp.toString() + "," + bat_v_avgd.id.toString() + "," + bat_v_avgd.value.toString() + "\r\n");
+            }  
         } catch (e) {
             rl.cursorTo(process.stdout, 0, 35);
             if (e instanceof SyntaxError) {
@@ -123,39 +123,14 @@ function Rocket(comPort) {
         }
     });
 
-    // process.stdin.on('data', (line) => {
-    //     // const words = String(line).split(' ');
-    //     // this.state[words[0]] = Number(words[1]);
-    //     // this.generateTelemetry();
-    // });
-
     this.drawTable();
     console.log("Transceiving on port " + comPort);
-};
-
-/**
- * Takes a measurement of spacecraft state, stores in history, and notifies 
- * listeners.
- */
-Rocket.prototype.generateTelemetry = function () {
-    var timestamp = Date.now(), sent = 0;
-    Object.keys(this.state).forEach(function (id) {
-        var state = { timestamp: timestamp, value: this.state[id], id: id };
-        this.notify(state);
-        console.log(state);
-        this.history[id].push(state);
-        this.state["comms.sent"] += JSON.stringify(state).length;
-        this.state["transmission"] += ", " + id + ": " + String(this.state[id]);
-    }, this);
-    this.state["transmission"] = "";
-
 };
 
 var tableRows = {};
 var baseLine = 10;
 var updateTimeouts = {};
 var ageDataTimeout = 3000; // in milliseconds
-<<<<<<< HEAD
 var tableWidth;
 var tableValueCol;
 var tableValueMaxLen;
@@ -181,7 +156,7 @@ Rocket.prototype.drawTable = function() {
     process.stdout.write("║tpc.state  │                                             ║\r\n"); tableRows["tpc.state"] = 10;
     process.stdout.write("║           │                                             ║\r\n");
     process.stdout.write("║tpc.bat_v  │                                             ║\r\n"); tableRows["tpc.bat_v"] = 12;
-    process.stdout.write("║tpc.bat_v *│                                             ║\r\n"); tableRows["tpc.bat_v*"] = 13;
+    process.stdout.write("║tpc.bat_v *│                                             ║\r\n"); tableRows["tpc.bat_v_avgd"] = 13;
     process.stdout.write("║           │                                             ║\r\n");
     process.stdout.write("║tpc.gps    │                                             ║\r\n"); tableRows["tpc.gps"] = 15;
     process.stdout.write("╟───────────┼─────────────────────────────────────────────║\r\n");
@@ -239,6 +214,9 @@ Rocket.prototype.updateConsole = function (obj) {
     } else if (obj.id === "tpc.bat_v") {
         value = obj.value.toFixed(3);
         suffix = " V";
+    } else if (obj.id === "tpc.bat_v_avgd") {
+        value = obj.value.toFixed(3);
+        suffix = " V";
     } else if (obj.id === "fc.alt") {
         value = obj.value.toFixed();
         suffix = " feet";
@@ -253,26 +231,6 @@ Rocket.prototype.updateConsole = function (obj) {
     this.updateRow(obj.id, value, false);
     // Age data
     updateTimeouts[obj.id] = setTimeout(this.updateRow, ageDataTimeout, obj.id, value, true);
-
-    if (obj.id === "tpc.bat_v") {
-        if (updateTimeouts["tpc.bat_v*"]) {
-            clearTimeout(updateTimeouts["tpc.bat_v*"]);
-        }
-        if (this.tpcBatHistory === undefined) {
-            this.tpcBatHistory = [];
-        }
-        this.tpcBatHistory.push(obj.value);
-        if (this.tpcBatHistory.length > 30) {
-            this.tpcBatHistory = this.tpcBatHistory.slice(1);
-        }
-
-        value = (this.tpcBatHistory.reduce((acc, v) => acc + v, 0) / this.tpcBatHistory.length).toFixed(3).toString() + " V";
-        this.updateRow("tpc.bat_v*", value, false);
-        // Age data
-        updateTimeouts["tpc.bat_v*"] = setTimeout(this.updateRow, ageDataTimeout, "tpc.bat_v*", value, true);
-    } else if (obj.id === "fc.state") {
-        this.drawFCState(fcStateDrawInfo[obj.value].state);
-    }
 };
 Rocket.prototype.updateRow = function(id, valueStr, aged) {
     valueStr = valueStr.padEnd(tableValueMaxLen);

@@ -314,6 +314,30 @@
             ]
         },
         {
+
+            "name": "Battery Voltage Moving Averaged",
+            "key": "tpc.bat_v_avgd",
+            "values": [
+                {
+                    "key": "value",
+                    "name": "Battery Voltage Moving Averaged",
+                    "format": "float",
+                    "hints": {
+                        "range": 1
+                    }
+                },
+                {
+                    "key": "utc",
+                    "source": "timestamp",
+                    "name": "Timestamp",
+                    "format": "utc",
+                    "hints": {
+                        "domain": 1
+                    }
+                }
+            ]
+        },
+        {
             "name": "Test Telemetry",
             "key": "test.telemetry",
             "values": [
