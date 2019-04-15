@@ -30,9 +30,14 @@ function Rocket(comPort) {
         this.history[k] = [];
     }, this);
 
-
-    const logFile = fs.createWriteStream('log.csv')
-    logFile.write("Timestamp,Id,Value\r\n");
+    var logFileIndex = 0;
+    var logFileName = 'logs/log' + logFileIndex.toString() + '-unconsolidated.tsv';
+    while (fs.existsSync('logs/log' + logFileIndex.toString() + '-unconsolidated.tsv')) {
+        logFileIndex++;
+        logFileName = 'logs/log' + logFileIndex.toString() + '-unconsolidated.tsv';
+    }
+    const logFile = fs.createWriteStream(logFileName);
+    logFile.write("timestamp\tid\tvalue\r\n");
 
     const port = new SerialPort(comPort, { baudRate: 115200 });
 
@@ -47,7 +52,11 @@ function Rocket(comPort) {
                 this.timestamp0 = obj["timestamp"];
                 this.set_t0 = true;
             }
-            obj["timestamp"] = this.t0 + Math.round((obj["timestamp"] - this.timestamp0) / 1000);
+            // Zero timestamps to the first received datum
+            obj["timestamp"] = obj["timestamp"] - this.timestamp0;
+            var logTimestamp = obj.timestamp.toString();
+            // For display in OpenMCT, add computer's current time
+            obj["timestamp"] = this.t0 + Math.round(obj["timestamp"] / 1000);
 
             if (obj["id"] === "comms.recd") {
                 this.total_comms_recd += obj["value"];
@@ -63,7 +72,7 @@ function Rocket(comPort) {
             this.history[obj["id"]].push(obj);
             this.updateConsole(obj);
 
-            logFile.write(obj.timestamp.toString() + "," + obj.id.toString() + "," + obj.value.toString() + "\r\n");
+            logFile.write(logTimestamp + "\t" + obj.id.toString() + "\t" + obj.value.toString() + "\r\n");
             // Moving average on battery volage
             if (obj.id === "tpc.bat_v") {
                 let last30 = this.history["tpc.bat_v"].length - 30;
@@ -82,10 +91,10 @@ function Rocket(comPort) {
                 this.notify(bat_v_avgd)
                 this.history["tpc.bat_v_avgd"].push(value);
                 this.updateConsole(bat_v_avgd);
-                logFile.write(bat_v_avgd.timestamp.toString() + "," + bat_v_avgd.id.toString() + "," + bat_v_avgd.value.toString() + "\r\n");
+                logFile.write(logTimestamp + "\ttpc.bat_v_avgd\t" + value.toString() + "\r\n");
             }  
         } catch (e) {
-            rl.cursorTo(process.stdout, 0, 35);
+            rl.cursorTo(process.stdout, 0, 40);
             if (e instanceof SyntaxError) {
                 console.log("syntax error");
             }
@@ -125,6 +134,7 @@ function Rocket(comPort) {
 
     this.drawTable();
     console.log("Transceiving on port " + comPort);
+    console.log("Logging to " + logFileName);
 };
 
 var tableRows = {};
@@ -231,6 +241,10 @@ Rocket.prototype.updateConsole = function (obj) {
     this.updateRow(obj.id, value, false);
     // Age data
     updateTimeouts[obj.id] = setTimeout(this.updateRow, ageDataTimeout, obj.id, value, true);
+
+    if (obj.id === "fc.state") {
+        this.drawFCState(fcStateDrawInfo[obj.value].state);
+    }
 };
 Rocket.prototype.updateRow = function(id, valueStr, aged) {
     valueStr = valueStr.padEnd(tableValueMaxLen);
