@@ -5,6 +5,8 @@ const chalk = require('chalk');
 const nmea = require('@drivetech/node-nmea')
 const fs = require('fs')
 
+var txLockoutMsgTimeout;
+
 function Rocket(comPort) {
     this.state = {
         "fc.pwr": 0,
@@ -46,6 +48,17 @@ function Rocket(comPort) {
     parser.on('data', (line) => {
         try {
             obj = JSON.parse(line);
+            if (obj.message !== undefined) {
+                // This is just a message from GS to us, not data from radio
+                if (obj.message === "transmit_locked") {
+                    if (txLockoutMsgTimeout) {
+                        clearTimeout(txLockoutMsgTimeout);
+                    }
+                    this.writeTxLockoutMsg(false);
+                    txLockoutMsgTimeout = setTimeout(this.writeTxLockoutMsg, 5000, true);
+                }
+                return;
+            }
 
             if (this.set_t0 === false) {
                 this.t0 = Date.now();
@@ -254,7 +267,7 @@ Rocket.prototype.updateRow = function(id, valueStr, aged) {
 
     rl.cursorTo(process.stdout, tableValueCol, baseLine + tableRows[id]);
     process.stdout.write(valueStr);
-    rl.cursorTo(process.stdout, 0, baseLine + tableRows["$END"]);
+    rl.cursorTo(process.stdout, 0, baseLine + tableRows["$END"] + 2);
 };
 Rocket.prototype.drawFCState = function(currentState) {
     var currentStateIndex = -1;
@@ -288,6 +301,18 @@ Rocket.prototype.drawFCState = function(currentState) {
         }
     }
 };
+Rocket.prototype.writeTxLockoutMsg = function(clear) {
+    // If clear is false, write it
+    // If true, clear it
+    rl.cursorTo(process.stdout, 0, baseLine + tableRows["$END"] + 1);
+    var text = chalk.redBright(">> Transmit is locked. Press the GS button and try again.");
+    if (clear) {
+        // text is same length as message
+        text = "                                                         "
+    }
+    process.stdout.write(text);
+    rl.cursorTo(process.stdout, 0, baseLine + tableRows["$END"] + 2);
+}
 
 Rocket.prototype.notify = function (point) {
     this.listeners.forEach(function (l) {
