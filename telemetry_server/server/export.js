@@ -16,7 +16,7 @@ const db = require('./db-interface')
 const logger = require('loggy')
 const Json2csvParser = require('json2csv').Parser
 
-const props = [ 'Time', 'Altitude', 'Temperature', 'GyroX', 'GyroY', 'GyroZ' ]
+//const props = [ 'Time', 'Altitude', 'Temperature', 'GyroX', 'GyroY', 'GyroZ' ]
 
 // YOUR CODE HERE
 var getExport = function (req, res) {
@@ -31,6 +31,8 @@ var getExport = function (req, res) {
       }
       logger.info('Generating CSV of run...')
       var json_arr = []
+      var names = new Set(results.map((element) => { return element.name }))
+      const props = Array.from(names)
       results.forEach(element => {
         json_arr[element.dataIndex - 1] = {}
       })
@@ -38,6 +40,7 @@ var getExport = function (req, res) {
       results.forEach(element => {
         json_arr[element.dataIndex - 1][element.name] = element.value
       })
+
       // In case defaultValue does not work as expected, add value to all unspecified values
       //   const unknownToken = '?'
       //   json_arr.forEach(element => {

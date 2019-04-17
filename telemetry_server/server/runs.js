@@ -41,7 +41,7 @@ var getRun = function (req, res) {
         res.end()
         logger.error(err)
       }
-      results.sort((ptA, ptB) => { return (ptA.dataIndex - ptB.dataIndex) + (ptA.dataTypeId - ptB.dataTypeId) * 40 })
+      results.sort((ptA, ptB) => { return (ptA.dataIndex - ptB.dataIndex) + (ptA.dataTypeId - ptB.dataTypeId) * results.length })
       var dataDict = []
       var pointSet = (new Set(results.map(point => point.name)))
       var pointAmt = results.length/pointSet.size
