@@ -208,9 +208,10 @@ Rocket.prototype.drawTable = function() {
         { state: "setup",           line: 1 },
         { state: "pad",             line: 3 },
         { state: "flight",          line: 5 },
-        { state: "drogue_deployed", line: 9 },
-        { state: "drogue_coast",    line: 11 },
-        { state: "main_deployed",   line: 15 },
+        { state: "armed",           line: 7 },
+        { state: "drogue_ignited",  line: 10 },
+        { state: "drogue_coast",    line: 12 },
+        { state: "main_ignited",    line: 15 },
         { state: "main_coast",      line: 17 },
         { state: "landed",          line: 21 }
     ];
