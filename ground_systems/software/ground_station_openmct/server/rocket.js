@@ -59,7 +59,7 @@ function Rocket(comPort) {
                     txLockoutMsgTimeout = setTimeout(this.writeTxLockoutMsg, 5000, true);
                 }
             }
-           
+
             var logTimestamp;
             if (obj.timestamp === -1) {
                 obj.timestamp = Date.now();
@@ -112,7 +112,7 @@ function Rocket(comPort) {
                 this.history["tpc.bat_v_avgd"].push(value);
                 this.updateConsole(bat_v_avgd);
                 logFile.write(logTimestamp + "\ttpc.bat_v_avgd\t" + value.toString() + "\r\n");
-            }  
+            }
         } catch (e) {
             rl.cursorTo(process.stdout, 0, 40);
             if (e instanceof SyntaxError) {
@@ -148,6 +148,14 @@ function Rocket(comPort) {
                     return console.log('Error on write: ', err.message)
                 }
                 // console.log('Turned on FC')
+            });
+        }
+        else if (key && key.name == 'b') {
+            port.write("b0000000\n", function (err) {
+                if (err) {
+                    return console.log('Error on write: ', err.message)
+                }
+                // console.log('Turned off BP')
             });
         }
     });
@@ -197,7 +205,7 @@ Rocket.prototype.drawTable = function() {
     process.stdout.write("║           │                                             ║\r\n");
     process.stdout.write("║fc.alt     │                                             ║\r\n"); tableRows["fc.alt"] = 21;
     process.stdout.write("╚═══════════╧═════════════════════════════════════════════╝\r\n");
-    process.stdout.write("\r\nTurn on FC: n\tTurn off FC: o");
+    process.stdout.write("\r\nTurn on FC: n\tTurn off FC: o\tTurn off BP: b");
     process.stdout.write("                                 ");
     process.stdout.write(chalk.green("Green: Complete") + "   " + chalk.blueBright("Blue: Current") + "\r\n");
     process.stdout.write("Quit: q\r\n");
