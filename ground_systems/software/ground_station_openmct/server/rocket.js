@@ -20,7 +20,8 @@ function Rocket(comPort) {
         "tpc.bat_v": "",
         "tpc.bat_v_avgd": "",
         "tpc.state": "",
-        "test.telemetry": ""
+        "test.telemetry": "",
+        "gs.log": ""
     };
     this.total_comms_recd = 0;
     this.history = {};
@@ -48,28 +49,33 @@ function Rocket(comPort) {
     parser.on('data', (line) => {
         try {
             obj = JSON.parse(line);
-            if (obj.message !== undefined) {
-                // This is just a message from GS to us, not data from radio
-                if (obj.message === "transmit_locked") {
+
+            if (obj.id === "gs.log") {
+                if (obj.value === "Failed to send frame: Transmit locked.") {
                     if (txLockoutMsgTimeout) {
                         clearTimeout(txLockoutMsgTimeout);
                     }
                     this.writeTxLockoutMsg(false);
                     txLockoutMsgTimeout = setTimeout(this.writeTxLockoutMsg, 5000, true);
                 }
-                return;
             }
-
-            if (this.set_t0 === false) {
-                this.t0 = Date.now();
-                this.timestamp0 = obj["timestamp"];
-                this.set_t0 = true;
+           
+            var logTimestamp;
+            if (obj.timestamp === -1) {
+                obj.timestamp = Date.now();
+                logTimestamp = obj.timestamp.toString();
+            } else {
+                if (this.set_t0 === false) {
+                    this.t0 = Date.now();
+                    this.timestamp0 = obj["timestamp"];
+                    this.set_t0 = true;
+                }
+                // Zero timestamps to the first received datum
+                obj["timestamp"] = obj["timestamp"] - this.timestamp0;
+                logTimestamp = obj.timestamp.toString();
+                // For display in OpenMCT, add computer's current time
+                obj["timestamp"] = this.t0 + Math.round(obj["timestamp"] / 1000);
             }
-            // Zero timestamps to the first received datum
-            obj["timestamp"] = obj["timestamp"] - this.timestamp0;
-            var logTimestamp = obj.timestamp.toString();
-            // For display in OpenMCT, add computer's current time
-            obj["timestamp"] = this.t0 + Math.round(obj["timestamp"] / 1000);
 
             if (obj["id"] === "comms.recd") {
                 this.total_comms_recd += obj["value"];
@@ -86,6 +92,7 @@ function Rocket(comPort) {
             this.updateConsole(obj);
 
             logFile.write(logTimestamp + "\t" + obj.id.toString() + "\t" + obj.value.toString() + "\r\n");
+
             // Moving average on battery volage
             if (obj.id === "tpc.bat_v") {
                 let last30 = this.history["tpc.bat_v"].length - 30;
@@ -148,6 +155,7 @@ function Rocket(comPort) {
     this.drawTable();
     console.log("Transceiving on port " + comPort);
     console.log("Logging to " + logFileName);
+
 };
 
 var tableRows = {};

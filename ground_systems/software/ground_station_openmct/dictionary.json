@@ -61,12 +61,40 @@
                     "format": "enum",
                     "enumerations": [
                         {
-                            "string": "PAD",
+                            "string": "Setup",
                             "value": 0
                         },
                         {
-                            "string": "FLIGHT",
+                            "string": "Pad",
                             "value": 1
+                        },
+                        {
+                            "string": "Flight",
+                            "value": 2
+                        },
+                        {
+                            "string": "Armed",
+                            "value": 3
+                        },
+                        {
+                            "string": "DrogueIgnition",
+                            "value": 4
+                        },
+                        {
+                            "string": "DrogueCoast",
+                            "value": 5
+                        },
+                        {
+                            "string": "MainIgnition",
+                            "value": 6
+                        },
+                        {
+                            "string": "MainCoast",
+                            "value": 7
+                        },
+                        {
+                            "string": "Landed",
+                            "value": 8
                         }
                     ],
                     "hints": {
@@ -274,6 +302,30 @@
                 {
                     "key": "value",
                     "name": "GPS String",
+                    "format": "string",
+                    "hints": {
+                        "range": 1
+                    }
+                },
+                {
+                    "key": "utc",
+                    "source": "timestamp",
+                    "name": "Timestamp",
+                    "format": "utc",
+                    "hints": {
+                        "domain": 1
+                    }
+                }
+            ]
+        },
+        {
+
+            "name": "Groundstation Log",
+            "key": "gs.log",
+            "values": [
+                {
+                    "key": "value",
+                    "name": "Ground Station Log",
                     "format": "string",
                     "hints": {
                         "range": 1
