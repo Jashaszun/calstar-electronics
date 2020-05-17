@@ -5,6 +5,10 @@ obj/
 
 *.swp
 
+mbed-os/
+BUILD/
+mbed_settings.pyc
+
 # Compiiled output
 *.d
 *.hex

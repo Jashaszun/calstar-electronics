@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title id="title">CalSTAR Telemetry</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+        crossorigin="anonymous">
+</head>
+
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="/">CalSTAR Telemetry</a>
+    </nav>
+    <script type="text/javascript" src="/dist/client.js"></script>
+
+    <form action="/upload" method="post" encType="multipart/form-data">
+        <div class="form-group">
+            <input type="file" id="runfile" name="runfile" />
+        </div>
+        <div class="form-group">
+            <select id="datatype" name="datatype">
+                <option value="0">Time</option>
+                <option value="1">Altitude</option>
+                <option value="2">Temperature</option>
+                <option value="3">GyroX</option>
+                <option value="4">GyroY</option>
+                <option value="5">GyroZ</option>
+            </select>
+        </div>
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="newrun">
+            <label class="form-check-label" for="newrun">New Run?</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <div>
+        <br><br>
+        <a class="btn btn-danger" href="/">Home</a>
+    </div>
+</body>
+
+</html>
